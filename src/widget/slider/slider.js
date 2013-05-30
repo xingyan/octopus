@@ -180,6 +180,13 @@
 
         /**
          * @private
+         * @property disableAll
+         * @type {Boolean}
+         */
+        disableAll: false,
+
+        /**
+         * @private
          * @property loop
          * @type {Boolean}
          * @desc 是否循环轮播
@@ -350,7 +357,7 @@
             this.viewDiv.className = "octopusui-slider-view";
             this.viewDiv.style.cssText = "position: relative; text-align: center; -webkit-transform: translate3d(0, 0, 0);" +
                 " -webkit-user-select: none; -webkit-user-drag: none; -webkit-transition: -webkit-transform 0ms " + this.animationType + ";";
-            if(this.hasButton) {
+            if(this.hasButton && !this.disableAll) {
                 this.preDom = document.createElement("a");
                 this.preDom.href = "";
                 this.nextDom = document.createElement("a");
@@ -560,7 +567,9 @@
         activate: function() {
             o.Widget.prototype.activate.apply(this, arguments);
             this.calcSelfSize();
-            this.initSelfEvent();
+            if(!this.disableAll) {
+                this.initSelfEvent();
+            }
         },
 
         /**
