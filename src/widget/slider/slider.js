@@ -568,6 +568,11 @@
         activate: function() {
             o.Widget.prototype.activate.apply(this, arguments);
             this.calcSelfSize();
+            if("orientationchange" in window) {
+                o.event.on(window, "orientationchange", o.util.bind(this.calcSelfSize, this));
+            } else {
+                o.event.on(window, "resize", o.util.bind(this.calcSelfSize, this));
+            }
             if(!this.disableAll) {
                 this.initSelfEvent();
             }
@@ -602,7 +607,7 @@
             var that = this,
                 len = this.length;
             this.viewDiv.style[pro] = "100%";
-            var _spro = this[spro] || o.dom["get" + spro.charAt(0).toUpperCase() + spro.substring(1)](this.el);
+            var _spro = o.dom["get" + spro.charAt(0).toUpperCase() + spro.substring(1)](this.el);
             this[spro]  = _spro;
             this.viewDiv.style[spro] = _spro * len + "px";
             o.util.each(this.doms, function(item, i) {
