@@ -61,7 +61,7 @@
             body.push(template
                 .replace(/[\r\n]+/g, "\n") // 去掉多余的换行，并且去掉IE中困扰人的\r
                 .replace(/^\n+|\s+$/mg, "") // 去掉空行，首部空行，尾部空白
-                .replace(/((^\s*[<>!#^&\u0000-\u0008\u007F-\uffff].*$|^.*[<>]\s*$|^(?!\s*(else|do|try|finally)\s*$)[^'":;,\[\]{}()\n\/]+$|^(\s*(([\w-]+\s*=\s*"[^"]*")|([\w-]+\s*=\s*'[^']*')))+\s*$|^\s*([.#][\w-.]+(:\w+)?(\s*|,))*(?!(else|do|while|try|return)\b)[.#]?[\w-.*]+(:\w+)?\s*\{.*$)\s?)+/mg, function(expression) { // 输出原文
+                .replace(/((^\s*[<>!#^&\u0000-\u0008\u007F-\uffff].*$|^.*[<>]\s*$|^(?!\s*(else|do|try|finally)\s*$)[^'":;,\[\]{}()\n\/]+$|^(\s*(([\w-]+\s*=\s*"[^"]*")|([\w-]+\s*=\s*'[^']*')))+\s*$|^\s*([.#][\w\-.]+(:\w+)?(\s*|,))*(?!(else|do|while|try|return)\b)[.#]?[\w\-\.*]+(:\w+)?\s*\{.*$)\s?)+/mg, function(expression) { // 输出原文
                     expression = ['"', expression
                         .replace(/&none;/g, "") // 空字符
                         .replace(/["'\\]/g, "\\$&") // 处理转义符
