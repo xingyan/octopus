@@ -262,7 +262,7 @@
             config = o.extend(config, {type: "PUT"});
             // set content type to application/xml if it isn't already set
             config.headers = config.headers ? config.headers : {};
-            if(!("CONTENT-TYPE" in OpenLayers.Util.upperCaseObject(config.headers))) {
+            if(!("CONTENT-TYPE" in o.util.upperCaseObject(config.headers))) {
                 config.headers["Content-Type"] = "application/xml";
             }
             return o.ajax.request(config);

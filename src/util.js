@@ -647,6 +647,37 @@
     };
 
     /**
+     * @method octopus.util.styleCss
+     * @desc 将前缀类css 样式化
+     * @example
+     * var css = "-webkit-transition";
+     * octopus.util.styleCss(css);
+     * return "webkitTransition"
+     */
+    util.styleCss = function(str) {
+        var flag = true;
+        var str = str.replace(/\-(\S)/g, function($1, $2) {
+            return flag ? (flag = false, $2) : $2.toUpperCase();
+        });
+        return str;
+    };
+
+    /**
+     * @method octopus.util.cssStyle
+     * @desc 将样式化的前缀 css化
+     * @example
+     * var style = "webkitTransition"
+     * octopus.util.cssStyle(style);
+     * return -webkit-transition
+     */
+    util.cssStyle = function(str) {
+        var str = str.replace(/(^\S|[A-Z])/g, function($1) {
+            return "-" + $1.toLowerCase();
+        });
+        return str;
+    };
+
+    /**
      * @method octopus.util.requestAnimation
      */
     util.requestAnimation = (function() {

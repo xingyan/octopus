@@ -114,6 +114,22 @@
         },
 
         /**
+         * @method octopus.dom.insertFirst
+         * @param el
+         * @param container
+         */
+        insertFirst: function(el, container) {
+            var el = o.g(el),
+                container = o.g(container),
+                firstChild = container.firstChild;
+            if(!firstChild) {
+                container.appendChild(el);
+            } else {
+                container.insertBefore(el, firstChild);
+            }
+        },
+
+        /**
          * @method octopus.dom.setStyles
          * @desc 批量赋值
          * @param el {DOMElement}
@@ -128,7 +144,11 @@
             }
             for(var k in obj) {
                 if(!isinit) {
-                    el.style[k] = obj[k];
+                    var _k = k;
+                    if(k.match(/^-(webkit|o|ms|moz)/g)) {
+                        _k  = o.util.styleCss(k);
+                    }
+                    el.style[_k] = obj[k];
                     continue;
                 }
                 cssText += k + ": " + obj[k] + ";";
@@ -202,6 +222,85 @@
                 o.event.on(cloneEl, name, observer, useCapture);
             });
             return cloneEl;
+        },
+
+        /**
+         * @method octopus.dom.scrollLite
+         * @desc 针对ios设备滚动条滚动时事件传播方向导致的滚动异常解决
+         * @param el {DOMElement} 滚动的节点
+         * @param isHorizon {Boolean} 是否横向
+         * @param preventFrom {DOMElement} 引起bug的根源容器 可不传
+         *
+         */
+        scrollLite: function(el, isHorizon, preventFrom) {
+            var pos = { left: 0, top: 0 };
+            if(preventFrom) {
+                preventFrom = o.g(preventFrom);
+                o.event.on(preventFrom, "touchmove", function(e) { o.event.stop(e, true); }, false);
+            }
+            el = o.g(el);
+            o.dom.setStyles(el, {
+                "-webkit-overflow-scrolling": "touch"
+            });
+            o.event.on(el, "touchstart", function(e) {
+                var touches = e.touches;
+                if(!touches)    return;
+                pos = {
+                    left: touches[0].pageX,
+                    top: touches[0].pageY
+                }
+            });
+            o.event.on(el, "touchmove", function(e) {
+                var touches = e.touches;
+                if(!touches)    return;
+                var target = e.currentTarget,
+                    scrollTop = target.scrollTop,
+                    scrollLeft = target.scrollLeft,
+                    moveLeft = touches[0].pageX,
+                    moveTop = touches[0].pageY,
+                    startTop = pos.top,
+                    startLeft = pos.left;
+                if(isHorizon) {
+                    if((scrollLeft <= 0 && moveLeft > startLeft) ||
+                        (scrollLeft >= target.scrollWidth - target.clientWidth && moveLeft < startLeft)) {
+                        e.preventDefault();
+                        return;
+                    }
+                    e.stopPropagation();
+                } else {
+                    if((scrollTop <= 0 && moveTop > startTop) ||
+                        (scrollTop >= target.scrollHeight - target.clientHeight && moveTop < startTop)) {
+                        e.preventDefault();
+                        return;
+                    }
+                    e.stopPropagation();
+                }
+
+            });
+        },
+
+        /**
+         * @public
+         * @method octopus.dom.data
+         * @desc 读取或设置指定节点的数据
+         * @param el {String | DOMELement}
+         * @param attrs {String | Array}
+         */
+        data: function(el, attrs) {
+            var vs = {};
+            el = o.g(el);
+            if(o.util.isString(attrs)) {
+                o.util.each(attrs.split(" "), function(item) {
+                    var _item = o.util.camelize(item);
+                    vs[item] = el.dataset && el.dataset[_item] || el.getAttribute("data-" + item);
+                })
+            } else {
+                vs = attrs;
+                for(var k in vs) {
+                    el.setAttribute("data-" + k, vs[k]);
+                }
+            }
+            return vs;
         }
     };
 })(octopus);

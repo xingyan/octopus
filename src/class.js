@@ -53,6 +53,7 @@
             o.inherit.apply(null, newArgs);
         } else {
             nc.prototype = i;
+            nc.prototype.constructor = nc;
         }
         return nc;
     };
@@ -65,8 +66,9 @@
      */
     o.inherit = function(child, father) {
         var f = function() {};
-        f.prototype = parent.prototype;
-        child.prototype = new father;
+        f.prototype = father.prototype;
+        child.prototype = new f;
+        child.prototype.superclass = f.prototype;
         var i, l, k;
         for(i = 2, l = arguments.length; i < l; i++) {
             k = arguments[i];

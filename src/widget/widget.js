@@ -145,16 +145,24 @@
             } else {
                 if(!!arguments[1]) {
                     var clonenode = o.dom.cloneNode(this.container, true);
-                    clonenode.appendChild(this.el);
+                    this.appendChild(this.el, clonenode);
                     this.container.parentNode.replaceChild(clonenode, this.container);
                     this.container = clonenode;
                 } else {
-                    this.container.appendChild(this.el);
+                    this.appendChild(this.el, this.container);
                 }
             }
             if(!this.isShow) {
                 this.isShow = true;
             }
+        },
+
+        /**
+         * @private
+         * @method octopus.Widget.appendChild
+         */
+        appendChild: function(dom, container) {
+            container.appendChild(dom);
         },
 
         /**

@@ -283,14 +283,6 @@
 
         /**
          * @private
-         * @property pageDragEndTime
-         * @type {Number}
-         * @desc 拖拽结束时间
-         */
-        pageDragEndTime: null,
-
-        /**
-         * @private
          * @property translateValue
          * @type {Number}
          * @desc 轮播的位置
@@ -338,7 +330,7 @@
          * @desc 与父类保持一致
          */
         initialize: function() {
-            o.Widget.prototype.initialize.apply(this, arguments);
+            this.superclass.initialize.apply(this, arguments);
             this.dataField = this.dataField || {
                 title: "title",
                 url: "url",
@@ -469,7 +461,7 @@
          * @param func {Function} 事件监听函数
          */
         on: function(type, func) {
-            o.Widget.prototype.on.apply(this, arguments);
+            this.superclass.on.apply(this, arguments);
             if(type == "slider-item-ontap" && !this.isDisableA) {
                 this.isDisableA = true;
             }
@@ -550,7 +542,7 @@
          * @desc 复写父类的render方法
          */
         render: function() {
-            o.Widget.prototype.render.apply(this, arguments);
+            this.superclass.render.apply(this, arguments);
             if(!this.active) {
                 this.activate();
             }
@@ -566,7 +558,7 @@
          * @desc 轮播图生成后加入页面需要激活
          */
         activate: function() {
-            o.Widget.prototype.activate.apply(this, arguments);
+            this.superclass.activate.apply(this, arguments);
             this.calcSelfSize();
             if("orientationchange" in window) {
                 o.event.on(window, "orientationchange", o.util.bind(this.calcSelfSize, this));
@@ -646,7 +638,6 @@
         onTouchStart: function(e) {
             o.event.stop(e);
             if(this.eventTimer) return;
-            var target = e.target;
             var touches = e.touches;
             if(!touches || touches.length > 1)  return;
             this.viewDiv.style.webkitTransitionDuration = "0ms";
@@ -672,7 +663,7 @@
                     nvalue,
                     otransform = that.viewDiv.style.webkitTransform;
                 if(that.isLon) {
-                    tvalue = parseInt(otransform.replace(/translate3d\(0\,/g, "")) || 0;
+                    tvalue = parseInt(otransform.replace(/translate3d\(0\S*\s/g, "")) || 0;
                     nvalue = "translate3d(0, " + (tvalue + dis) + "px, 0)";
                 } else {
                     tvalue = parseInt(otransform.replace(/translate3d\(/g, "")) || 0;
@@ -717,7 +708,6 @@
             }
             var target = e.target;
             if(target == this.preDom || target == this.nextDom) return;
-            this.pageDragEndTime = + new Date;
             var __type = this.isLon ? "height" : "width";
             this.isSlide = false;
             if(Math.abs(this.changeDis) <= this.springBackDis) {
