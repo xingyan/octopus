@@ -291,6 +291,15 @@
 
         /**
          * @public
+         * @method octopus.Widget.clone
+         * @returns {*}
+         */
+        clone: function() {
+            return eval("new " + this.CLASS_NAME + "(o.util.clone(this.options))");
+        },
+
+        /**
+         * @public
          * @method octopus.Widget.getEl
          * @desc 拿widget的根节点
          */
