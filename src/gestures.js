@@ -2,7 +2,7 @@
  * 直接引用hammer
  */
 
-(function(o, undefined) {
+;(function(o, undefined) {
     'use strict';
 
     var Hammer = function(element, options) {

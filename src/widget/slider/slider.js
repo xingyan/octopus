@@ -10,7 +10,7 @@
  * @require lib/event.js
  * @require widget/widget.js
  */
-(function(o, undefined) {
+;(function(o, undefined) {
 
     "use strict";
 

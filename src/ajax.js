@@ -8,7 +8,7 @@
  * @require lib/util.js
  * @require lib/dom.js
  */
-(function (o, undefined) {
+;(function (o, undefined) {
 
     o.ajax = o.ajax || {};
 

@@ -4,7 +4,7 @@
  * @author oupeng-fe
  * @version 0.1
  */
-(function(window, undefined) {
+;(function(window, undefined) {
 
     "use strict";
 

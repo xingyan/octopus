@@ -8,7 +8,7 @@
  * @require lib/dom.js
  * @require lib/event.js
  */
-(function(o, undefined) {
+;(function(o, undefined) {
 
     "use strict";
 

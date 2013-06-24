@@ -7,7 +7,7 @@
  * @author oupeng-fe
  * @version 0.1
  */
-(function(o, undefined) {
+;(function(o, undefined) {
 
     "use strict";
 
