@@ -9,4 +9,5 @@ nbproject
 rsync.sh
 .settings
 node_modules
+build
 
