@@ -362,6 +362,8 @@
             || source instanceof String
             || source instanceof Boolean) {
             return result;
+        } else if(util.isNode(source)) {
+            return source.cloneNode(true);
         } else if (util.isArray(source)) {
             result = [];
             var resultLen = 0,
