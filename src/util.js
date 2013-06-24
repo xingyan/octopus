@@ -646,7 +646,7 @@
      * @param source {String}
      */
     util.camelize = function(source) {
-        var oStringList = source.split('-');
+        var oStringList = source.split(/[\-|_|\s|\.]/g);
         var camelizedString = oStringList[0],
             i = 1,
             len = oStringList.length;
