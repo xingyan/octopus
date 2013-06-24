@@ -543,9 +543,6 @@
          */
         render: function() {
             this.superclass.render.apply(this, arguments);
-            if(!this.active) {
-                this.activate();
-            }
             if(this.autoPlay) {
                 this.start();
             }

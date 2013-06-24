@@ -155,6 +155,9 @@
             if(!this.isShow) {
                 this.isShow = true;
             }
+            if(!this.active) {
+                this.activate();
+            }
         },
 
         /**
