@@ -320,6 +320,15 @@
     };
 
     /**
+     * @method octopus.util.isNumeric
+     * @desc 判断对象是否是数字
+     * @returns {Boolean}
+     */
+    util.isNumeric = function(obj) {
+        return !isNaN(parseFloat(obj)) && isFinite(obj);
+    };
+
+    /**
      * @method octopus.util.isPlain
      * @desc 判断是否是普通对象 非function
      */
