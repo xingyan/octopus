@@ -227,7 +227,9 @@
          */
         wipe: function(el, config, func) {
             var options = o.extend({
-                out: true
+                out: true,
+                duration: .4,
+                ease: "ease-out"
             }, config);
             func = func || o.util.void;
             var el = el,
@@ -241,12 +243,15 @@
                 mask = '-webkit-gradient(linear, left bottom, right bottom, from(transparent), to(#000), color-stop(66%, #000), color-stop(33%, transparent))';
                 var _width = o.dom.getWidth(el);
                 el.style.webkitMaskImage = mask;
+                el.style.maskImage = mask;
                 el.style.webkitMaskSize = _width * 3 + "px" + o.dom.getHeight(el) + "px";
+                el.style.maskSize = _width * 3 + "px" + o.dom.getHeight(el) + "px";
                 el.style.zIndex = zIndex;
-                return new o.Tween(el, "-webkit-mask-position-x", 0, -_width * 2 + 'px',  options.duration, func, {
+                return new o.Tween(el, "-webkit-mask-position-x", "0", 0 - _width + "px",  options.duration, func, {
                     ease: options.ease
                 });
             }
+            window.setTimeout(func, options.duration * 1000);
             return null;
         }
     };
