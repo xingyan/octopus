@@ -252,7 +252,7 @@
          */
         checkValue: function(propertyName, startValue, endValue){
             var pass = false;
-            if(/transform/i.test(propertyName)) {
+            if(/transform/i.test(propertyName) || /-webkit-/i.test(propertyName)) {
                 this.isTransform = true;
                 pass = !!startValue && o.util.isString(startValue) && !!endValue && o.util.isString(endValue)
             } else if(propertyName.indexOf('color') != -1) {
