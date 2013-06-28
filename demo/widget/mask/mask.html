@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+        <title>mask demo</title>
+        <meta name="description" content="mask demo" />
+        <meta name="author" content="xingyan" />
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+        <link rel="stylesheet" type="text/css" href="../../octopus.css" />
+        <link rel="stylesheet" type="text/css" href="../../../src/widget/mask/mask.css" />
+
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+        <script type="text/javascript" src="../../../src/class.js"></script>
+
+        <script type="text/javascript" src="../../../src/util.js"></script>
+        <script type="text/javascript" src="../../../src/dom.js"></script>
+        <script type="text/javascript" src="../../../src/events.js"></script>
+        <script type="text/javascript" src="../../../src/gestures.js"></script>
+        <script type="text/javascript" src="../../../src/tween.js"></script>
+
+        <script type="text/javascript" src="../../../src/widget/widget.js"></script>
+        <script type="text/javascript" src="../../../src/widget/mask/mask.js"></script>
+
+        <script type="text/javascript" src="mask.js"></script>
+
+        <style type="text/css">
+
+            body {
+                background: #fcd04b;
+            }
+
+            input[type="button"] {
+                border: none;
+                font-family: inherit;
+                font-size: inherit;
+                color: inherit;
+                background: none;
+                cursor: pointer;
+                padding: 10px 25px;
+                display: inline-block;
+                margin: 15px 30px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                font-weight: 700;
+                outline: none;
+                position: relative;
+                -webkit-transition: all 0.3s;
+                -moz-transition: all 0.3s;
+                transition: all 0.3s;
+            }
+
+            #global_mask {
+                background: #fcad26;
+                color: #fff;
+            }
+
+            #global_mask:hover {
+                background: #f29e0d;
+            }
+
+            #mask_container {
+                width: 320px;
+                height: 300px;
+                background: #2ecc71;
+                margin: 20px auto;
+            }
+
+            #container_mask {
+                border: 3px solid #fff;
+                color: #fff;
+                overflow: hidden;
+            }
+
+            #container_mask:hover {
+                background: #24b662;
+            }
+        </style>
+    </head>
+    <body>
+        <input type="button" value="popup" id="global_mask" />
+        <div id="mask_container">
+            <input type="button" value="popup" id="container_mask" />
+        </div>
+    </body>
+</html>
