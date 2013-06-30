@@ -174,7 +174,7 @@
             this.startValue = startv;
             this.endValue = endv;
             this.duration = duration;
-            this.func = func || o.util.void;
+            this.func = func || o.util.empty;
             this.needParams = [];
             this.colorList = [];
             this.paramsDics = ["width", "height", "left", "top", "right", "bottom", "padding",

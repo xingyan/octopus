@@ -42,7 +42,7 @@
                 ease: "ease-out",
                 isScale: false
             }, config);
-            func = func || o.util.void;
+            func = func || o.util.empty;
             var el = el,
                 out = options.out,
                 currentOpacity,
@@ -117,7 +117,7 @@
                 duration: .4,
                 ease: "ease-out"
             }, config);
-            func = func || o.util.void;
+            func = func || o.util.empty;
             var el = el,
                 fromOpacity = 1,
                 toOpacity = 1,
@@ -147,7 +147,7 @@
                 ease: "ease-out",
                 scaleOnExit: true
             }, config);
-            func = func || o.util.void;
+            func = func || o.util.empty;
             var el = el,
                 fromScale = 1,
                 toScale = 1,
@@ -189,7 +189,7 @@
                 ease: "ease-out",
                 direction: "left"
             }, config);
-            func = func || o.util.void;
+            func = func || o.util.empty;
             var el = el,
                 direction = options.direction,
                 rotateProp = 'Y',
@@ -229,7 +229,7 @@
             var options = o.extend({
                 out: true
             }, config);
-            func = func || o.util.void;
+            func = func || o.util.empty;
             var el = el,
                 curZ = o.dom.getStyle(el, "z-index") || 0,
                 zIndex,
