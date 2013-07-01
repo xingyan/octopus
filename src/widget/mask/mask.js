@@ -49,10 +49,18 @@
         /**
          * @private
          * @property animation
-         * @type {Boolean}
+         * @type {String}
          * @desc 参数 表明浮层浮出的动画类型
          */
         animation: null,
+
+        /**
+         * @private
+         * @property origin
+         * @type {String}
+         * @desc 浮层动画起始点 只有当animation为"scale"时生效
+         */
+        origin: null,
 
         /**
          * @private
@@ -97,6 +105,18 @@
 
         /**
          * @public
+         * @method octopus.Widget.Mask.render
+         * @desc 复写父类方法
+         */
+        render: function(container, clone, origin) {
+            if(this.animation == "scale" && origin) {
+                this.origin = origin;
+            }
+            this.superclass.render.apply(this, arguments);
+        },
+
+        /**
+         * @public
          * @method octopus.Widget.Mask.activate
          * @desc 复写父类方法 在节点扔进dom流后做的初始化
          */
@@ -130,8 +150,14 @@
          * @public
          * @method octopus.Widget.Mask.show
          */
-        show: function() {
+        show: function(origin) {
             if(this.isShow) return;
+            if(origin && origin != this.origin) {
+                this.origin = origin;
+            }
+            if(this.origin) {
+                this.el.style.webkitTransformOrigin = this.origin.left + "px " + this.origin.top + "px";
+            }
             this.isShow = true;
             this.el.style.visibility = "visible";
             if(!!this[this.animation]) {
@@ -159,6 +185,10 @@
          */
         _hidden: function() {
             this.el.style.visibility = "hidden";
+            this.el.style.webkitTransformOrigin = "";
+            if(this.origin) {
+                this.origin = null;
+            }
         },
 
         /**
@@ -200,13 +230,10 @@
             this.el.style.webkitTransformOrigin = "left bottom";
             var that = this;
             if(out) {
-                new o.Tween(this.el, ["opacity", "-webkit-transform"], [0, "rotate(-90deg)"], [1, "rotate(0deg)"], .4, function() {
-                    that.el.style.webkitTransformOrigin = "";
-                });
+                new o.Tween(this.el, ["opacity", "-webkit-transform"], [0, "rotate(-90deg)"], [1, "rotate(0deg)"], .4);
             } else {
                 new o.Tween(this.el, ["opacity", "-webkit-transform"], [1, "rotate(0deg)"], [0, "rotate(90deg)"], .4, function() {
                     that._hidden();
-                    that.el.style.webkitTransformOrigin = "";
                 });
             }
         },
