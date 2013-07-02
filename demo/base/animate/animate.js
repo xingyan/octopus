@@ -15,6 +15,7 @@
         currentType = "slide",
         direction = "left",
         opDirection = "right",
+        horizon = null,
         images = document.getElementsByClassName("image-item"),
         flag1 = true,
         flag2 = true,
@@ -63,6 +64,7 @@
         var value = this.value.split("-");
         currentType = value[0];
         direction = value[1] || null;
+        horizon = value[2] || null;
         direction && (opDirection = opposite[direction], true);
         o.dom.addClass(currentDom, "current");
     }
@@ -90,7 +92,8 @@
             config: {
                 direction: _direction,
                 isFade: isFade,
-                isScale: isScale
+                isScale: isScale,
+                horizon: horizon
             }
         });
         index = this == pre ? (--index < 0 ? len - 1 : index)  : (++index > len - 1 ? 0 : index);
@@ -108,7 +111,8 @@
                 out: false,
                 direction: _direction,
                 isFade: isFade,
-                isScale: isScale
+                isScale: isScale,
+                horizon: horizon
             }
         });
     }

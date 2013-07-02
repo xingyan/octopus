@@ -253,6 +253,89 @@
             }
             window.setTimeout(func, options.duration * 1000);
             return null;
+        },
+
+        /**
+         * @method octopus.animation.roll
+         */
+        roll: function(el, config, func) {
+            var options = o.extend({
+                out: true,
+                duration: .4,
+                ease: "ease-out",
+                isFade: false
+            }, config);
+            func = func || o.util.empty;
+            var el = el,
+                out = options.out,
+                fromTransform = "translateX(-100%) rotate(-120deg)",
+                toTransform = "translateX(0px) rotate(0deg)",
+                ps = ["-webkit-transform"],
+                fvs = [],
+                evs = [];
+            if(out) {
+                var temp = fromTransform;
+                fromTransform = toTransform;
+                toTransform = temp;
+            }
+            fvs.push(fromTransform);
+            evs.push(toTransform);
+            if(options.isFade) {
+                ps.push("opacity");
+                fvs.push(options.out ? 1 : 0);
+                evs.push(options.out ? 0 : 1);
+            }
+            return new o.Tween(el, ps, fvs, evs, options.duration, func, {
+                ease: options.ease
+            })
+        },
+
+        /**
+         * @method octopus.animation.rotate
+         */
+        rotate: function(el, config, func) {
+            var options = o.extend({
+                out: true,
+                duration: .4,
+                ease: "ease-out",
+                horizon: "center",
+                direction: "center",
+                isFade: false
+            }, config);
+            func = func || o.util.empty;
+            var el = el,
+                out = options.out,
+                ps = ["-webkit-transform"],
+                fvs = [],
+                fromTransform = "rotate(200deg)",
+                toTransform = "rotate(0)",
+                evs = [];
+            if(options.direction == "up") {
+                options.direction = "top";
+            } else if(options.direction == "down") {
+                options.direction = "bottom";
+            }
+            el.style.webkitTransformOrigin = options.horizon + " " + options.direction;
+            if(options.horizon == "left") {
+                fromTransform = "rotate(90deg)";
+            } else if(options.horizon == "right") {
+                fromTransform = "rotate(-90deg)";
+            }
+            if(out) {
+                var temp = fromTransform;
+                fromTransform = toTransform;
+                toTransform = temp;
+            }
+            fvs.push(fromTransform);
+            evs.push(toTransform);
+            if(options.isFade) {
+                ps.push("opacity");
+                fvs.push(options.out ? 1 : 0);
+                evs.push(options.out ? 0 : 1);
+            }
+            return new o.Tween(el, ps, fvs, evs, options.duration, func, {
+                ease: options.ease
+            })
         }
     };
 })(octopus);
