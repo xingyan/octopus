@@ -493,7 +493,7 @@
         setImageLoad: function(index, dom) {
             var url = this.getDataBy(index, "image_url");
             var _dom = dom.querySelector(".octopusui-slider-imgChildren") || dom;
-            o.util.loadImage(url, o.util.void, function() {
+            o.util.loadImage(url, o.util.empty, function() {
                 _dom.style.backgroundImage = "url('" + url + "')";
             }, function() {
                 throw new Error("Image load failed!");

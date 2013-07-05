@@ -240,17 +240,10 @@
     })();
 
     /**
-     * @method octopus.util.void
+     * @method octopus.util.empty
      * @desc 空函数
      */
-    util.void = function() {};
-
-    /**
-     * @method octopus.util.true
-     * @desc true函数
-     * @return {Boolean}
-     */
-    util.true = function() {return true;};
+    util.empty = function() {};
 
     /**
      * @method octopus.util.bind

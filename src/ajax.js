@@ -43,7 +43,7 @@
             user: undefined,
             password: undefined,
             data: null,
-            complete: o.util.void,
+            complete: o.util.empty,
             success: null,
             error: null,
             scope: null,
@@ -155,7 +155,7 @@
             }
             if (config.timeout > 0) {
                 abortTimeout = setTimeout(function(){
-                    xhr.onreadystatechange = o.util.void;
+                    xhr.onreadystatechange = o.util.empty;
                     xhr.abort()
                     var error;
                     if(config.error) {
@@ -358,7 +358,7 @@
                 that = this,
                 url = options["url"],
                 callback = options["complete"] || options["success"],
-                error = options["error"] || o.util.void;
+                error = options["error"] || o.util.empty;
             if(o.util.isString(callback)) {
                 callbackName = callback;
             } else {
@@ -388,7 +388,7 @@
                             callback.apply(window, arguments);
 
                         }
-                        window[callbackName] = o.util.void;
+                        window[callbackName] = o.util.empty;
                     } catch (exception) {}
                     finally {
                         that._removeScriptTag(script);

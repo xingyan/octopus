@@ -501,7 +501,7 @@
             this.toggleStyle(false);
             this.toggleLoading(false);
             if(startV == endV)  return;
-            var fn = o.util.void;
+            var fn = o.util.empty;
             if(this.direction == "down") {
                 var dom = document.createElement("div");
                 document.body.appendChild(dom);
