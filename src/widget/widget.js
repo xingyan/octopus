@@ -262,7 +262,7 @@
         show: function() {
             if(this.isShow) return;
             this.isShow = true;
-            this.el.style.display = "";
+            this.el.style.display = "block";
         },
 
         /**
