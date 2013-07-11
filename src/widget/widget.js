@@ -307,6 +307,24 @@
             return this.el;
         },
 
+        /**
+         * @public
+         * @method octopus.Widget.getHeight
+         * @desc 拿到widget的高度
+         */
+        getHeight: function() {
+            return o.dom.getHeight(this.el) || o.dom.getStyle(this.el, "height");
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.getWidth
+         * @desc 拿到widget的宽度
+         */
+        getWidth: function() {
+            return o.dom.getWidth(this.el) || o.dom.getStyle(this.el, "width");
+        },
+
         CLASS_NAME: "octopus.Widget"
     });
 
