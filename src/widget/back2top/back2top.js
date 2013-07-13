@@ -15,6 +15,17 @@
 
     "use strict";
 
+    /**
+     * @class octopus.Widget.Back2Top
+     * @parent octopus.Widget
+     * @desc 回到顶部控件
+     * @param options {Object} 接受的参数
+     * @param options.isFast {Boolean} 是否使用高性能（即当滚动时隐藏控件）模式 默认不采用
+     * @param options.animation {Boolean} 返回顶部是否使用动画 默认不采用
+     * @param options.bottom {Number} 控件距离底部的值
+     * @param options.right {Number} 控件距离右侧的值
+     * @param options.customize {Boolean} 是否自定制点击控件后的回调 若为true则点击控件只触发自定义事件（back2top-ontap） 不返回顶部
+     */
     o.Widget.Back2Top = o.define(o.Widget, {
 
         /**
@@ -36,14 +47,24 @@
         /**
          * @private
          * @property isAbsolute
+         * @desc 某些机器不支持fixed属性 用absolute代替
          * @type {Boolean}
          */
         isAbsolute: false,
 
         /**
          * @private
+         * @property isFast
+         * @type {Boolean}
+         * @desc 是否在滚动中隐藏从而提高性能
+         */
+        isFast: false,
+
+        /**
+         * @private
          * @property scrollTimer
          * @type {Number}
+         * @desc 用来优化性能的scroll时的定时器
          */
         scrollTimer: null,
 
@@ -51,6 +72,7 @@
          * @private
          * @property isScroll
          * @type {Boolean}
+         * @desc 当前是否在scroll的标志位
          */
         isScroll: false,
 
@@ -58,6 +80,7 @@
          * @private
          * @property customize
          * @type {Boolean}
+         * @desc 是否用户自定义点击事件
          */
         customize: false,
 
@@ -65,6 +88,7 @@
          * @private
          * @property animation
          * @type {Boolean}
+         * @desc 是否有动画
          */
         animation: false,
 
@@ -72,6 +96,7 @@
          * @pirvate
          * @property loop
          * @type {Object}
+         * @desc 动画的内存寻址
          */
         loop: null,
 
@@ -79,8 +104,25 @@
          * @private
          * @property count
          * @type {Number}
+         * @desc 动画计数
          */
         count: 0,
+
+        /**
+         * @private
+         * @property testFixed
+         * @type {Boolean}
+         * @desc 是否测试过是否支持fixed属性
+         */
+        testFixed: false,
+
+        /**
+         * @private
+         * @property testFixableDom
+         * @type {DOMElement}
+         * @desc 用来判断设备是否支持fixed的节点
+         */
+        testFixableDom: null,
 
         /**
          * @private
@@ -92,6 +134,10 @@
             this.loop = {};
             this.initFixed();
             this.initEvent();
+            this.testFixableDom = o.dom.createDom("div", null, {
+                top: "5px",
+                position: "fixed"
+            });
         },
 
         /**
@@ -102,8 +148,7 @@
         initFixed: function() {
             var that = this;
             if(/M031/.test(navigator.userAgent)) {
-                this.el.style.position = "absolute";
-                this.isAbsolute = true;
+                this.setAbsolute();
             } else {
                 o.dom.setStyles(this.el, {
                     position: "fixed",
@@ -115,10 +160,34 @@
 
         /**
          * @private
+         * @method setAbsolute
+         * @desc 将不支持fixed的节点设置为absolute
+         */
+        setAbsolute: function() {
+            this.el.style.position = "absolute";
+            this.isAbsolute = true;
+            if("orientationchange" in window) {
+                o.event.on(window, "orientationchange", o.util.bind(this.onOrientationChanged, this));
+            } else {
+                o.event.on(window, "resize", o.util.bind(this.onOrientationChanged, this));
+            }
+        },
+
+        /**
+         * @private
+         * @method onOrientationChanged
+         */
+        onOrientationChanged: function() {
+            this.startFixed();
+        },
+
+        /**
+         * @private
          * @method initEvent
+         * @desc 事件初始化
          */
         initEvent: function() {
-            o.event.on(document, "touchmove", o.util.bindAsEventListener(this.onTouchMove, this), false);
+            this.isFast && o.event.on(document, "touchmove", o.util.bindAsEventListener(this.onTouchMove, this), false);
             o.event.on(document, "scroll", o.util.bindAsEventListener(this.onJudgeScroll, this), false);
             o.event.on(document, "touchend", o.util.bindAsEventListener(this.onTouchEnd, this), false);
             o.event.on(document, "touchcancel", o.util.bindAsEventListener(this.onTouchEnd, this), false);
@@ -127,7 +196,7 @@
 
         /**
          * @private
-         * @method onClick
+         * @method onTap
          */
         onTap: function(e) {
             this.notify("back2top-ontap", e);
@@ -136,10 +205,11 @@
         },
 
         /**
-         * @private
+         * @public octopus.Widget.Back2Top.goTo
          * @method goTo
          * @param y {Number}
          * @param animation {Boolean}
+         * @desc 使页面滚到指定位置
          */
         goTo: function(y, animation) {
             if(!animation) {
@@ -169,6 +239,7 @@
         /**
          * @private
          * @method onTouchEnd
+         * @desc 判断是否应该显示
          */
         onTouchEnd: function() {
             this.checkIfVisible();
@@ -191,7 +262,8 @@
          */
         onScroll: function() {
             this.clearTimer();
-            this.hidden();
+            this.isFast && this.hidden();
+            this.isAbsolute && this.startFixed();
             this.scrollTimer = window.setTimeout(o.util.bind(this.onScrollStop, this), 300);
             this.isScroll = false;
         },
@@ -202,7 +274,22 @@
          */
         onScrollStop: function() {
             this.isAbsolute && this.startFixed();
+            !this.testFixed && this.testFixable();
             this.checkIfVisible();
+        },
+
+        /**
+         * @private
+         * @method testFixable
+         * @desc 判断当前设备是否支持fixed属性
+         */
+        testFixable: function() {
+            this.testFixed = true;
+            if(this.testFixableDom.getBoundingClientRect().top != 5) {
+                this.setAbsolute();
+            }
+            document.body.removeChild(this.testFixableDom);
+            this.testFixableDom = null;
         },
 
         /**
@@ -235,6 +322,7 @@
         /**
          * @private
          * @method startFixed
+         * @desc 当设备不支持fixed时用absolute的滚动
          */
         startFixed: function() {
             if(!this.active)    return;
@@ -251,6 +339,7 @@
         activate: function() {
             this.superclass.activate.apply(this, arguments);
             this.isShow = false;
+            document.body.appendChild(this.testFixableDom);
         },
 
         CLASS_NAME: "octopus.Widget.Back2Top"
