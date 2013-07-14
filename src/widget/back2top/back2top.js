@@ -285,7 +285,7 @@
          */
         testFixable: function() {
             this.testFixed = true;
-            if(this.testFixableDom.getBoundingClientRect().top != 5) {
+            if(this.testFixableDom.offsetTop != 5) {
                 this.setAbsolute();
             }
             document.body.removeChild(this.testFixableDom);
