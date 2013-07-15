@@ -1,0 +1,10 @@
+.octopusui-mask {
+    position: absolute;
+    display: block;
+    left: 0;
+    top: 0;
+    background: rgba(78, 82, 87, .8);
+    z-index: 1001;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+}

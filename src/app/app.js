@@ -635,8 +635,9 @@
         Z_INDEX_BASE: {
             BaseLayer: 0,
             Layer: 350,
-            Popup: 750,
-            Widget: 1000
+            Widget: 750,
+            Mask: 1000,
+            Popup: 1500
         },
 
         CLASS_NAME: "octopus.App"

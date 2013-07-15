@@ -189,6 +189,46 @@
         },
 
         /**
+         * @method octopus.dom.getPosition
+         * @desc 获得元素相对于浏览器左上角的坐标
+         * @param el {DOMElement}
+         */
+        getPosition: function(el) {
+            el = o.g(el);
+            var doc = !!el.ownerDocument ? el.ownerDocument : el,
+                getStyle = o.dom.getStyle,
+                pos = {"left": 0, "top": 0},
+                viewport = doc.documentElement,
+                parent = el;
+            if(el == viewport){
+                return pos;
+            }
+
+            do {
+                pos.left += parent.offsetLeft;
+                pos.top  += parent.offsetTop;
+                if (getStyle(parent, 'position') == 'fixed') {
+                    pos.left += doc.body.scrollLeft;
+                    pos.top  += doc.body.scrollTop;
+                    break;
+                }
+                parent = parent.offsetParent;
+            } while (parent && parent != el);
+            if(getStyle(el, 'position') == 'absolute'){
+                pos.top  -= doc.body.offsetTop;
+            }
+            parent = el.offsetParent;
+            while (parent && parent != doc.body) {
+                pos.left -= parent.scrollLeft;
+                if (parent.tagName != 'TR') {
+                    pos.top -= parent.scrollTop;
+                }
+                parent = parent.offsetParent;
+            }
+            return pos;
+        },
+
+        /**
          * @method octopus.dom.createDom
          * @desc 创建dom节点
          * @param type {String} dom类型
