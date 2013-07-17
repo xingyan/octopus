@@ -227,7 +227,9 @@
          */
         wipe: function(el, config, func) {
             var options = o.extend({
-                out: true
+                out: true,
+                duration: .4,
+                ease: "ease-out"
             }, config);
             func = func || o.util.empty;
             var el = el,
@@ -241,13 +243,218 @@
                 mask = '-webkit-gradient(linear, left bottom, right bottom, from(transparent), to(#000), color-stop(66%, #000), color-stop(33%, transparent))';
                 var _width = o.dom.getWidth(el);
                 el.style.webkitMaskImage = mask;
+                el.style.maskImage = mask;
                 el.style.webkitMaskSize = _width * 3 + "px" + o.dom.getHeight(el) + "px";
+                el.style.maskSize = _width * 3 + "px" + o.dom.getHeight(el) + "px";
                 el.style.zIndex = zIndex;
-                return new o.Tween(el, "-webkit-mask-position-x", 0, -_width * 2 + 'px',  options.duration, func, {
+                return new o.Tween(el, "-webkit-mask-position-x", "0", 0 - _width + "px",  options.duration, func, {
                     ease: options.ease
                 });
             }
+            window.setTimeout(func, options.duration * 1000);
             return null;
+        },
+
+        /**
+         * @method octopus.animation.roll
+         */
+        roll: function(el, config, func) {
+            var options = o.extend({
+                out: true,
+                duration: .4,
+                ease: "ease-out",
+                isFade: false
+            }, config);
+            func = func || o.util.empty;
+            var el = el,
+                out = options.out,
+                fromTransform = "translateX(-100%) rotate(-120deg)",
+                toTransform = "translateX(0px) rotate(0deg)",
+                ps = ["-webkit-transform"],
+                fvs = [],
+                evs = [];
+            if(out) {
+                var temp = fromTransform;
+                fromTransform = toTransform;
+                toTransform = temp;
+            }
+            fvs.push(fromTransform);
+            evs.push(toTransform);
+            if(options.isFade) {
+                ps.push("opacity");
+                fvs.push(options.out ? 1 : 0);
+                evs.push(options.out ? 0 : 1);
+            }
+            return new o.Tween(el, ps, fvs, evs, options.duration, func, {
+                ease: options.ease
+            })
+        },
+
+        /**
+         * @method octopus.animation.rotate
+         */
+        rotate: function(el, config, func) {
+            var options = o.extend({
+                out: true,
+                duration: .4,
+                ease: "ease-out",
+                horizon: "center",
+                direction: "center",
+                isFade: false
+            }, config);
+            func = func || o.util.empty;
+            var el = el,
+                out = options.out,
+                ps = ["-webkit-transform"],
+                fvs = [],
+                fromTransform = "rotate(200deg)",
+                toTransform = "rotate(0)",
+                evs = [];
+            if(options.direction == "up") {
+                options.direction = "top";
+            } else if(options.direction == "down") {
+                options.direction = "bottom";
+            }
+            el.style.webkitTransformOrigin = options.horizon + " " + options.direction;
+            if(options.horizon == "left") {
+                fromTransform = "rotate(90deg)";
+            } else if(options.horizon == "right") {
+                fromTransform = "rotate(-90deg)";
+            }
+            if(out) {
+                var temp = fromTransform;
+                fromTransform = toTransform;
+                toTransform = temp;
+            }
+            fvs.push(fromTransform);
+            evs.push(toTransform);
+            if(options.isFade) {
+                ps.push("opacity");
+                fvs.push(options.out ? 1 : 0);
+                evs.push(options.out ? 0 : 1);
+            }
+            return new o.Tween(el, ps, fvs, evs, options.duration, func, {
+                ease: options.ease
+            });
+        },
+
+        /**
+         * @method octopus.animation.fold
+         */
+        fold: function(el, config, func) {
+            var options = o.extend({
+                out: true,
+                duration: .4,
+                ease: "ease-out",
+                direction: "left",
+                isFade: false
+            }, config);
+            func = func || o.util.empty;
+            var el = el,
+                out = options.out,
+                direction = options.direction,
+                transform = {
+                    "left": {
+                        "origin": "100% 50%",
+                        "startTransform": "translateX(-100%) rotateY(-90deg)"
+                    },
+                    "right": {
+                        "origin": "0% 50%",
+                        "startTransform": "translateX(100%) rotateY(90deg)"
+                    },
+                    "up": {
+                        "origin": "50% 100%",
+                        "startTransform": "translateY(-100%) rotateX(90deg)"
+                    },
+                    "down": {
+                        "origin": "50% 0%",
+                        "startTransform": "translateY(100%) rotateX(-90deg)"
+                    }
+                },
+                ps = ["-webkit-transform"],
+                fvs = [],
+                evs = [],
+                fromTransform = transform[direction]["startTransform"],
+                toTransform = "translate3d(0, 0, 0) rotate(0)";
+            el.style.webkitTransformOrigin = transform[direction]["origin"];
+            if(out) {
+                var temp = fromTransform;
+                fromTransform = toTransform;
+                toTransform = temp;
+            }
+            fvs.push(fromTransform);
+            evs.push(toTransform);
+            if(options.isFade) {
+                ps.push("opacity");
+                fvs.push(options.out ? 1 : 0);
+                evs.push(options.out ? 0 : 1);
+            }
+            return new o.Tween(el, ps, fvs, evs, options.duration, func, {
+                ease: options.ease
+            });
+        },
+
+        /**
+         * @method octopus.animation.carousel
+         */
+        carousel: function(el, config, func) {
+            var options = o.extend({
+                out: true,
+                duration: .4,
+                ease: "ease-out",
+                direction: "left",
+                isFade: false
+            }, config);
+            func = func || o.util.empty;
+            var el = el,
+                out = options.out,
+                direction = options.direction,
+                transform = {
+                    "left": {
+                        "originOut": "100% 50%",
+                        "originIn": "0% 50%",
+                        "startTransformOut": "translateX(-200%) scale(.4) rotateY(-65deg)",
+                        "startTransformIn": "translateX(200%) scale(.4) rotateY(65deg)"
+                    },
+                    "right": {
+                        "originOut": "0% 50%",
+                        "originIn": "100% 50%",
+                        "startTransformOut": "translateX(200%) scale(.4) rotateY(65deg)",
+                        "startTransformIn": "translateX(-200%) scale(.4) rotateY(-65deg)"
+                    },
+                    "up": {
+                        "originOut": "50% 100%",
+                        "originIn": "50% 0%",
+                        "startTransformOut": "translateY(-200%) scale(.4) rotateX(65deg)",
+                        "startTransformIn": "translateY(200%) scale(.4) rotateX(-65deg)"
+                    },
+                    "down": {
+                        "originOut": "50% 0%",
+                        "originIn": "50% 100%",
+                        "startTransformOut": "translateY(200%) scale(.4) rotateX(-65deg)",
+                        "startTransformIn": "translateY(-200%) scale(.4) rotateX(65deg)"
+                    }
+                },
+                ps = ["-webkit-transform"],
+                fvs = [],
+                evs = [],
+                fromTransform = transform[direction]["startTransformOut"],
+                toTransform = "translate3d(0, 0, 0) rotate(0)";
+            el.style.webkitTransformOrigin = out ? transform[direction]["originIn"] : transform[direction]["originOut"];
+            if(out) {
+                fromTransform = toTransform;
+                toTransform = transform[direction]["startTransformIn"];
+            }
+            fvs.push(fromTransform);
+            evs.push(toTransform);
+            if(options.isFade) {
+                ps.push("opacity");
+                fvs.push(options.out ? 1 : 0);
+                evs.push(options.out ? 0 : 1);
+            }
+            return new o.Tween(el, ps, fvs, evs, options.duration, func, {
+                ease: options.ease
+            });
         }
     };
 })(octopus);

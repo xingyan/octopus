@@ -164,6 +164,13 @@
 
         /**
          * @private
+         * @property eventTimer
+         * @type {Number}
+         */
+        eventTimer: null,
+
+        /**
+         * @private
          * @constructor octopus.Tween
          */
         initialize: function(el, pro, startv, endv, duration, func, options) {
@@ -252,7 +259,7 @@
          */
         checkValue: function(propertyName, startValue, endValue){
             var pass = false;
-            if(/transform/i.test(propertyName)) {
+            if(/transform/i.test(propertyName) || /-webkit-/i.test(propertyName)) {
                 this.isTransform = true;
                 pass = !!startValue && o.util.isString(startValue) && !!endValue && o.util.isString(endValue)
             } else if(propertyName.indexOf('color') != -1) {
@@ -358,8 +365,33 @@
                         var curValue = _this.endValue[z];
                         _this.el.style[proarr[z]] = _this.getValue(curValue, z);
                     }
+                    _this.clearEventTimer();
+                    _this.eventTimer = setTimeout(o.util.bind(_this.onFinish, _this), _this.duration * 1000);
+
                 }, 0);
             }, 0);
+        },
+
+        /**
+         * @private
+         * @method clearEventTimer
+         */
+        clearEventTimer: function() {
+            if(this.eventTimer) {
+                window.clearTimeout(this.eventTimer);
+                this.eventTimer = null;
+            }
+        },
+
+        /**
+         * @private
+         * @method onFinish
+         */
+        onFinish: function() {
+            o.event.stopEventObserver(this.el, this.endEvent);
+            this.func && this.func();
+            this.el.style[this.prefix + "transition"] = "";
+            this.destroy();
         },
 
         /**
@@ -368,9 +400,8 @@
          */
         onEndEventCompleted: function(e) {
             if(e.target !== e.currentTarget)    return;
-            o.event.stopEventObserver(this.el, this.endEvent);
-            this.func && this.func();
-            this.el.style[this.prefix + "transition"] = "";
+            this.clearEventTimer();
+            this.onFinish();
         },
 
         /**
