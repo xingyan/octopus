@@ -522,8 +522,157 @@
             return this.needParams[order] ? value + 'px' : value;
         },
 
-        CLASS_NAME: "Octopus.Tween"
+        CLASS_NAME: "octopus.Tween"
     });
+
+	/**
+	 * @class octopus.StepTween
+	 */
+	o.StepTween = o.define({
+
+		/**
+		 * @private
+		 * @property type
+		 * @type {String} "normal" | "dropFrame"
+		 * @desc 效果优先或性能优先
+		 */
+		type: "normal",
+
+		/**
+		 * @private
+		 * @property ease
+		 */
+		ease: null,
+
+		/**
+		 * @private
+		 * @property startValue
+		 * @type {String}
+		 */
+		startValue: null,
+
+		/**
+		 * @private
+		 * @property endValue
+		 * @type {String}
+		 */
+		endValue: null,
+
+		/**
+		 * @private
+		 * @property duration
+		 * @desc 与octopus.tween不同 这里的duration表示动画执行的次数
+		 */
+		duration: null,
+
+		/**
+		 * @private
+		 * @property func
+		 * @type {Function}
+		 */
+		func: null,
+
+		/**
+		 * @private
+		 * @property count
+		 */
+		count: 0,
+
+		/**
+		 * @private
+		 * @property playing
+		 * @type {Boolean}
+		 * @desc 标志位 标志是否在动画
+		 */
+		playing: false,
+
+		/**
+		 * @private
+		 * @constructor
+		 * @param options
+		 */
+		initialize: function(options) {
+			o.extend(this, options);
+			this.ease = this.ease || o.easing.expo.easeOut;
+			this.start(this.startValue, this.endValue, this.duration, this.func);
+		},
+
+		/**
+		 * @private
+		 * @method start
+		 * @param startValue
+		 * @param endValue
+		 * @param duration
+		 * @param func
+		 */
+		start: function(startValue, endValue, duration, func) {
+			this.playing = true;
+			this.startValue = startValue;
+			this.endValue = endValue;
+			this.duration = duration;
+			this.func = func;
+			this.count = 0;
+			if(this.func && this.func.start) {
+				this.func.start.call(this, this.startValue);
+			}
+			o.util.requestAnimation(o.util.bind(this.play, this));
+		},
+
+		/**
+		 * @public octopus.stepTween.stop
+		 * @desc 停止动画
+		 */
+		stop: function() {
+			if(!this.playing) return;
+
+			if(this.func && this.func.done) {
+				this.func.done.call(this, this.endValue);
+			}
+			this.playing = false;
+			this.destroy();
+		},
+
+		/**
+		 * @private
+		 * @method destroy
+		 */
+		destroy: function() {
+			this.func = null;
+			this.startValue = null;
+			this.endValue = null;
+			this.duration = null;
+			this.count = null;
+		},
+
+		/**
+		 * @private
+		 * @method play
+		 */
+		play: function() {
+			if(this.playing == false)	return;
+			var value = {};
+			for(var k in this.startValue) {
+				var b = this.startValue[k];
+				var f = this.endValue[k];
+				if(b == null || f == null || isNaN(b) || isNaN(f)) {
+					throw new Error('invalid value for Tween');
+				}
+				var c = f - b;
+				value[k] = this.ease.apply(this, [this.count, b, c, this.duration]);
+			}
+			this.count++;
+			if(this.func && this.func.eachStep) {
+				this.func.eachStep.call(this, value);
+			}
+			if(this.count > this.duration) {
+				this.stop();
+				return;
+			}
+			o.util.requestAnimation(o.util.bind(this.play, this));
+		},
+
+		CLASS_NAME: "octopus.StepTween"
+	});
 
     /**
      * @namespace octopus.easing

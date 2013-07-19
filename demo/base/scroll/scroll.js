@@ -5,6 +5,11 @@
 	o.event.on(window, "DOMContentLoaded", onLoaded);
 
 	function onLoaded() {
-		new o.ScrollLite("scroll_container", "scroll_scrollContainer");
+		new o.ScrollLite({
+			el: "scroll_container",
+			scrollEl: "scroll_scrollContainer",
+			distance: 400,
+			isTransform: true
+		});
 	}
 })(octopus);

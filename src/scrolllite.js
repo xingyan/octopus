@@ -21,7 +21,9 @@
 	 * @param options.isLon {Boolean} 用以表明是横向滚动还是纵向滚动 默认横向滚动
 	 * @param options.maxV {Number} 拖拽时偏移的最大值 默认为150
 	 * @param options.distance {Number} 拖拽惯性滚动的基础数值 越大滚动越远 默认为350
-	 * @param options.swipeVelocity {Number} 拖拽的判断速度 越小滚动越灵敏 默认为0.35
+	 * @param options.swipeVelocity {Number} 拖拽的判断速度 越小滚动越灵敏 默认为0.4
+	 * @param options.duration {Number} 拖拽的动画时长 默认为.8
+	 * @param options.isTransform {Boolean} 这个参数很重要 一种是css的代码实现 另一种是js的代码实现 其间区别用用就知道
 	 */
 	o.ScrollLite = o.define({
 
@@ -96,10 +98,10 @@
 
 		/**
 		 * @private
-		 * @property transformV
+		 * @property tempV
 		 * @desc 中间变量 标明当前滚动节点的translate值
 		 */
-		transformV: 0,
+		tempV: 0,
 
 		/**
 		 * @private
@@ -130,21 +132,57 @@
 		 * @desc 每次滚动的判断系数 越小越灵敏
 		 * @type {Number}
 		 */
-		swipeVelocity: 0.35,
+		swipeVelocity: 0.4,
 
+	    /**
+		 * @private
+		 * @property duration
+		 * @type {Number}
+	     */
+		duration: .8,
+
+		/**
+		 * @private
+		 * @property isTween
+		 * @type {Boolean}
+		 */
+		isTween: false,
+
+		/**
+		 * @private
+		 * @property isTransform
+		 * @type {Boolean}
+		 * @desc 是否使用transform 如果不使用 则默认使用left值 性能低 操作性好
+		 */
+		isTransform: false,
+
+		/**
+		 * @private
+		 * @property dragTween
+		 * @type {<octopus.Tween>}
+		 * @desc 全局定时器
+		 */
+		dragTween: null,
 
 		/**
 		 * @private
 		 * @constructor
 		 */
-		initialize: function(el, scrollEl) {
+		initialize: function(options) {
+			options.el = o.g(options.el);
+			options.scrollEl = o.g(options.scrollEl);
+			o.extend(this, options);
+			var el = options.el,
+				scrollEl = options.scrollEl;
 			if(!el || !scrollEl) throw new Error("Illegal arguments!")
-			el = o.g(el);
-			scrollEl = o.g(scrollEl);
-			this.scrollEl = scrollEl;
-			this.el = el;
 			this.gesture = o.gesture;
 			el.style.overflow = "hidden";
+			if(!this.isTransform) {
+				scrollEl.style.position = "relative";
+				if(o.dom.getStyle(el, "position") == "static") {
+					el.style.position = "relative";
+				}
+			}
 			this.initEvent();
 		},
 
@@ -154,7 +192,7 @@
 		 * @desc 更新当前维护的translate值
 		 */
 		updateV: function(v) {
-			this.transformV = v;
+			this.tempV = v;
 		},
 
 		/**
@@ -167,9 +205,11 @@
 			o.event.on(this.el, "touchmove", o.util.bindAsEventListener(this.onTouchMove, this));
 			o.event.on(this.el, "touchend", o.util.bindAsEventListener(this.onTouchEnd, this));
 			o.event.on(this.el, "touchcancel", o.util.bindAsEventListener(this.onTouchEnd, this));
+
 			this.gesture(this.el, {
 				swipe_velocity: this.swipeVelocity
 			}).on("swipe", o.util.bind(this.onSwipe, this));
+
 		},
 
 		/**
@@ -178,36 +218,56 @@
 		 * @desc 监听手的滑动事件
 		 */
 		onSwipe: function(e) {
+			if(this.isTween)	return;
 			var gesture = e.gesture,
 				v = this.isLon ? gesture.velocityY : gesture.velocityX,
 				direction = gesture.direction,
 				dis = this.distance * v,
 				that = this,
 				limitV = this.isLon ? o.dom.getHeight(this.scrollEl) - o.dom.getHeight(this.el) : o.dom.getWidth(this.scrollEl) - o.dom.getWidth(this.el);
-			if(this.transformV > 0 || this.transformV < -limitV)	return;
+			if(this.tempV > 0 || this.tempV < -limitV)	return;
 			var startV,
 				endV,
 				_endV,
 				_v;
 			if(direction == "right" || direction == "down") {
-				_v = this.transformV + dis;
+				_v = this.tempV + dis;
 				endV = _v > 0 ? 0 : _v;
 			} else {
-				_v = this.transformV - dis;
+				_v = this.tempV - dis;
 				endV = _v < -limitV ? -limitV : _v;
 			}
-			if(this.isLon) {
-				startV = "translate(0, " + this.transformV + "px)";
-				_endV = "translate(0, " + endV + "px)";
+			if(this.isTransform) {
+				if(this.isLon) {
+					startV = "translate(0, " + this.tempV + "px)";
+					_endV = "translate(0, " + endV + "px)";
+				} else {
+					startV = "translate(" + this.tempV + "px, 0)";
+					_endV = "translate(" + endV + "px, 0)";
+				}
+				this.isTween = true;
+				new o.Tween(this.scrollEl, "-webkit-transform", startV, _endV, this.duration, function() {
+					that.updateV(endV);
+					that.isTween = false;
+				}, {
+					ease: "ease-out"
+				});
 			} else {
-				startV = "translate(" + this.transformV + "px, 0)";
-				_endV = "translate(" + endV + "px, 0)";
+				var prop = this.isLon ? "top" : "left",
+					start = { "prop": that.tempV },
+					end = { "prop": endV };
+				this.dragTween = new o.StepTween({
+					startValue: start,
+					endValue: end,
+					func: {
+						eachStep: o.util.bind(function(by) {
+							that.scrollEl.style[prop] = by.prop + "px";
+							that.updateV(by.prop);
+						}, that)
+					},
+					duration: that.duration * 100
+				});
 			}
-			new o.Tween(this.scrollEl, "-webkit-transform", startV, _endV, .4, function() {
-				that.updateV(endV);
-			}, {
-				ease: "ease-out"
-			});
 		},
 
 		/**
@@ -220,6 +280,7 @@
 			o.event.stop(e);
 			var touches = e.touches;
 			if(!touches || touches.length > 1)  return;
+			this.stopDragTween();
 			this.stop = false;
 			this.isDrag = true;
 			var touch = touches[0];
@@ -229,8 +290,20 @@
 			} else {
 				dc = touch.pageX;
 			}
+			this.stopDragTween();
 			this.pageDragStartC = this.pageDragTempC = dc;
 			o.util.requestAnimation(o.util.bind(this.onDragTimer, this));
+		},
+
+		/**
+		 * @private
+		 * @method stopDragTween
+		 */
+		stopDragTween: function() {
+			if(this.dragTween) {
+				this.dragTween.stop();
+				this.dragTween = null;
+			}
 		},
 
 		/**
@@ -240,7 +313,7 @@
 		 */
 		onDragTimer: function() {
 			if(this.stop) return;
-			if(this.pageDragTempC == this.pageDragEndC) {
+			if(this.pageDragTempC == this.pageDragEndC || this.isTween) {
 				this.pageDragStartC = this.pageDragTempC
 				o.util.requestAnimation(o.util.bind(this.onDragTimer, this));
 				return;
@@ -253,9 +326,10 @@
 			this.pageDragEndC = this.pageDragTempC;
 			var dis = this.pageDragTempC - this.pageDragStartC;
 			this.pageDragStartC = this.pageDragTempC;
-			var tvalue = this.transformV,
+			var tvalue = this.tempV,
 				nvalue,
-				finalv = tvalue + dis;
+				finalv = tvalue + dis,
+				changeP;
 			if(this.dragDirection == "next") {
 				if(finalv > this.maxV) {
 					finalv = this.maxV;
@@ -266,12 +340,15 @@
 					finalv = -(this.maxV + limitV);
 				}
 			}
-			if(this.isLon) {
-				nvalue = "translate(0, " + finalv + "px)";
+			if(this.isTransform) {
+				changeP = "webkitTransform";
+				nvalue = this.isLon ? "translate(0, " + finalv + "px)" : "translate(" + finalv + "px, 0)";
 			} else {
-				nvalue = "translate(" + finalv + "px, 0)";
+				nvalue = finalv + "px";
+				changeP = this.isLon ? "top" : "left";
 			}
-			this.scrollEl.style.webkitTransform = nvalue;
+
+			this.scrollEl.style[changeP] = nvalue;
 			this.updateV(finalv);
 			o.util.requestAnimation(o.util.bind(this.onDragTimer, this));
 		},
@@ -304,27 +381,48 @@
 		onTouchEnd: function(e) {
 			this.isDrag = false;
 			this.stop = true;
-			var limitV,
+			var limitV = this.isLon ? o.dom.getHeight(this.scrollEl) - o.dom.getHeight(this.el)
+					: o.dom.getWidth(this.scrollEl) - o.dom.getWidth(this.el),
 				startV,
 				endV,
 				_endV = 0,
 				that = this;
-			if(this.isLon) {
-				limitV = o.dom.getHeight(this.scrollEl) - o.dom.getHeight(this.el);
-				startV = "translate(0, " + this.transformV + "px)";
-				endV = "translate(0, -" + limitV + "px)";
+			if(this.isTransform) {
+				startV = this.isLon ? "translate(0, " + this.tempV + "px)" : "translate(" + this.tempV + "px, 0)";
+				endV = this.isLon ? "translate(0, -" + limitV + "px)" : "translate(-" + limitV + "px, 0)";
 			} else {
-				limitV = o.dom.getWidth(this.scrollEl) - o.dom.getWidth(this.el);
-				startV = "translate(" + this.transformV + "px, 0)";
-				endV = "translate(-" + limitV + "px, 0)";
+				startV = this.tempV;
+				endV = -limitV;
 			}
-			if(this.transformV > 0 || this.transformV < -limitV) {
-				this.transformV > 0 ? endV = "translate(0, 0)" : _endV = -limitV;
-				new o.Tween(this.scrollEl, "-webkit-transform", startV, endV, .4, function() {
-					that.updateV(_endV);
-				}, {
-					ease: "ease-out"
-				});
+			if(this.tempV > 0 || this.tempV < -limitV) {
+				if(this.isTransform) {
+					this.tempV > 0 ? endV = "translate(0, 0)" : _endV = -limitV;
+					this.isTween = true;
+					new o.Tween(this.scrollEl, "-webkit-transform", startV, endV, .4, function() {
+						that.isTween = false;
+						that.updateV(_endV);
+					}, {
+						ease: "ease-out"
+					});
+				} else {
+					this.tempV > 0 ? endV = 0 : _endV = -limitV;
+					this.stopDragTween();
+					var prop = this.isLon ? "top" : "left",
+						start = { "prop": startV },
+						end = { "prop": _endV };
+					this.dragTween = new o.StepTween({
+						startValue: start,
+						endValue: end,
+						func: {
+							eachStep: o.util.bind(function(by) {
+								that.scrollEl.style[prop] = by.prop + "px";
+								that.updateV(by.prop);
+							}, that)
+						},
+						duration: 50
+					});
+				}
+
 			}
 		},
 
