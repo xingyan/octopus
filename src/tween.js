@@ -592,9 +592,9 @@
 		 * @param options
 		 */
 		initialize: function(options) {
-			o.extend(this, options)
+			o.extend(this, options);
 			this.ease = this.ease || o.easing.expo.easeOut;
-			this.start(this.startValue, this.endValue, this.duration, this.func)
+			this.start(this.startValue, this.endValue, this.duration, this.func);
 		},
 
 		/**
