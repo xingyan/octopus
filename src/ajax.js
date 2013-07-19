@@ -137,7 +137,7 @@
             }
             var that = this;
             xhr.onreadystatechange = function() {
-                if(xhr.readyState == o.ajax.XMLHttpRequest.DONE) {
+                if(xhr.readyState == 4) {
                     clearTimeout(abortTimeout);
                     that.runCallbacks(
                         {request: xhr, config: config, requestUrl: config.url}
