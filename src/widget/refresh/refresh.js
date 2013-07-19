@@ -443,7 +443,6 @@
          */
         loadMore: function() {
             this.isLocked = true;
-            this.notify("refresh-ui-loadmore");
             var startV = "translate3d(0, " + this.translateV + "px, 0)",
                 endV,
                 v;
@@ -464,6 +463,7 @@
                     that.updateText("loadText");
                     that.arrow.style.display = "none";
                     that.toggleLoading(true);
+					that.notify("refresh-ui-loadmore");
                     if(dom) {
                         document.body.removeChild(dom);
                     }
