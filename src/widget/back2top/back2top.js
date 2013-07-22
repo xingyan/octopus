@@ -23,7 +23,8 @@
      * @param options.isFast {Boolean} 是否使用高性能（即当滚动时隐藏控件）模式 默认不采用
      * @param options.animation {Boolean} 返回顶部是否使用动画 默认不采用
      * @param options.bottom {Number} 控件距离底部的值
-     * @param options.right {Number} 控件距离右侧的值
+     * @param options.direction {String} 控件在左侧还是右侧 默认右侧 "right" || "left"
+	 * @param options.offsetV {Number} 控件距离左侧或者右侧的距离
      * @param options.customize {Boolean} 是否自定制点击控件后的回调 若为true则点击控件只触发自定义事件（back2top-ontap） 不返回顶部
      */
     o.Widget.Back2Top = o.define(o.Widget, {
@@ -36,13 +37,20 @@
          */
         bottom: 10,
 
+		/**
+		 * @private
+		 * @property direction
+		 * @type {String}	"right" || "left"
+		 */
+		direction: "right",
+
         /**
          * @private
-         * @property right
+         * @property offsetV
          * @type {Number}
-         * @desc 控件距离右边距离
+         * @desc 控件距离两侧的距离
          */
-        right: 10,
+		offsetV: 10,
 
         /**
          * @private
@@ -150,11 +158,12 @@
             if(/M031/.test(navigator.userAgent)) {
                 this.setAbsolute();
             } else {
+				var direction = this.direction;
                 o.dom.setStyles(this.el, {
                     position: "fixed",
-                    bottom: this.bottom + "px",
-                    right: this.right + "px"
+                    bottom: this.bottom + "px"
                 });
+				this.el.style[direction] = this.offsetV + "px";
             }
         },
 
@@ -326,10 +335,11 @@
          */
         startFixed: function() {
             if(!this.active)    return;
+			var direction = this.direction == "right" ? "left" : "right";
             o.dom.setStyles(this.el, {
-                top: window.pageYOffset + window.innerHeight - parseInt(this.getHeight()) - this.bottom + "px",
-                left: document.body.offsetWidth - parseInt(this.getWidth()) - this.right + "px"
+                top: window.pageYOffset + window.innerHeight - parseInt(this.getHeight()) - this.bottom + "px"
             });
+			this.el.style[direction] = document.body.offsetWidth - parseInt(this.getWidth()) - this.offsetV + "px";
         },
 
         /**

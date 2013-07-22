@@ -406,7 +406,6 @@
          * @param e
          */
         onTouchMove: function(e) {
-            o.event.stop(e, true);
             var touches = e.touches;
             if(!this.isDrag || !touches || touches.length > 1)    return;
             var touch = touches[0];
