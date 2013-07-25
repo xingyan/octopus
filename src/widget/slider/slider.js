@@ -353,10 +353,17 @@
         eventTimer: null,
 
         /**
-         * @priate
+         * @private
          * @property unloadImage
          */
         unloadImage: null,
+
+		/**
+		 * @private
+		 * @property touchStartPixel
+		 * @object
+		 */
+		touchStartPixel: null,
 
         /**
          * @private
@@ -385,9 +392,9 @@
                 " -webkit-backface-visibility: hidden; -webkit-user-select: none; -webkit-user-drag: none;" +
                 " -webkit-transition: -webkit-transform 0ms " + this.animationType + ";";
             if(this.hasButton && !this.disableAll) {
-                this.preDom = document.createElement("a");
+                this.preDom = document.createElement("div");
                 this.preDom.href = "";
-                this.nextDom = document.createElement("a");
+                this.nextDom = document.createElement("div");
                 this.nextDom.href = "";
                 this.preDom.style.cssText = this.nextDom.style.cssText = "display: block; text-decoration: none;"
                 this.preDom.className = "octopusui-slider-button octopusui-slider-prebutton";
@@ -709,7 +716,6 @@
          * @param e {window.event}
          */
         onTouchStart: function(e) {
-            o.event.stop(e);
             if(this.eventTimer) return;
             var touches = e.touches;
             if(!touches || touches.length > 1)  return;
@@ -725,7 +731,8 @@
             } else {
                 dc = touch.pageX;
             }
-            this.pageDragStartC = this.pageDragTempC = dc;
+			this.touchStartPixel = touch;
+			this.pageDragStartC = this.pageDragTempC = dc;
             var that = this;
             this.dragtimer = window.setInterval(function() {
                 if(that.pageDragTempC == that.pageDragEndC) return;
@@ -754,7 +761,6 @@
          * @param e {window.event}
          */
         onTouchMove: function(e) {
-            o.event.stop(e);
             var touches = e.touches;
             if(!this.isDrag || !touches || touches.length > 1)    return;
             var touch = touches[0],
@@ -764,7 +770,13 @@
             } else {
                 dc = touch.pageX;
             }
+			if(this.pageDragTempC == dc)	return;
             this.pageDragTempC = dc;
+			var angle = o.util.getDirection(this.touchStartPixel, touch);
+			if((this.isLon && (angle == "left" || angle == "right")) ||
+				(!this.isLon && (angle == "up" || angle == "down"))) {
+					o.event.stop(e);
+			}
         },
 
         /**
