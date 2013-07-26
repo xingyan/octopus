@@ -640,15 +640,20 @@
         activate: function() {
             this.superclass.activate.apply(this, arguments);
             this.calcSelfSize();
-            if("orientationchange" in window) {
-                o.event.on(window, "orientationchange", o.util.bind(this.calcSelfSize, this));
-            } else {
-                o.event.on(window, "resize", o.util.bind(this.calcSelfSize, this));
-            }
+			o.event.on(window, "ortchange", o.util.bind(this.onOrtChanged, this), false);
             if(!this.disableAll) {
                 this.initSelfEvent();
             }
         },
+
+		/**
+		 * @private
+		 * @method onOrtChanged
+		 */
+		onOrtChanged: function() {
+			this.calcSelfSize();
+			this.select(this.current.index);
+		},
 
         /**
          * @private
@@ -869,9 +874,8 @@
          * @method octopus.Widget.Slider.select
          * @desc 选择第n个子节点
          * @param index {Number}
-         * @param loadIndex {Number}
          */
-        select: function(index, loadIndex) {
+        select: function(index) {
             this.isSlide = true;
             this.viewDiv.style.webkitTransitionDuration = this.animationTime + "ms";
             if(this.loop) {

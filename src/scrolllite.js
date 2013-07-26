@@ -217,9 +217,8 @@
 			o.event.on(this.el, "touchmove", o.util.bindAsEventListener(this.onTouchMove, this));
 			o.event.on(this.el, "touchend", o.util.bindAsEventListener(this.onTouchEnd, this));
 			o.event.on(this.el, "touchcancel", o.util.bindAsEventListener(this.onTouchEnd, this));
-			var type = "orientationchange" in window ? "orientationchange" : "resize",
-				that = this;
-			o.event.on(window, type, function() {
+			var that = this;
+			o.event.on(window, "ortchange", function() {
 				if(that.tempV < -that.limitV) {
 				    var v;
 					if(that.isTransform) {

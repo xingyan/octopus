@@ -175,11 +175,7 @@
         setAbsolute: function() {
             this.el.style.position = "absolute";
             this.isAbsolute = true;
-            if("orientationchange" in window) {
-                o.event.on(window, "orientationchange", o.util.bind(this.onOrientationChanged, this));
-            } else {
-                o.event.on(window, "resize", o.util.bind(this.onOrientationChanged, this));
-            }
+			o.event.on(window, "ortchange", o.util.bind(this.onOrientationChanged, this));
         },
 
         /**

@@ -21,7 +21,7 @@
         _mask.hidden();
     })
 
-    o.event.on(window, "DOMContentLoaded", onLoadCompleted, false);
+    o.event.on(window, "ready", onLoadCompleted, false);
 
     function onLoadCompleted() {
         o.gesture(o.g("global_mask")).on("tap", function(e) {

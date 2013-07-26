@@ -203,7 +203,7 @@
             this.id = config.id || o.util.createUniqueID(this.CLASS_NAME + "_");
 
             //监听window事件 启动模块
-            o.event.on(window, "DOMContentLoaded", o.util.bind(this.onWindowLoad, this));
+            o.event.on(window, "ready", o.util.bind(this.onWindowLoad, this));
             o.event.on(window, "resize", o.util.bind(this.onWindowResize, this));
             if("orientationchange" in window) {
                 o.event.on(window, "orientationchange", o.util.bind(this.onOrientationChanged, this));
