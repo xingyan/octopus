@@ -46,7 +46,7 @@
         el: null,
 
         /**
-         * @public
+         * @private
          * @property octopus.Layer.isBaseLayer
          * @type {Boolean}
          */

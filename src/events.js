@@ -125,16 +125,19 @@
         on: function(dom, name, fn, useCapture) {
             var element = o.g(dom);
             useCapture = useCapture || false;
-            if (name == 'keypress' &&
-                (navigator.appVersion.match(/Konqueror|Safari|KHTML/)
-                    || element.attachEvent)) {
-                name = 'keydown';
-            }
 
-            if (!this.observers) {
+			if(name == "ortchange") {
+				name = "orientationchange" in window ? "orientationchange" : "resize";
+			}
+
+			if(name == "ready") {
+				name = "DOMContentLoaded";
+			}
+
+            if(!this.observers) {
                 this.observers = {};
             }
-            if (!element._eventCacheID) {
+            if(!element._eventCacheID) {
                 var idPrefix = "eventCacheID_";
                 if (element.id) {
                     idPrefix = element.id + "_" + idPrefix;
@@ -142,7 +145,7 @@
                 element._eventCacheID = o.util.createUniqueID(idPrefix);
             }
             var cacheID = element._eventCacheID;
-            if (!this.observers[cacheID]) {
+            if(!this.observers[cacheID]) {
                 this.observers[cacheID] = [];
             }
             this.observers[cacheID].push({
@@ -151,7 +154,7 @@
                 'observer': fn,
                 'useCapture': useCapture
             });
-            if (element.addEventListener) {
+            if(element.addEventListener) {
                 element.addEventListener(name, fn, useCapture);
             } else if (element.attachEvent) {
                 element.attachEvent('on' + name, fn);

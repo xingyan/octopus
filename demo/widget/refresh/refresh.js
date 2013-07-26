@@ -81,7 +81,7 @@
         }, 2000)
     })
 
-    o.event.on(window, "load", onLoadCompleted);
+    o.event.on(window, "ready", onLoadCompleted);
     o.event.on(document, "touchmove", function(e) {
         o.event.stop(e, true);
     })

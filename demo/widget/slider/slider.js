@@ -262,7 +262,7 @@ slider.on("slider-item-ontap", function(option) {
     console.log(option);
 })
 
-o.event.on(window, "load", onLoadCompleted);
+o.event.on(window, "ready", onLoadCompleted);
 
 
 

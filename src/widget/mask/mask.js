@@ -78,8 +78,7 @@
          */
         initEvent: function() {
             !this.isScroll && o.event.on(document, "touchmove", o.util.bindAsEventListener(this.onTouchMove, this), false);
-            ("orientationchange" in window) ? o.event.on(window, "orientationchange", o.util.bind(this.calcSelfSize, this), false)
-                : o.event.on(window, "resize", o.util.bind(this.calcSelfSize, this), false);
+			o.event.on(window, "ortchange", o.util.bind(this.calcSelfSize, this), false);
         },
 
         /**
