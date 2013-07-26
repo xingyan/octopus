@@ -21,14 +21,14 @@
         /**
          * @private
          * @property commands
-         * @type {Array <octopus.Cmd>}
+         * @type {Array}
          */
         commands: null,
 
         /**
          * @private
          * @property executeCmds
-         * @type {Array <octopus.Cmd>}
+         * @type {Array}
          */
         executeCmds: null,
 

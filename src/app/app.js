@@ -13,6 +13,10 @@
 
     "use strict";
 
+	/**
+	 * @namespace octopus.app
+	 * @desc octopus app模块结构
+	 */
     o.app = (function() {
 
         var app = null;
@@ -69,7 +73,7 @@
 
             /**
              * @public
-             * @property octopus.app.initialize
+             * @method octopus.app.initialize
              * @param options
              * @desc 初始化app对象 如果不被调用则按照默认属性初始化
              * @returns {octopus.App|app}
@@ -121,7 +125,7 @@
         /**
          * @private
          * @property cmds
-         * @type {Array <octopus.Cmd>}
+         * @type {Array}
          */
         cmds: null,
 
@@ -190,7 +194,7 @@
 
         /**
          * @private
-         * constructor
+         * @constructor
          */
         initialize: function(options) {
             var config = this.config = o.extend({}, options);

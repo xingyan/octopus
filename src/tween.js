@@ -533,7 +533,7 @@
 		/**
 		 * @private
 		 * @property type
-		 * @type {String} "normal" | "dropFrame"
+		 * @type {String}
 		 * @desc 效果优先或性能优先
 		 */
 		type: "normal",
@@ -619,7 +619,8 @@
 		},
 
 		/**
-		 * @public octopus.stepTween.stop
+		 * @public
+		 * @method octopus.StepTween.stop
 		 * @desc 停止动画
 		 */
 		stop: function() {

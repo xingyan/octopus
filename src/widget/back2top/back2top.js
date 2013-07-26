@@ -40,7 +40,7 @@
 		/**
 		 * @private
 		 * @property direction
-		 * @type {String}	"right" || "left"
+		 * @type {String}
 		 */
 		direction: "right",
 
@@ -214,8 +214,8 @@
         },
 
         /**
-         * @public octopus.Widget.Back2Top.goTo
-         * @method goTo
+         * @public
+         * @method octopus.Widget.Back2Top.goTo
          * @param y {Number}
          * @param animation {Boolean}
          * @desc 使页面滚到指定位置
