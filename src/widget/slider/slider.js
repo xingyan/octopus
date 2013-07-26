@@ -358,13 +358,6 @@
          */
         unloadImage: null,
 
-		/**
-		 * @private
-		 * @property touchStartPixel
-		 * @object
-		 */
-		touchStartPixel: null,
-
         /**
          * @private
          * @constructor octopus.Widget.Slider.initialize
@@ -736,7 +729,6 @@
             } else {
                 dc = touch.pageX;
             }
-			this.touchStartPixel = touch;
 			this.pageDragStartC = this.pageDragTempC = dc;
             var that = this;
             this.dragtimer = window.setInterval(function() {
@@ -777,11 +769,6 @@
             }
 			if(this.pageDragTempC == dc)	return;
             this.pageDragTempC = dc;
-			var angle = o.util.getDirection(this.touchStartPixel, touch);
-			if((this.isLon && (angle == "left" || angle == "right")) ||
-				(!this.isLon && (angle == "up" || angle == "down"))) {
-					o.event.stop(e);
-			}
         },
 
         /**

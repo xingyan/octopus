@@ -171,12 +171,6 @@
 
 		/**
 		 * @private
-		 * @property startPixel
-		 */
-		touchStartPixel: null,
-
-		/**
-		 * @private
 		 * @constructor
 		 */
 		initialize: function(options) {
@@ -318,7 +312,6 @@
 			this.stop = false;
 			this.isDrag = true;
 			var touch = touches[0];
-			this.touchStartPixel = touch;
 			this.pageDragStartC = this.pageDragTempC = touch.pageX;;
 			var that = this;
 
@@ -408,10 +401,6 @@
 			if(!this.isDrag || !touches || touches.length > 1)    return;
 			var touch = touches[0];
 			this.pageDragTempC = touch.pageX;
-			var angle = o.util.getDirection(this.touchStartPixel, touch);
-			if(angle == "up" || angle == "down") {
-				o.event.stop(e);
-			}
 		},
 
 		/**
