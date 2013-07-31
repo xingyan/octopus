@@ -153,7 +153,7 @@
                 }
             }
             if(!this.isShow) {
-                this.isShow = true;
+                this.show();
             }
             if(!this.active) {
                 this.activate();
