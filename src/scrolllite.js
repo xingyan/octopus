@@ -124,7 +124,7 @@
 		 * @desc 每次滚动的判断系数 越小越灵敏
 		 * @type {Number}
 		 */
-		swipeVelocity: 0.5,
+		swipeVelocity: 0.8,
 
 	    /**
 		 * @private
@@ -168,6 +168,12 @@
 		 * @type {Number}
 		 */
 		limitV: null,
+
+		/**
+		 * @private
+		 * @property time
+		 */
+		time: 0,
 
 		/**
 		 * @private
@@ -240,6 +246,10 @@
 		 */
 		onSwipe: function(e) {
 			if(this.isTween)	return;
+			var now = Date.now(),
+				time = now - this.time;
+			this.time = now;
+			if(time < this.duration * 1500)	return;
 			var gesture = e.gesture,
 				v = gesture.velocityX,
 				direction = gesture.direction,
