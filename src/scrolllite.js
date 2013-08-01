@@ -171,6 +171,20 @@
 
 		/**
 		 * @private
+		 * @property touchStartPixelX
+		 * @type {Number}
+		 */
+		touchStartPixelX: null,
+
+		/**
+		 * @private
+		 * @property touchStartPixelY
+		 * @type {Number}
+		 */
+		touchStartPixelY: null,
+
+		/**
+		 * @private
 		 * @constructor
 		 */
 		initialize: function(options) {
@@ -312,6 +326,8 @@
 			this.stop = false;
 			this.isDrag = true;
 			var touch = touches[0];
+			this.touchStartPixelX = touch.pageX;
+			this.touchStartPixelY = touch.pageY;
 			this.pageDragStartC = this.pageDragTempC = touch.pageX;;
 			var that = this;
 
@@ -400,6 +416,15 @@
 			var touches = e.touches;
 			if(!this.isDrag || !touches || touches.length > 1)    return;
 			var touch = touches[0];
+			if(this.pageDragTempC == touch.pageX)	return;
+			var pixel = {
+				pageX: this.touchStartPixelX,
+				pageY: this.touchStartPixelY
+			}
+			var angle = o.util.getDirection(pixel, touch);
+			if(angle == "left" || angle == "right") {
+				o.event.stop(e);
+			}
 			this.pageDragTempC = touch.pageX;
 		},
 
