@@ -358,6 +358,20 @@
          */
         unloadImage: null,
 
+		/**
+		 * @private
+		 * @property touchStartPixelX
+		 * @type {Number}
+		 */
+		touchStartPixelX: null,
+
+		/**
+		 * @private
+		 * @property touchStartPixelY
+		 * @type {Number}
+		 */
+		touchStartPixelY: null,
+
         /**
          * @private
          * @constructor octopus.Widget.Slider.initialize
@@ -633,7 +647,6 @@
         activate: function() {
             this.superclass.activate.apply(this, arguments);
             this.calcSelfSize();
-			o.event.on(window, "ortchange", o.util.bind(this.onOrtChanged, this), false);
             if(!this.disableAll) {
                 this.initSelfEvent();
             }
@@ -700,11 +713,11 @@
          * @desc 给轮播图绑定事件
          */
         initSelfEvent: function() {
-            var that = this;
             o.event.on(this.el, "touchstart", o.util.bindAsEventListener(this.onTouchStart, this));
             o.event.on(this.el, "touchmove", o.util.bindAsEventListener(this.onTouchMove, this));
             o.event.on(this.el, "touchend", o.util.bindAsEventListener(this.onTouchEnd, this));
             o.event.on(this.el, "touchcancel", o.util.bindAsEventListener(this.onTouchEnd, this));
+			o.event.on(window, "ortchange", o.util.bind(this.onOrtChanged, this), false);
         },
 
         /**
@@ -714,7 +727,7 @@
          * @param e {window.event}
          */
         onTouchStart: function(e) {
-            if(this.eventTimer) return;
+            if(this.eventTimer || this.isSlide) return;
             var touches = e.touches;
             if(!touches || touches.length > 1)  return;
             this.viewDiv.style.webkitTransitionDuration = "0ms";
@@ -729,6 +742,8 @@
             } else {
                 dc = touch.pageX;
             }
+			this.touchStartPixelX = touch.pageX;
+			this.touchStartPixelY = touch.pageY;
 			this.pageDragStartC = this.pageDragTempC = dc;
             var that = this;
             this.dragtimer = window.setInterval(function() {
@@ -768,7 +783,16 @@
                 dc = touch.pageX;
             }
 			if(this.pageDragTempC == dc)	return;
-            this.pageDragTempC = dc;
+			var pixel = {
+				pageX: this.touchStartPixelX,
+				pageY: this.touchStartPixelY
+			}
+			var angle = o.util.getDirection(pixel, touch);
+			if((this.isLon && (angle == "up" || angle == "down")) ||
+				(!this.isLon && (angle == "left" || angle == "right"))) {
+				o.event.stop(e);
+			}
+			this.pageDragTempC = dc;
         },
 
         /**
@@ -785,8 +809,6 @@
             }
             var target = e.target;
             if(target == this.preDom || target == this.nextDom) return;
-            var __type = this.isLon ? "height" : "width";
-            this.isSlide = false;
             if(Math.abs(this.changeDis) <= this.springBackDis) {
                 this.select(this.current.index);
             } else if(this.loop) {
@@ -922,19 +944,8 @@
         selectLoop: function(index) {
             var _index = this.current.index,
                 len = this.length - 2,
-                _typestr = "translate3d(0, 0, 0)",
                 temp,
-                _temp,
-                __temp = temp = _temp = "translate3d(";
-            if(index == _index) {
-                if(this.isLon) {
-                    __temp += "0, " + this.translateValue + "px, 0)";
-                } else {
-                    __temp += this.translateValue + "px, 0, 0)";
-                }
-                this.viewDiv.style.webkitTransform = __temp;
-                return;
-            }
+                _temp = temp = "translate3d(";
             if((index == 0 && _index == (len - 1)) || (_index == 0 && index == (len - 1))) {
                 var that = this;
                 var onChanged = function(e) {
