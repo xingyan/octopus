@@ -146,16 +146,19 @@
             }
             elements.push(element);
         }
-        return elements;
+        return elements || null;
     };
 
     /**
      * @method octopus.$
      * @desc 不想重复的去写这么多
+	 * @param filter {String}
+	 * @param el {String | DOMElement}
      * @returns {NodeList}
      */
-    o.$ = function() {
-        return document.querySelectorAll(arguments[0]);
+    o.$ = function(filter, el) {
+		el = o.g(el) || document;
+        return el.querySelectorAll(filter) || null;
     };
 
     if(!window.$) {
