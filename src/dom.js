@@ -16,6 +16,16 @@
      * @desc 一些基础的dom操作
      */
     o.dom = {
+		/**
+		 * @method octopus.dom.one
+		 * @param filter {String}
+		 * @param el {DOMElement}
+		 */
+		one: function(filter, el) {
+			el = o.g(el) || document;
+			return el.querySelector(filter) || null;
+		},
+
         /**
          * @method octopus.dom.hasClass
          * @desc 判断节点有class
