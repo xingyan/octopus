@@ -273,8 +273,8 @@
             if(this.height == null) {
                 this.height = o.dom.getHeight(this.el);
             }
+			this.addEvent();
             o.dom.scrollLite(this.container.parentNode, false);
-            this.addEvent();
         },
 
         /**
@@ -323,21 +323,19 @@
                 if(that.pageDragTempC > that.pageDragStartC) {
                     that.dragDirection = "down";
                 } else if(that.pageDragTempC < that.pageDragStartC) {
-                    that.dragDirection = "up";
+					that.dragDirection = "up";
                 }
                 if((that.pageDragTempC == that.pageDragStartC) || !that.adjustScrollBar()) {
                     that.pageDragStartC = that.pageDragTempC
                     o.util.requestAnimation(that.timer);
                     return;
-                }
+				}
                 that.pageDragEndC = that.pageDragTempC;
                 var dis = (that.pageDragTempC - that.pageDragStartC);
                 that.pageDragStartC = that.pageDragTempC;
-                var otransform = that.container.style.webkitTransform || "",
-                    tvalue = that.translateV;
+                var tvalue = that.translateV;
                 var v,
                     _v = tvalue + dis;
-
                 if(that.direction == "up") {
                     if(that.dragDirection == "up" && that.isLocked) {
                         o.util.requestAnimation(that.timer);
@@ -409,7 +407,8 @@
             var touches = e.touches;
             if(!this.isDrag || !touches || touches.length > 1)    return;
             var touch = touches[0];
-            this.pageDragTempC = touch.pageY;
+			if(this.pageDragTempC == touch.pageY)	return;
+			this.pageDragTempC = touch.pageY;
         },
 
         /**
@@ -520,11 +519,15 @@
          * @returns {boolean}
          */
         adjustScrollBar: function() {
-            var translate = this.translateV;
-            var body = document.body;
+            var translate = this.translateV,
+				body = document.body,
+				scrollHeight = body.scrollHeight,
+				height = body.offsetHeight,
+				top = body.scrollTop,
+				_height = height + top;
             return (Math.abs(translate) <= this.maxTranslate &&
-                ((this.direction == "up" && (body.scrollTop >= body.scrollHeight - o.dom.getHeight(body) - 1)) ||
-                (this.direction == "down" && body.scrollTop  == 0)));
+                (this.direction == "up" && (_height + 5) >= scrollHeight) ||
+                (this.direction == "down" && top == 0));
         },
 
         CLASS_NAME: "octopus.Widget.Refresh"

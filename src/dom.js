@@ -335,14 +335,14 @@
                     startLeft = pos.left;
                 if(isHorizon) {
                     if((scrollLeft <= 0 && moveLeft > startLeft) ||
-                        (scrollLeft >= target.scrollWidth - target.clientWidth && moveLeft < startLeft)) {
+                        (scrollLeft >= target.scrollWidth - target.clientWidth - 5 && moveLeft < startLeft)) {
                         e.preventDefault();
                         return;
                     }
                     e.stopPropagation();
                 } else {
                     if((scrollTop <= 0 && moveTop > startTop) ||
-                        (scrollTop >= target.scrollHeight - target.clientHeight && moveTop < startTop)) {
+                        (scrollTop >= target.scrollHeight - target.clientHeight - 5 && moveTop < startTop)) {
                         e.preventDefault();
                         return;
                     }
