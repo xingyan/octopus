@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+        <title>menu demo</title>
+        <meta name="description" content="menu demo" />
+        <meta name="author" content="xingyan" />
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+        <link rel="stylesheet" type="text/css" href="../../octopus.css" />
+        <link rel="stylesheet" type="text/css" href="../../../src/widget/menu/menu.css" />
+
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+        <script type="text/javascript" src="../../../src/class.js"></script>
+        <script type="text/javascript" src="../../../src/util.js"></script>
+        <script type="text/javascript" src="../../../src/dom.js"></script>
+        <script type="text/javascript" src="../../../src/events.js"></script>
+        <script type="text/javascript" src="../../../src/gestures.js"></script>
+        <script type="text/javascript" src="../../../src/tween.js"></script>
+        <script type="text/javascript" src="../../../src/animate.js"></script>
+
+        <script type="text/javascript" src="../../../src/widget/widget.js"></script>
+
+        <script id="script" type="text/javascript">
+            document.write("<script type='text\/javascript' src='..\/..\/..\/src\/widget\/menu\/menu.js?time=" + Date.now() + "'><\/script>");
+            $("head")[0].removeChild($("#script")[0]);
+        </script>
+
+        <script type="text/javascript" src="menu.js"></script>
+        <style>
+            #menu_container {
+                position: absolute;
+                width: 320px;
+                top: 20px;
+                left: 50%;
+                margin-left: -160px;
+            }
+
+            input[type="button"] {
+                border: none;
+                cursor: pointer;
+                display: inline-block;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                font-weight: 700;
+                position: relative;
+                padding: 0 20px;
+                border-radius: 5px;
+                box-shadow: 0 0 1px 1px #dc7801;
+                height: 60px;
+                line-height: 60px;
+                background: #fcad26;
+                color: #fff;
+                position: absolute;
+                left: 20px;
+                top: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <input type="button" value="点击出菜单" />
+        <div id="menu_container"></div>
+    </body>
+</html>

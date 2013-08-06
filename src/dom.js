@@ -33,10 +33,10 @@
          * @param name {String}
          */
         hasClass: function(el, name) {
-            var element = o.g(el),
-                names;
-            return !!element.classList ? element.classList.contains(name) :
-                (names = element.className, !!names && new RegExp("(^|\\s)" + name + "(\\s|$)").test(names));
+			el = o.g(el);
+            var names;
+            return !!el.classList ? el.classList.contains(name) :
+                (names = el.className, !!names && new RegExp("(^|\\s)" + name + "(\\s|$)").test(names));
         },
 
         /**
@@ -46,18 +46,18 @@
          * @param name {String}
          */
         addClass: function(el, name) {
-            var element = o.g(el);
-            var classList = element.classList
+			el = o.g(el);
+			var classList = el.classList;
             if(!!classList) {
                 if(!classList.contains(name)) {
-                    element.classList.add(name);
+					el.classList.add(name);
                 }
             } else {
-                if(!o.dom.hasClass(element, name)) {
-                    element.className += (element.className ? " " : "") + name;
+                if(!o.dom.hasClass(el, name)) {
+					el.className += (el.className ? " " : "") + name;
                 }
             }
-            return element;
+            return el;
         },
 
         /**
@@ -67,18 +67,18 @@
          * @param name {String}
          */
         removeClass: function(el, name) {
-            var element = o.g(el),
-                names;
-            var classList = element.classList;
+            var names;
+			el = o.g(el);
+            var classList = el.classList;
             if(!!classList) {
                 if(classList.contains(name)) {
-                    element.classList.remove(name);
+					el.classList.remove(name);
                 }
             } else {
-                if(o.dom.hasClass(element, name)) {
-                    names = element.className;
+                if(o.dom.hasClass(el, name)) {
+                    names = el.className;
                     if(names) {
-                        element.className = o.util.trim(
+						el.className = o.util.trim(
                             names.replace(
                                 new RegExp("(^|\\s+)" + name + "(\\s+|$)"), " "
                             )
@@ -86,8 +86,25 @@
                     }
                 }
             }
-            return element;
+            return el;
         },
+
+		/**
+		 * @method octopus.dom.toggleClass
+		 * @desc toggle指定节点的指定样式
+		 * @param el {DOMElement | String} 指定节点
+		 * @param name {String} 指定样式
+		 */
+		toggleClass: function(el, name) {
+			el = o.g(el);
+			var t = o.dom.hasClass(el, name);
+			if(t) {
+				o.dom.removeClass(el, name);
+			} else {
+				o.dom.addClass(el, name);
+			}
+			return !t;
+		},
 
         /**
          * @method octopus.dom.getWidth
@@ -95,8 +112,8 @@
          * @param el {DOMElement}
          */
         getWidth: function(el) {
-            var element = o.g(el);
-            var width = !!element.offsetWidth ? element.offsetWidth : element.clientWidth;
+            var el = o.g(el);
+            var width = !!el.offsetWidth ? el.offsetWidth : el.clientWidth;
             return width > 0 ? width : 0;
         },
 
@@ -106,8 +123,8 @@
          * @param el {DOMElement}
          */
         getHeight: function(el) {
-            var element = o.g(el);
-            var height = !!element.offsetHeight ? element.offsetHeight : element.clientHeight;
+            var el = o.g(el);
+            var height = !!el.offsetHeight ? el.offsetHeight : el.clientHeight;
             return height > 0 ? height : 0;
         },
 
