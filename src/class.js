@@ -134,7 +134,7 @@
      * @desc 靠id拿个节点 由于只是简单支持 没有必要写得那么高级
      * @return {DOMElement}
      */
-    o.g = o.util.g = function() {
+    o.g = function() {
         var elements = [];
         for(var i = 0, len = arguments.length; i < len; i++) {
             var element = arguments[i];
@@ -160,6 +160,16 @@
 		el = o.g(el) || document;
         return el.querySelectorAll(filter) || null;
     };
+
+	/**
+	 * @method octopus.one
+	 * @param filter {String}
+	 * @param el {DOMElement}
+	 */
+	o.one = function(filter, el) {
+		el = o.g(el) || document;
+		return el.querySelector(filter) || null;
+	};
 
     if(!window.$) {
         window.$ = o.$;

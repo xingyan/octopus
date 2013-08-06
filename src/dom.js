@@ -11,21 +11,13 @@
 
     "use strict";
 
+	var u = o.util;
+
     /**
      * @namespace octopus.dom
      * @desc 一些基础的dom操作
      */
     o.dom = {
-		/**
-		 * @method octopus.dom.one
-		 * @param filter {String}
-		 * @param el {DOMElement}
-		 */
-		one: function(filter, el) {
-			el = o.g(el) || document;
-			return el.querySelector(filter) || null;
-		},
-
         /**
          * @method octopus.dom.hasClass
          * @desc 判断节点有class
@@ -78,7 +70,7 @@
                 if(o.dom.hasClass(el, name)) {
                     names = el.className;
                     if(names) {
-						el.className = o.util.trim(
+                        element.className = u.trim(
                             names.replace(
                                 new RegExp("(^|\\s+)" + name + "(\\s+|$)"), " "
                             )
@@ -173,7 +165,7 @@
                 if(!isinit) {
                     var _k = k;
                     if(k.match(/^-(webkit|o|ms|moz)/g)) {
-                        _k  = o.util.styleCss(k);
+                        _k  = u.styleCss(k);
                     }
                     el.style[_k] = obj[k];
                     continue;
@@ -195,14 +187,14 @@
             el = o.g(el);
             var value = null;
             if (el && el.style) {
-                value = el.style[o.util.camelize(style)];
+                value = el.style[u.camelize(style)];
                 if (!value) {
                     if (document.defaultView &&
                         document.defaultView.getComputedStyle) {
                         var css = document.defaultView.getComputedStyle(el, null);
                         value = css ? css.getPropertyValue(style) : null;
                     } else if (el.currentStyle) {
-                        value = el.currentStyle[o.util.camelize(style)];
+                        value = el.currentStyle[u.camelize(style)];
                     }
                 }
                 var positions = ['left', 'top', 'right', 'bottom'];
@@ -228,12 +220,12 @@
 			var depth = 0,
 				_el = null;
 			el = el.parentNode;
-			while(o.util.isNode(el) && (depth < maxDepth)) {
+			while(u.isNode(el) && (depth < maxDepth)) {
 				var parent = el.parentNode,
 					list = parent.querySelectorAll(filter);
 				if(list && list.length > 0) {
-					o.util.each(list, function(item) {
-						if(o.util.isNode(item) && item == el) {
+					u.each(list, function(item) {
+						if(u.isNode(item) && item == el) {
 							_el = item;
 							return true;
 						}
@@ -295,7 +287,7 @@
          */
         createDom: function(type, atts, stys) {
             var dom = document.createElement(type);
-            atts && o.util.each(atts, function(v, att) {
+            atts && u.each(atts, function(v, att) {
                 dom.setAttribute(att, v);
             });
             stys && o.dom.setStyles(dom, stys, true);
@@ -313,10 +305,10 @@
             var cloneEl = o.g(el).cloneNode(true);
             if(!ev || !el._eventCacheID) return cloneEl;
             var obs = o.event.observers[el._eventCacheID];
-            o.util.each(obs, function(item, i) {
+            u.each(obs, function(item, i) {
                 var name = item.name,
-                    observer = o.util.clone(item.observer),
-                    useCapture = o.util.clone(item.useCapture);
+                    observer = u.clone(item.observer),
+                    useCapture = u.clone(item.useCapture);
                 o.event.on(cloneEl, name, observer, useCapture);
             });
             return cloneEl;
@@ -360,14 +352,14 @@
                     startLeft = pos.left;
                 if(isHorizon) {
                     if((scrollLeft <= 0 && moveLeft > startLeft) ||
-                        (scrollLeft >= target.scrollWidth - target.clientWidth && moveLeft < startLeft)) {
+                        (scrollLeft >= target.scrollWidth - target.clientWidth - 5 && moveLeft < startLeft)) {
                         e.preventDefault();
                         return;
                     }
                     e.stopPropagation();
                 } else {
                     if((scrollTop <= 0 && moveTop > startTop) ||
-                        (scrollTop >= target.scrollHeight - target.clientHeight && moveTop < startTop)) {
+                        (scrollTop >= target.scrollHeight - target.clientHeight - 5 && moveTop < startTop)) {
                         e.preventDefault();
                         return;
                     }
@@ -387,11 +379,17 @@
         data: function(el, attrs) {
             var vs = {};
             el = o.g(el);
-            if(o.util.isString(attrs)) {
-                o.util.each(attrs.split(" "), function(item) {
-                    var _item = o.util.camelize(item);
-                    vs[item] = el.dataset && el.dataset[_item] || el.getAttribute("data-" + item);
-                })
+            if(u.isString(attrs)) {
+				var ars = attrs.split(" "),
+					len = ars.length;
+				if(len == 1) {
+					return el.dataset && el.dataset[ars[0]] || el.getAttribute("data-" + ars[0]) || null;
+				} else {
+					u.each(ars, function(item) {
+						var _item = u.camelize(item);
+						vs[item] = el.dataset && el.dataset[_item] || el.getAttribute("data-" + item) || null;
+					});
+				}
             } else {
                 vs = attrs;
                 for(var k in vs) {
@@ -399,6 +397,33 @@
                 }
             }
             return vs;
-        }
+        },
+
+		/**
+		 * @public
+		 * @method octopus.dom.attr
+		 * @desc 读取或设置指定节点的属性
+		 */
+		attr: function(el, attrs) {
+			var vs = {};
+			el = o.g(el);
+			if(u.isString(attrs)) {
+				var ars = attrs.split(" "),
+					len = ars.length;
+				if(len == 1) {
+					return el.getAttribute(ars[0]) || null;
+				} else {
+					u.each(ars, function(item) {
+						vs[item] = el.getAttribute(item) || null;
+					});
+				}
+			} else {
+				vs = attrs;
+				for(var k in vs) {
+					el.setAttribute(k, vs[k]);
+				}
+			}
+			return vs;
+		}
     };
 })(octopus);
