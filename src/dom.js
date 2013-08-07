@@ -70,10 +70,8 @@
                 if(o.dom.hasClass(el, name)) {
                     names = el.className;
                     if(names) {
-                        element.className = u.trim(
-                            names.replace(
-                                new RegExp("(^|\\s+)" + name + "(\\s+|$)"), " "
-                            )
+						el.className = u.trim(names).replace(
+							new RegExp("(^|\\s+)" + name + "(\\s+|$)"), " "
                         );
                     }
                 }
