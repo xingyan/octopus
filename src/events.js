@@ -126,13 +126,13 @@
             var element = o.g(dom);
             useCapture = useCapture || false;
 
-			if(name == "ortchange") {
-				name = "orientationchange" in window ? "orientationchange" : "resize";
-			}
+            if(name == "ortchange") {
+                name = "orientationchange" in window ? "orientationchange" : "resize";
+            }
 
-			if(name == "ready") {
-				name = "DOMContentLoaded";
-			}
+            if(name == "ready") {
+                name = "DOMContentLoaded";
+            }
 
             if(!this.observers) {
                 this.observers = {};
