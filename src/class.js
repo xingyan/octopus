@@ -152,8 +152,8 @@
     /**
      * @method octopus.$
      * @desc 不想重复的去写这么多
-	 * @param filter {String}
-	 * @param el {String | DOMElement}
+     * @param filter {String}
+     * @param el {String | DOMElement}
      * @returns {NodeList}
      */
     o.$ = function(filter, el) {

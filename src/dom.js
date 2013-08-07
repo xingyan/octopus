@@ -11,7 +11,7 @@
 
     "use strict";
 
-	var u = o.util;
+    var u = o.util;
 
     /**
      * @namespace octopus.dom
@@ -25,7 +25,7 @@
          * @param name {String}
          */
         hasClass: function(el, name) {
-			el = o.g(el);
+            el = o.g(el);
             var names;
             return !!el.classList ? el.classList.contains(name) :
                 (names = el.className, !!names && new RegExp("(^|\\s)" + name + "(\\s|$)").test(names));
@@ -38,15 +38,15 @@
          * @param name {String}
          */
         addClass: function(el, name) {
-			el = o.g(el);
-			var classList = el.classList;
+            el = o.g(el);
+            var classList = el.classList;
             if(!!classList) {
                 if(!classList.contains(name)) {
-					el.classList.add(name);
+                    el.classList.add(name);
                 }
             } else {
                 if(!o.dom.hasClass(el, name)) {
-					el.className += (el.className ? " " : "") + name;
+                    el.className += (el.className ? " " : "") + name;
                 }
             }
             return el;
@@ -60,18 +60,18 @@
          */
         removeClass: function(el, name) {
             var names;
-			el = o.g(el);
+            el = o.g(el);
             var classList = el.classList;
             if(!!classList) {
                 if(classList.contains(name)) {
-					el.classList.remove(name);
+                    el.classList.remove(name);
                 }
             } else {
                 if(o.dom.hasClass(el, name)) {
                     names = el.className;
                     if(names) {
-						el.className = u.trim(names).replace(
-							new RegExp("(^|\\s+)" + name + "(\\s+|$)"), " "
+                        el.className = u.trim(names).replace(
+                            new RegExp("(^|\\s+)" + name + "(\\s+|$)"), " "
                         );
                     }
                 }
@@ -79,22 +79,22 @@
             return el;
         },
 
-		/**
-		 * @method octopus.dom.toggleClass
-		 * @desc toggle指定节点的指定样式
-		 * @param el {DOMElement | String} 指定节点
-		 * @param name {String} 指定样式
-		 */
-		toggleClass: function(el, name) {
-			el = o.g(el);
-			var t = o.dom.hasClass(el, name);
-			if(t) {
-				o.dom.removeClass(el, name);
-			} else {
-				o.dom.addClass(el, name);
-			}
-			return !t;
-		},
+        /**
+         * @method octopus.dom.toggleClass
+         * @desc toggle指定节点的指定样式
+         * @param el {DOMElement | String} 指定节点
+         * @param name {String} 指定样式
+         */
+        toggleClass: function(el, name) {
+            el = o.g(el);
+            var t = o.dom.hasClass(el, name);
+            if(t) {
+                o.dom.removeClass(el, name);
+            } else {
+                o.dom.addClass(el, name);
+            }
+            return !t;
+        },
 
         /**
          * @method octopus.dom.getWidth
@@ -205,36 +205,36 @@
             return value == 'auto' ? null : value;
         },
 
-		/**
-		 * @method octopus.dom.getParentNode
-		 * @desc 查询符合条件的离指定节点最近的父节点
-		 * @param el {DOMELement | String} 被查找的起始节点
-		 * @param filter {String} 筛选器
-		 * @param maxDepth {Number} 查看的最深层数
-		 */
-		getParentNode: function(el, filter, maxDepth) {
-			var el = o.g(el);
-			maxDepth = maxDepth || 50;
-			var depth = 0,
-				_el = null;
-			el = el.parentNode;
-			while(u.isNode(el) && (depth < maxDepth)) {
-				var parent = el.parentNode,
-					list = parent.querySelectorAll(filter);
-				if(list && list.length > 0) {
-					u.each(list, function(item) {
-						if(u.isNode(item) && item == el) {
-							_el = item;
-							return true;
-						}
-					});
-				}
-				el = el.parentNode;
-				if(_el || el.tagName == "HTML")	break;
-				depth++;
-			}
-			return _el;
-		},
+        /**
+         * @method octopus.dom.getParentNode
+         * @desc 查询符合条件的离指定节点最近的父节点
+         * @param el {DOMELement | String} 被查找的起始节点
+         * @param filter {String} 筛选器
+         * @param maxDepth {Number} 查看的最深层数
+         */
+        getParentNode: function(el, filter, maxDepth) {
+            var el = o.g(el);
+            maxDepth = maxDepth || 50;
+            var depth = 0,
+                _el = null;
+            el = el.parentNode;
+            while(u.isNode(el) && (depth < maxDepth)) {
+                var parent = el.parentNode,
+                    list = parent.querySelectorAll(filter);
+                if(list && list.length > 0) {
+                    u.each(list, function(item) {
+                        if(u.isNode(item) && item == el) {
+                            _el = item;
+                            return true;
+                        }
+                    });
+                }
+                el = el.parentNode;
+                if(_el || el.tagName == "HTML")	break;
+                depth++;
+            }
+            return _el;
+        },
 
         /**
          * @method octopus.dom.getPosition
@@ -251,7 +251,6 @@
             if(el == viewport){
                 return pos;
             }
-
             do {
                 pos.left += parent.offsetLeft;
                 pos.top  += parent.offsetTop;
@@ -378,16 +377,16 @@
             var vs = {};
             el = o.g(el);
             if(u.isString(attrs)) {
-				var ars = attrs.split(" "),
-					len = ars.length;
-				if(len == 1) {
-					return el.dataset && el.dataset[ars[0]] || el.getAttribute("data-" + ars[0]) || null;
-				} else {
-					u.each(ars, function(item) {
-						var _item = u.camelize(item);
-						vs[item] = el.dataset && el.dataset[_item] || el.getAttribute("data-" + item) || null;
-					});
-				}
+                var ars = attrs.split(" "),
+                    len = ars.length;
+                if(len == 1) {
+                    return el.dataset && el.dataset[ars[0]] || el.getAttribute("data-" + ars[0]) || null;
+                } else {
+                    u.each(ars, function(item) {
+                        var _item = u.camelize(item);
+                        vs[item] = el.dataset && el.dataset[_item] || el.getAttribute("data-" + item) || null;
+                    });
+                }
             } else {
                 vs = attrs;
                 for(var k in vs) {
@@ -397,31 +396,31 @@
             return vs;
         },
 
-		/**
-		 * @public
-		 * @method octopus.dom.attr
-		 * @desc 读取或设置指定节点的属性
-		 */
-		attr: function(el, attrs) {
-			var vs = {};
-			el = o.g(el);
-			if(u.isString(attrs)) {
-				var ars = attrs.split(" "),
-					len = ars.length;
-				if(len == 1) {
-					return el.getAttribute(ars[0]) || null;
-				} else {
-					u.each(ars, function(item) {
-						vs[item] = el.getAttribute(item) || null;
-					});
-				}
-			} else {
-				vs = attrs;
-				for(var k in vs) {
-					el.setAttribute(k, vs[k]);
-				}
-			}
-			return vs;
-		}
+        /**
+         * @public
+         * @method octopus.dom.attr
+         * @desc 读取或设置指定节点的属性
+         */
+        attr: function(el, attrs) {
+            var vs = {};
+            el = o.g(el);
+            if(u.isString(attrs)) {
+                var ars = attrs.split(" "),
+                    len = ars.length;
+                if(len == 1) {
+                    return el.getAttribute(ars[0]) || null;
+                } else {
+                    u.each(ars, function(item) {
+                        vs[item] = el.getAttribute(item) || null;
+                    });
+                }
+            } else {
+                vs = attrs;
+                for(var k in vs) {
+                    el.setAttribute(k, vs[k]);
+                }
+            }
+            return vs;
+        }
     };
 })(octopus);
