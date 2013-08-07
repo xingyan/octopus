@@ -520,11 +520,11 @@
          */
         adjustScrollBar: function() {
             var translate = this.translateV,
-				body = document.body,
-				scrollHeight = body.scrollHeight,
-				height = body.offsetHeight,
-				top = body.scrollTop,
-				_height = height + top;
+                body = document.body,
+                scrollHeight = body.scrollHeight,
+                height = body.offsetHeight,
+                top = body.scrollTop,
+                _height = height + top;
             return (Math.abs(translate) <= this.maxTranslate &&
                 (this.direction == "up" && (_height + 5) >= scrollHeight) ||
                 (this.direction == "down" && top == 0));

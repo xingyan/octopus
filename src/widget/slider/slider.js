@@ -32,8 +32,8 @@
      * @param options.animationType {String} 轮播图的动化类型 默认为"ease-out"
      * @param options.loop {Boolean} 是否是循环轮播 默认为true
      * @param options.imgZoom {Boolean} 是否缩放图片至最佳效果 默认为true
-	 * @param options.hasTitle {Boolean} 是否有轮播图下方的title区域
-	 * @param options.hasGizmos {Boolean} 是否有轮播图下方的选择区域
+     * @param options.hasTitle {Boolean} 是否有轮播图下方的title区域
+     * @param options.hasGizmos {Boolean} 是否有轮播图下方的选择区域
      */
     o.Widget.Slider = o.define(o.Widget, {
 
@@ -211,21 +211,21 @@
          */
         hasButton: true,
 
-		/**
-		 * @private
-		 * @property hasTitle
-		 * @type {Boolean}
-		 * @desc 是否具有下侧的title区域
-		 */
-		hasTitle: true,
+        /**
+         * @private
+         * @property hasTitle
+         * @type {Boolean}
+         * @desc 是否具有下侧的title区域
+         */
+        hasTitle: true,
 
-		/**
-		 * @private
-		 * @property hasGizmos
-		 * @type {Boolean}
-		 * @desc 是否具有下侧的选择区域
-		 */
-		hasGizmos: true,
+        /**
+         * @private
+         * @property hasGizmos
+         * @type {Boolean}
+         * @desc 是否具有下侧的选择区域
+         */
+        hasGizmos: true,
 
         /**
          * @private
@@ -243,21 +243,21 @@
          */
         nextDom: null,
 
-		/**
-		 * @private
-		 * @property currentGizmos
-		 * @type {DOMElement}
-		 * @desc 当前的小玩意
-		 */
-		currentGizmos: null,
+        /**
+         * @private
+         * @property currentGizmos
+         * @type {DOMElement}
+         * @desc 当前的小玩意
+         */
+        currentGizmos: null,
 
-		/**
-		 * @private
-		 * @property gizmosDoms
-		 * @type {Array}
-		 * @desc 选择器节点的数组
-		 */
-		gizmosDoms: null,
+        /**
+         * @private
+         * @property gizmosDoms
+         * @type {Array}
+         * @desc 选择器节点的数组
+         */
+        gizmosDoms: null,
 
         /**
          * @private
@@ -358,19 +358,19 @@
          */
         unloadImage: null,
 
-		/**
-		 * @private
-		 * @property touchStartPixelX
-		 * @type {Number}
-		 */
-		touchStartPixelX: null,
+        /**
+         * @private
+         * @property touchStartPixelX
+         * @type {Number}
+         */
+        touchStartPixelX: null,
 
-		/**
-		 * @private
-		 * @property touchStartPixelY
-		 * @type {Number}
-		 */
-		touchStartPixelY: null,
+        /**
+         * @private
+         * @property touchStartPixelY
+         * @type {Number}
+         */
+        touchStartPixelY: null,
 
         /**
          * @private
@@ -413,29 +413,29 @@
                 this.el.appendChild(this.preDom);
                 this.el.appendChild(this.nextDom);
             }
-			if(this.hasGizmos) {
-				this.gizmosDoms = new Array(this.length);
-				var len = this.length,
-					i = 0,
-					fragment = document.createDocumentFragment(),
-					rodom = o.dom.createDom("div", {
-						"class": "octopusui-slider-gizmos"
-					});
-				for(; i < len; i++) {
-					var _className = "octopusui-slider-gizmositem";
-					if(i == 0) {
-						_className = "octopusui-slider-gizmositem octopusui-slider-currentgizmositem"
-					}
-					var dom = o.dom.createDom("div", {
-						"class": _className
-					});
-					this.gizmosDoms[i] = dom;
-					fragment.appendChild(dom);
-				}
-				this.currentGizmos = this.gizmosDoms[0];
-				rodom.appendChild(fragment);
-				this.el.appendChild(rodom);
-			}
+            if(this.hasGizmos) {
+                this.gizmosDoms = new Array(this.length);
+                var len = this.length,
+                    i = 0,
+                    fragment = document.createDocumentFragment(),
+                    rodom = o.dom.createDom("div", {
+                        "class": "octopusui-slider-gizmos"
+                    });
+                for(; i < len; i++) {
+                    var _className = "octopusui-slider-gizmositem";
+                    if(i == 0) {
+                        _className = "octopusui-slider-gizmositem octopusui-slider-currentgizmositem"
+                    }
+                    var dom = o.dom.createDom("div", {
+                        "class": _className
+                    });
+                    this.gizmosDoms[i] = dom;
+                    fragment.appendChild(dom);
+                }
+                this.currentGizmos = this.gizmosDoms[0];
+                rodom.appendChild(fragment);
+                this.el.appendChild(rodom);
+            }
             this.buildSlider();
             //如果是自动渲染生成 必须传入宽度与高度 否则抛错
             if(this.autoActivate) {
@@ -452,14 +452,14 @@
          */
         setCurrent: function(options) {
             this.current = o.extend(this.current, options);
-			if(this.currentGizmos) {
-				var index = this.current.index;
-				if(this.currentGizmos != this.gizmosDoms[index]) {
-					o.dom.removeClass(this.currentGizmos, "octopusui-slider-currentgizmositem");
-					this.currentGizmos = this.gizmosDoms[index];
-					o.dom.addClass(this.currentGizmos, "octopusui-slider-currentgizmositem");
-				}
-			}
+            if(this.currentGizmos) {
+                var index = this.current.index;
+                if(this.currentGizmos != this.gizmosDoms[index]) {
+                    o.dom.removeClass(this.currentGizmos, "octopusui-slider-currentgizmositem");
+                    this.currentGizmos = this.gizmosDoms[index];
+                    o.dom.addClass(this.currentGizmos, "octopusui-slider-currentgizmositem");
+                }
+            }
         },
 
         /**
@@ -528,17 +528,17 @@
                 });
             }
             dom.appendChild(idom);
-			if(this.hasTitle) {
-				var titledom = o.dom.createDom("div", {
-						"class": "octopusui-slider-imgTitle"
-					}),
-					titlecontent = o.dom.createDom("div", {
-						"class": "octopusui-slider-imgTitleContent octopusui-text-limit"
-					});
-				titlecontent.innerHTML = o.util.encodeHtml(this.getDataBy(index, "title"));
-				titledom.appendChild(titlecontent);
-				dom.appendChild(titledom);
-			}
+            if(this.hasTitle) {
+                var titledom = o.dom.createDom("div", {
+                        "class": "octopusui-slider-imgTitle"
+                    }),
+                    titlecontent = o.dom.createDom("div", {
+                        "class": "octopusui-slider-imgTitleContent octopusui-text-limit"
+                    });
+                titlecontent.innerHTML = o.util.encodeHtml(this.getDataBy(index, "title"));
+                titledom.appendChild(titlecontent);
+                dom.appendChild(titledom);
+            }
             this.doms.push(dom);
             return dom;
         },
@@ -652,14 +652,14 @@
             }
         },
 
-		/**
-		 * @private
-		 * @method onOrtChanged
-		 */
-		onOrtChanged: function() {
-			this.calcSelfSize();
-			this.select(this.current.index);
-		},
+        /**
+         * @private
+         * @method onOrtChanged
+         */
+        onOrtChanged: function() {
+            this.calcSelfSize();
+            this.select(this.current.index);
+        },
 
         /**
          * @private
@@ -717,7 +717,7 @@
             o.event.on(this.el, "touchmove", o.util.bindAsEventListener(this.onTouchMove, this));
             o.event.on(this.el, "touchend", o.util.bindAsEventListener(this.onTouchEnd, this));
             o.event.on(this.el, "touchcancel", o.util.bindAsEventListener(this.onTouchEnd, this));
-			o.event.on(window, "ortchange", o.util.bind(this.onOrtChanged, this), false);
+            o.event.on(window, "ortchange", o.util.bind(this.onOrtChanged, this), false);
         },
 
         /**
@@ -742,9 +742,9 @@
             } else {
                 dc = touch.pageX;
             }
-			this.touchStartPixelX = touch.pageX;
-			this.touchStartPixelY = touch.pageY;
-			this.pageDragStartC = this.pageDragTempC = dc;
+            this.touchStartPixelX = touch.pageX;
+            this.touchStartPixelY = touch.pageY;
+            this.pageDragStartC = this.pageDragTempC = dc;
             var that = this;
             this.dragtimer = window.setInterval(function() {
                 if(that.pageDragTempC == that.pageDragEndC) return;
@@ -782,17 +782,17 @@
             } else {
                 dc = touch.pageX;
             }
-			if(this.pageDragTempC == dc)	return;
-			var pixel = {
-				pageX: this.touchStartPixelX,
-				pageY: this.touchStartPixelY
-			}
-			var angle = o.util.getDirection(pixel, touch);
-			if((this.isLon && (angle == "up" || angle == "down")) ||
-				(!this.isLon && (angle == "left" || angle == "right"))) {
-				o.event.stop(e);
-			}
-			this.pageDragTempC = dc;
+            if(this.pageDragTempC == dc)	return;
+            var pixel = {
+                pageX: this.touchStartPixelX,
+                pageY: this.touchStartPixelY
+            }
+            var angle = o.util.getDirection(pixel, touch);
+            if((this.isLon && (angle == "up" || angle == "down")) ||
+                (!this.isLon && (angle == "left" || angle == "right"))) {
+                o.event.stop(e);
+            }
+            this.pageDragTempC = dc;
         },
 
         /**

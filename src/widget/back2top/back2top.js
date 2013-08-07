@@ -24,7 +24,7 @@
      * @param options.animation {Boolean} 返回顶部是否使用动画 默认不采用
      * @param options.bottom {Number} 控件距离底部的值
      * @param options.direction {String} 控件在左侧还是右侧 默认右侧 "right" || "left"
-	 * @param options.offsetV {Number} 控件距离左侧或者右侧的距离
+     * @param options.offsetV {Number} 控件距离左侧或者右侧的距离
      * @param options.customize {Boolean} 是否自定制点击控件后的回调 若为true则点击控件只触发自定义事件（back2top-ontap） 不返回顶部
      */
     o.Widget.Back2Top = o.define(o.Widget, {
@@ -37,12 +37,12 @@
          */
         bottom: 10,
 
-		/**
-		 * @private
-		 * @property direction
-		 * @type {String}
-		 */
-		direction: "right",
+        /**
+         * @private
+         * @property direction
+         * @type {String}
+         */
+        direction: "right",
 
         /**
          * @private
@@ -50,7 +50,7 @@
          * @type {Number}
          * @desc 控件距离两侧的距离
          */
-		offsetV: 10,
+        offsetV: 10,
 
         /**
          * @private
@@ -158,12 +158,12 @@
             if(/M031/.test(navigator.userAgent)) {
                 this.setAbsolute();
             } else {
-				var direction = this.direction;
+                var direction = this.direction;
                 o.dom.setStyles(this.el, {
                     position: "fixed",
                     bottom: this.bottom + "px"
                 });
-				this.el.style[direction] = this.offsetV + "px";
+                this.el.style[direction] = this.offsetV + "px";
             }
         },
 
@@ -175,7 +175,7 @@
         setAbsolute: function() {
             this.el.style.position = "absolute";
             this.isAbsolute = true;
-			o.event.on(window, "ortchange", o.util.bind(this.onOrientationChanged, this));
+            o.event.on(window, "ortchange", o.util.bind(this.onOrientationChanged, this));
         },
 
         /**
@@ -206,7 +206,6 @@
         onTap: function(e) {
             this.notify("back2top-ontap", e);
             !this.customize && this.goTo(1, this.animation);
-
         },
 
         /**
@@ -335,7 +334,7 @@
             o.dom.setStyles(this.el, {
                 top: window.pageYOffset + window.innerHeight - parseInt(this.getHeight()) - this.bottom + "px"
             });
-			this.el.style[direction] = document.body.offsetWidth - parseInt(this.getWidth()) - this.offsetV + "px";
+            this.el.style[direction] = document.body.offsetWidth - parseInt(this.getWidth()) - this.offsetV + "px";
         },
 
         /**
