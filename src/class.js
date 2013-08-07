@@ -161,15 +161,15 @@
         return el.querySelectorAll(filter) || null;
     };
 
-	/**
-	 * @method octopus.one
-	 * @param filter {String}
-	 * @param el {DOMElement}
-	 */
-	o.one = function(filter, el) {
-		el = o.g(el) || document;
-		return el.querySelector(filter) || null;
-	};
+    /**
+     * @method octopus.one
+     * @param filter {String}
+     * @param el {DOMElement}
+     */
+    o.one = function(filter, el) {
+        el = o.g(el) || document;
+        return el.querySelector(filter) || null;
+    };
 
     if(!window.$) {
         window.$ = o.$;
