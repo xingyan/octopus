@@ -393,23 +393,26 @@
                 dom: null
             };
             this.calcCurrent = o.util.bind(this._calcCurrent, this);
-            this.viewDiv = this.viewDiv || document.createElement("div");
-            this.viewDiv.className = "octopusui-slider-view";
-            this.viewDiv.style.cssText = "position: relative; text-align: center; -webkit-transform: translate3d(0, 0, 0);" +
-                " -webkit-backface-visibility: hidden; -webkit-user-select: none; -webkit-user-drag: none;" +
-                " -webkit-transition: -webkit-transform 0ms " + this.animationType + ";";
+            this.viewDiv = this.viewDiv || o.dom.createDom("div", {
+                style: "position: relative; text-align: center; -webkit-transform: translate3d(0, 0, 0);" +
+                    " -webkit-backface-visibility: hidden; -webkit-user-select: none; -webkit-user-drag: none;" +
+                    " -webkit-transition: -webkit-transform 0ms " + this.animationType + ";",
+                "class": "octopusui-slider-view"
+            });
             if(this.hasButton && !this.disableAll) {
-                this.preDom = document.createElement("div");
-                this.preDom.href = "";
-                this.nextDom = document.createElement("div");
-                this.nextDom.href = "";
-                this.preDom.style.cssText = this.nextDom.style.cssText = "display: block; text-decoration: none;"
-                this.preDom.className = "octopusui-slider-button octopusui-slider-prebutton";
-                this.nextDom.className = "octopusui-slider-button octopusui-slider-nextbutton";
-                this.selectPre = o.util.bind(this._selectPre, this);
-                this.selectNext = o.util.bind(this._selectNext, this);
-                this.gesture(this.preDom).on("tap", this.selectPre);
-                this.gesture(this.nextDom).on("tap", this.selectNext);
+                var btnCssText = "display: block; text-decoration: none;";
+                this.preDom = o.dom.createDom("div", {
+                    href: "",
+                    style: btnCssText,
+                    "class": "octopusui-slider-button octopusui-slider-prebutton"
+                });
+                this.nextDom = o.dom.createDom("div", {
+                    href: "",
+                    style: btnCssText,
+                    "class": "octopusui-slider-button octopusui-slider-nextbutton"
+                });
+                this.gesture(this.preDom).on("tap", o.util.bind(this._selectPre, this));
+                this.gesture(this.nextDom).on("tap", o.util.bind(this._selectNext, this));
                 this.el.appendChild(this.preDom);
                 this.el.appendChild(this.nextDom);
             }
@@ -476,9 +479,7 @@
             }
             if(this.loop) {
                 var fristdom = this.doms[0].cloneNode(true),
-                    firstimgdom = fristdom.querySelector("img"),
-                    lastdom = this.doms[this.length - 1].cloneNode(true),
-                    lastimgdom = lastdom.querySelector("img");
+                    lastdom = this.doms[this.length - 1].cloneNode(true);
                 if(this._type == "img") {
                     this.setImageLoad(0, fristdom);
                     this.setImageLoad(this.length - 1, lastdom);
@@ -503,14 +504,18 @@
          * @param index {Number}
          */
         buildSliderItem: function(index) {
-            var dom = document.createElement("div");
-            dom.className = "octopusui-slider-children";
-            var idom = document.createElement("div"),
+            var dom = o.dom.createDom("div", {
+                    "class": "octopusui-slider-children"
+                }, {
+                    "-webkit-transform": "translate3d(0, 0, 0)"
+                }),
+                idom = o.dom.createDom("div", {
+                    "class": "octopusui-slider-imgChildren",
+                    style: "width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center center"
+                }),
                 __url = this.getDataBy(index, "url") || "",
-                __target = this.isNewTab ? "_blank" : "_self";
-            idom.className = "octopusui-slider-imgChildren";
-            idom.style.cssText = "width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center center;";
-			var that = this;
+                __target = this.isNewTab ? "_blank" : "_self",
+                that = this;
             this.gesture(idom).on("tap", function() {
                 if(!that.isDisableA) {
                     window.open(__url, __target)
@@ -582,7 +587,7 @@
          */
         setImageLoad: function(index, dom) {
             var url = this.getDataBy(index, "image_url");
-            var _dom = dom.querySelector(".octopusui-slider-imgChildren") || dom;
+            var _dom = o.one(".octopusui-slider-imgChildren", dom) || dom;
             o.util.loadImage(url, o.util.empty, function() {
                 _dom.style.backgroundImage = "url('" + url + "')";
             }, function() {
@@ -913,6 +918,7 @@
             var that = this;
             window.setTimeout(function() {
                 that.isSlide = false;
+                that.notify("slider-ui-slidechange");
             }, this.animationTime);
         },
 
