@@ -339,12 +339,22 @@
 
         /**
          * @private
-         * @method activate
+         * @method render
          */
-        activate: function() {
-            this.superclass.activate.apply(this, arguments);
-            this.isShow = false;
-            document.body.appendChild(this.testFixableDom);
+        render: function() {
+            var b = document.body,
+                fragment = document.createDocumentFragment();
+            this.container = b;
+            fragment.appendChild(this.el);
+            fragment.appendChild(this.testFixableDom)
+            this.appendChild(fragment, this.container);
+            if(this.isShow) {
+                this.isShow = false;
+                this.show();
+            }
+            if(!this.active) {
+                this.activate();
+            }
         },
 
         CLASS_NAME: "octopus.Widget.Back2Top"
