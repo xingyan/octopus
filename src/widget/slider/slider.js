@@ -918,6 +918,7 @@
             var that = this;
             window.setTimeout(function() {
                 that.isSlide = false;
+                that.notify("slider-ui-slidechange");
             }, this.animationTime);
         },
 
