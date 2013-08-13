@@ -435,16 +435,39 @@
      * @param to {Object}
      * @param from {Object}
      */
-    util.applyDefaults = function (to, from) {
+    util.applyDefaults = function(to, from) {
         to = to || {};
         var fromIsEvt = typeof window.Event == "function"
             && from instanceof window.Event;
-
         for (var key in from) {
-            if (to[key] === undefined ||
+            if(to[key] === undefined ||
                 (!fromIsEvt && from.hasOwnProperty
                     && from.hasOwnProperty(key) && !to.hasOwnProperty(key))) {
                 to[key] = from[key];
+            }
+        }
+        if(!fromIsEvt && from && from.hasOwnProperty
+            && from.hasOwnProperty('toString') && !to.hasOwnProperty('toString')) {
+            to.toString = from.toString;
+        }
+        return to;
+    };
+
+    /**
+     * @method octopus.util.applyAdd
+     * @desc 将一个对象里的参数深度拷贝给另一个对象 如果参数已存在 则覆盖 如果不存在 则追加
+     * @param to {Object}
+     * @param from  {Object}
+     */
+    util.applyAdd = function(to, from) {
+        to = to || {};
+        var fromIsEvt = typeof window.Event == "function"
+            && from instanceof window.Event;
+        for(var k in from) {
+            if(util.isObject(to[k]) && util.isObject(from[k])) {
+                to[k] = util.applyAdd(to[k], from[k]);
+            } else if(from[k] !== undefined) {
+                to[k] = from[k]
             }
         }
         if(!fromIsEvt && from && from.hasOwnProperty
