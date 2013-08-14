@@ -230,6 +230,15 @@
             var element = o.g(dom);
             var cacheID = element._eventCacheID;
             useCapture = useCapture || false;
+
+            if(name == "ortchange") {
+                name = "orientationchange" in window ? "orientationchange" : "resize";
+            }
+
+            if(name == "ready") {
+                name = "DOMContentLoaded";
+            }
+
             if (name == 'keypress') {
                 if ( navigator.appVersion.match(/Konqueror|Safari|KHTML/) ||
                     element.detachEvent) {

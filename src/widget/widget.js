@@ -15,7 +15,6 @@
     /**
      * @class octopus.Widget
      * @desc octopus-ui的父类
-     * @param dom {String | DOMElement}
      * @param options {Object}
      * @param options.el {DOMElement} 根节点 如果没有则创建一个div
      * @param options.id {String} widget的id 也会成为根节点的id
