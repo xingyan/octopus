@@ -23,7 +23,7 @@
 
     /**
      * @class octopus.ImgLazyLoad
-     * @desc
+     * @desc 用来对指定图片或者容器内的图片进行延后加载
      * @param options 参数
      * @param options.imgs {String | Array | DOMElement} 需要延后加载的图片数组或节点或节点id
      * @param options.el {DOMElement | String} 需要延后加载的节点容器或节点容器id 如果已传入options.imgs 则此参数不生效
