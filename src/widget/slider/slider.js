@@ -509,9 +509,9 @@
                 }, {
                     "-webkit-transform": "translate3d(0, 0, 0)"
                 }),
-                idom = o.dom.createDom("div", {
+                idom = o.dom.createDom("img", {
                     "class": "octopusui-slider-imgChildren",
-                    style: "width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center center"
+                    style: "width: 100%; height: auto; position: absolute; left: 0; right: 0; top: 0; bottom: 0; margin: auto;"
                 }),
                 __url = this.getDataBy(index, "url") || "",
                 __target = this.isNewTab ? "_blank" : "_self",
@@ -589,7 +589,7 @@
             var url = this.getDataBy(index, "image_url");
             var _dom = o.one(".octopusui-slider-imgChildren", dom) || dom;
             o.util.loadImage(url, o.util.empty, function() {
-                _dom.style.backgroundImage = "url('" + url + "')";
+                _dom.src = url;
             }, function() {
                 throw new Error("Image load failed!");
             });
