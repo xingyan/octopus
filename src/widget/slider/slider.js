@@ -378,7 +378,7 @@
          * @desc 与父类保持一致
          */
         initialize: function() {
-            this.superclass.initialize.apply(this, arguments);
+            o.Widget.prototype.initialize.apply(this, arguments);
             this.dataField = this.dataField || {
                 title: "title",
                 url: "url",
@@ -652,7 +652,7 @@
          * @desc 复写父类的render方法
          */
         render: function() {
-            this.superclass.render.apply(this, arguments);
+            o.Widget.prototype.render.apply(this, arguments);
             if(this.autoPlay) {
                 this.start();
             }
@@ -665,7 +665,7 @@
          * @desc 轮播图生成后加入页面需要激活
          */
         activate: function() {
-            this.superclass.activate.apply(this, arguments);
+            o.Widget.prototype.activate.apply(this, arguments);
             this.calcSelfSize();
             if(!this.disableAll) {
                 this.initSelfEvent();
@@ -1090,9 +1090,7 @@
          */
         initialize: function() {
             //虽然继承自octopus.Widget.Slider 但是构造函数这里希望使用octopus.Widget的构造函数
-            //o.Widget.prototype.initialize.apply(this, arguments);
-            var me = this;
-            this.superclass.initialize.apply(me, arguments);
+            o.Widget.prototype.initialize.apply(this, arguments);
             this.dataField = {
                 title: "title",
                 url: "url"

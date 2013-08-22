@@ -68,7 +68,6 @@
         var f = function() {};
         f.prototype = father.prototype;
         child.prototype = new f;
-        child.prototype.superclass = f.prototype;
         var i, l, k;
         for(i = 2, l = arguments.length; i < l; i++) {
             k = arguments[i];

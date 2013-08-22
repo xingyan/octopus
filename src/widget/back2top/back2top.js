@@ -137,7 +137,7 @@
          * @constructor
          */
         initialize: function() {
-            this.superclass.initialize.apply(this, arguments);
+            o.Widget.prototype.initialize.apply(this, arguments);
             o.dom.addClass(this.el, "octopusui-back2top");
             this.loop = {};
             this.initFixed();

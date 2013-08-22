@@ -103,7 +103,7 @@
          * @constructor
          */
         initialize: function() {
-            this.superclass.initialize.apply(this, arguments);
+            o.Widget.prototype.initialize.apply(this, arguments);
             if(!this.data)	throw new Error("require the property of data!");
             var root = this.buildMenu(this.data);
             this.DIRECTION = {
@@ -282,7 +282,7 @@
          * @desc 显示控件
          */
         show: function() {
-            this.superclass.show.apply(this, arguments);
+            o.Widget.prototype.show.apply(this, arguments);
             if(this.showAnimateType) {
                 this[this.showAnimateType](this.el, true);
             }
@@ -294,7 +294,7 @@
          * @desc 隐藏控件
          */
         hidden: function() {
-            var h = this.superclass.hidden;
+            var h = o.Widget.prototype.hidden;
             if(this.showAnimateType) {
                 var that = this;
                 this[this.showAnimateType](this.el, false, function() {
