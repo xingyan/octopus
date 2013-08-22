@@ -18,7 +18,7 @@
      * @param options {Object}
      * @param options.el {DOMElement} 根节点 如果没有则创建一个div
      * @param options.id {String} widget的id 也会成为根节点的id
-     * @param eventListeners {Object} 用以批量添加事件
+     * @param options.eventListeners {Object} 用以批量添加事件
      * @example
      * var widget = new Widget({
      *     id: "widget",
@@ -116,14 +116,14 @@
         initialize: function(options) {
             options = options || {};
             this.addOptions(options);
-            this.el = this.el || document.createElement("div");
-            this.id = this.id || o.util.createUniqueID(this.CLASS_NAME + "_");
-            this.el.id = this.id;
             this.events = new o.Events(this);
             this.gesture = o.gesture;
+            this.id = this.id || o.util.createUniqueID(this.CLASS_NAME + "_");
             if(this.eventListeners instanceof Object) {
                 this.events.register(this.eventListeners);
             }
+            this.el = this.el || document.createElement("div");
+            !this.el.id && (this.el.id = this.id, !0);
         },
 
         /**
@@ -330,5 +330,172 @@
     o.Widget.GESTURES = ["tap", "lontap", "doubletap", "swipe", "swipeleft",
         "swiperight", "swipeup", "swipedown", "drag", "drapleft", "dragright",
         "dragup", "dragdown", "touch", "release"];
+
+    /**
+     * @method octopus.widgetManager
+     * @desc 返回一个widget的管理器
+     * @param el {DOMElement}
+     * @param opts {Object}
+     * @returns {o.WidgetManager}
+     */
+    o.widgetManager = function(el, opts) {
+        return new o.WidgetManager(el, opts);
+    };
+
+    /**
+     * @class octopus.WidgetManager
+     * @desc widget管理器
+     * @param el {DOMElement} 管理器覆盖的节点 必须有的参数
+     * @param opts {Object} 额外参数 非必需
+     * @param opts.classFilter {String} 符合条件的节点必需包括这个class 默认为"octopusui-container"
+     * @param opts.supportType {Array} 当前这个管理器支持的控件类型 默认为 slider refresh menu mask back2top
+     */
+    o.WidgetManager = o.define({
+
+        /**
+         * @private
+         * @property el
+         * @type {DOMElement}
+         * @desc 管理器覆盖的节点容器
+         */
+        el: null,
+
+        /**
+         * @private
+         * @property els
+         * @type {Array}
+         * @desc 符合条件的节点集合
+         */
+        els: null,
+
+        /**
+         * @private
+         * @property opts
+         * @desc 参数项
+         */
+        opts: null,
+
+        /**
+         * @private
+         * @property classFilter
+         * @type {String}
+         * @desc 符合条件节点的class
+         */
+        classFilter: null,
+
+        /**
+         * @private
+         * @property widgets
+         * @desc 管理器里已拿到的控件
+         * @type {Array}
+         */
+        widgets: null,
+
+        /**
+         * @private
+         * @property supportType
+         * @desc 支持的控件类型集合
+         */
+        supportType: null,
+
+        /**
+         * @private
+         * @constructor
+         * @param el {String | DOMElement} 解析的容器
+         * @param opts {Object} 传入的参数
+         */
+        initialize: function(el, opts) {
+            this.opts = o.extend({}, opts || {});
+            this.el = o.g(el);
+            if(!o.util.isNode(this.el))  throw new Error("require a node to initialize the slider!");
+            this.els = [];
+            this.widgets = [];
+            this.supportType = this.opts.supportType || ["slider", "menu", "mask", "refresh", "back2top"];
+            this.classFilter = this.opts.classFilter || ".octopusui-container";
+            return this;
+        },
+
+        /**
+         * @public
+         * @method octopus.WidgetManager.init
+         * @desc 开始对指定节点下的符合条件的html片段控件化
+         */
+        init: function() {
+            var els = o.$(this.classFilter, this.el),
+                that = this;
+            o.util.each(els, function(item) {
+                if(o.util.isNode(item)) {
+                    that.els.push(item);
+                }
+            });
+            if(this.els.length == 0)    return;
+            o.util.each(this.els, o.util.bind(this.initWidgets, this));
+        },
+
+        /**
+         * @private
+         * @method initWidgets
+         * @param item 单个widget的html片段的容器
+         */
+        initWidgets: function(item) {
+            var type = o.dom.data(item, "octopusui-type"),
+                index = this.supportType.indexOf(type);
+            if(index == -1)   return;
+            var widget = this[this.supportType[index]](item);
+            this.widgets.push(widget);
+        },
+
+        /**
+         * @private
+         * @method getWidgetBy
+         * @param type {String} 获取类型
+         * @param filter {String} 获取节点的选择器
+         */
+        getWidgetBy: function(type, filter) {
+            var widgets = [],
+                len = this.widgets.length,
+                i = len;
+            for(; i--; ) {
+                var widget = this.widgets[i];
+                if(widget[type] == filter) {
+                    if(type == "id") return widget;
+                    widgets.push(widget);
+                }
+            }
+            return widgets;
+        },
+
+        /**
+         * @public
+         * @method octopus.WidgetManager.getWidgetById
+         * @param id {String}
+         * @desc 根据widget的id拿到widget对象
+         */
+        getWidgetById: function(id) {
+            return this.getWidgetBy("id", id)[0];
+        },
+
+        /**
+         * @public
+         * @method octopus.WidgetManager.getWidgetByClass
+         * @param c {String}
+         * @desc 根据widget的class_name拿widget对象集合
+         */
+        getWidgetByClass: function(c) {
+            return this.getWidgetBy("CLASS_NAME", c);
+        },
+
+        /**
+         * @public
+         * @method octopus.WidgetManager.slider
+         * @desc 创建一个轮播图
+         * @param el {DOMElement}
+         */
+        slider: function(el) {
+            return o.Widget.slider(el);
+        },
+
+        CLASS_NAME: "octopus.WidgetManager"
+    });
 
 })(octopus);
