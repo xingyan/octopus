@@ -65,9 +65,12 @@
      * @param father {Function} 父类
      */
     o.inherit = function(child, father) {
-        var f = function() {};
-        f.prototype = father.prototype;
-        child.prototype = new f;
+        var f = function() {},
+            cp,
+            fp = father.prototype;
+        f.prototype = fp;
+        cp = child.prototype = new f;
+        cp.constructor = child;
         var i, l, k;
         for(i = 2, l = arguments.length; i < l; i++) {
             k = arguments[i];

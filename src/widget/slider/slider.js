@@ -1054,7 +1054,7 @@
     };
 
     /**
-     * @class
+     * @class octopus.Widget.HtmlSlider
      * @parent octopus.Widget.Slider
      * @desc 参数与octopus.Widget.Slider相同 不同的是 这个类仅限于对已有符合规范的html模版的改造与封装
      * 符合条件的html模版属性包括
@@ -1095,6 +1095,7 @@
                 title: "title",
                 url: "url"
             };
+            this.container = this.el.parentNode;
             this.fragment = document.createDocumentFragment();
             this.unloadImage = [];
             this.loop = o.dom.data(this.el, "octopusui-slider-loop");
@@ -1105,9 +1106,11 @@
             this.adaptive = o.dom.data(this.el, "octopusui-slider-adaptive");
             this.hasTitle = !o.dom.data(this.el, "octopusui-slider-notitle");
             this.buildSelf();
-            this.calcSelfSize();
-            if(!this.disableAll) {
-                this.initSelfEvent();
+            if(!this.isShow) {
+                this.show();
+            }
+            if(!this.active) {
+                this.activate();
             }
             if(this.autoPlay) {
                 this.start();

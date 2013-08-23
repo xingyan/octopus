@@ -8,7 +8,6 @@
 
     var widgets = manager.getWidgetByClass("octopus.Widget.HtmlSlider");
     o.util.each(widgets, function(item) {
-        console.log(1);
         item.on("slider-item-ontap", function(data) {
             console.log(data);
         })

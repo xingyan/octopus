@@ -123,7 +123,7 @@
                 this.events.register(this.eventListeners);
             }
             this.el = this.el || document.createElement("div");
-            !this.el.id && (this.el.id = this.id, !0);
+            !!this.el.id ? this.id = this.el.id : this.el.id = this.id;
         },
 
         /**
@@ -407,7 +407,7 @@
         initialize: function(el, opts) {
             this.opts = o.extend({}, opts || {});
             this.el = o.g(el);
-            if(!o.util.isNode(this.el))  throw new Error("require a node to initialize the slider!");
+            if(!o.util.isNode(this.el))  throw new Error("require a node to initialize!");
             this.els = [];
             this.widgets = [];
             this.supportType = this.opts.supportType || ["slider", "menu", "mask", "refresh", "back2top"];
@@ -472,7 +472,7 @@
          * @desc 根据widget的id拿到widget对象
          */
         getWidgetById: function(id) {
-            return this.getWidgetBy("id", id)[0];
+            return this.getWidgetBy("id", id);
         },
 
         /**
@@ -493,6 +493,16 @@
          */
         slider: function(el) {
             return o.Widget.slider(el);
+        },
+
+        /**
+         * @public
+         * @method octopus.WidgetManager.back2top
+         * @desc 创建一个fixed的元素
+         * @param el {DOMElement}
+         */
+        back2top: function(el) {
+            return o.Widget.back2top(el);
         },
 
         CLASS_NAME: "octopus.WidgetManager"
