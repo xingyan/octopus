@@ -1165,6 +1165,15 @@
 
         /**
          * @private
+         * @method render
+         * @desc 防止被调用
+         */
+        render: function() {
+            throw new Error("this class can't render! :)");
+        },
+
+        /**
+         * @private
          * @method buildItem
          * @desc 生成每张单张的轮播图
          */

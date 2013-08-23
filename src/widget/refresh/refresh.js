@@ -203,7 +203,9 @@
          */
         initialize: function() {
             o.Widget.prototype.initialize.apply(this, arguments);
-            this.el.setAttribute("class", "octopusui-refresh octopusui-refresh" + o.util.camelize(this.direction));
+            o.dom.attr(this.el, {
+                "class": "octopusui-refresh octopusui-refresh" + o.util.camelize(this.direction)
+            });
             this.buildSelf();
         },
 

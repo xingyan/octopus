@@ -416,6 +416,15 @@
 
         /**
          * @private
+         * @method render
+         * @desc 防止被调用
+         */
+        render: function() {
+            throw new Error("this class can't render! :)");
+        },
+
+        /**
+         * @private
          * @method checkDom
          * @desc 初始化dom
          */

@@ -410,7 +410,7 @@
             if(!o.util.isNode(this.el))  throw new Error("require a node to initialize!");
             this.els = [];
             this.widgets = [];
-            this.supportType = this.opts.supportType || ["slider", "menu", "mask", "refresh", "back2top"];
+            this.supportType = this.opts.supportType || ["slider", "back2top"];
             this.classFilter = this.opts.classFilter || ".octopusui-container";
             return this;
         },

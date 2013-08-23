@@ -8,6 +8,6 @@
     var widget = manager.getWidgetById("test_back2top");
     widget.on("back2top-ontap", function(data) {
         console.log(data);
-    })
+    });
 
 })(octopus);
