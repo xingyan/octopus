@@ -191,6 +191,10 @@
             var t = this.container.scrollTop,
                 h = o.dom.getHeight(this.container),
                 that = this;
+            if(this.container == document.body) {
+                var _h = o.dom.getScreenHeight();
+                h > _h && (h = _h);
+            }
             o.util.each(this.imgs, function(item) {
                 that.checkImg(item, t, h);
             });

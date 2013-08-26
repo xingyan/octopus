@@ -22,6 +22,13 @@
          */
         doc = document;
 
+    function getScreenBy(t) {
+        var v = window["inner" + t],
+            _v = (u.isNumeric(v) && v > 0) ? v :
+                (doc.compatMode == "CSS1Compat") ? doc.documentElement["client" + t] : o.dom["get" + t](doc.body);
+        return _v > 0 ? _v : 0;
+    }
+
     /**
      * @namespace octopus.dom
      * @desc 一些基础的dom操作
@@ -150,6 +157,24 @@
             var el = o.g(el);
             var width = !!el.offsetWidth ? el.offsetWidth : el.clientWidth;
             return width > 0 ? width : 0;
+        },
+
+        /**
+         * @method octopus.dom.getScreenWidth
+         * @returns {number}
+         * @desc 获得屏幕宽度
+         */
+        getScreenWidth: function() {
+            return getScreenBy("Width");
+        },
+
+        /**
+         * @method octopus.dom.getScreenHeight
+         * @returns {number}
+         * @desc 获得屏幕高度
+         */
+        getScreenHeight: function() {
+            return getScreenBy("Height");
         },
 
         /**
