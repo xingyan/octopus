@@ -37,7 +37,7 @@
      *         this.property = Object.create({});
      *     }
      * });
-     * @return new Class {function}
+     * @return {Function}
      */
     o.define = function() {
         var len = arguments.length,
