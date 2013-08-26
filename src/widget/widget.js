@@ -109,6 +109,14 @@
 
         /**
          * @private
+         * @property widgetManager
+         * @type {octopus.WidgetManager}
+         * @desc widget管理器
+         */
+        widgetManager: null,
+
+        /**
+         * @private
          * @constructor octopus.Widget.initialize
          * @desc 构造函数
          * @param options  -   {Object}
@@ -324,6 +332,16 @@
             return o.dom.getWidth(this.el) || o.dom.getStyle(this.el, "width");
         },
 
+        /**
+         * @public
+         * @method octopus.Widget.setManager
+         * @desc widget被注册进widgetManager
+         * @param m
+         */
+        setManager: function(m) {
+            this.widgetManager = m;
+        },
+
         CLASS_NAME: "octopus.Widget"
     });
 
@@ -400,6 +418,12 @@
 
         /**
          * @private
+         * @property event
+         */
+        event: null,
+
+        /**
+         * @private
          * @constructor
          * @param el {String | DOMElement} 解析的容器
          * @param opts {Object} 传入的参数
@@ -409,6 +433,7 @@
             this.el = o.g(el);
             if(!o.util.isNode(this.el))  throw new Error("require a node to initialize!");
             this.els = [];
+            this.event = new o.Events(this);
             this.widgets = [];
             this.supportType = this.opts.supportType || ["slider", "back2top"];
             this.classFilter = this.opts.classFilter || ".octopusui-container";
@@ -440,9 +465,12 @@
         initWidgets: function(item) {
             var type = o.dom.data(item, "octopusui-type"),
                 index = this.supportType.indexOf(type);
-            if(index == -1)   return;
+            if(index == -1 || o.dom.data(item, "octopusui-loaded"))   return;
             var widget = this[this.supportType[index]](item);
-            this.widgets.push(widget);
+            this.register(widget);
+            o.dom.data(widget.el, {
+                "octopusui-loaded": "true"
+            });
         },
 
         /**
@@ -503,6 +531,27 @@
          */
         back2top: function(el) {
             return o.Widget.back2top(el);
+        },
+
+        /**
+         * @public
+         * @method octopus.WidgetManager.register
+         */
+        register: function(widget) {
+            if(this.widgets.indexOf(widget) != -1)  return false;
+            this.widgets.push(widget);
+            widget.setManager(this);
+        },
+
+        /**
+         * @public
+         * @method octopus.WidgetManager.unregister
+         */
+        unregister: function(widget) {
+            var index = this.widgets.indexOf(widget);
+            if(index == -1) return false;
+            this.widgets[index].setManager(null);
+            this.widgets.splice(index, 1);
         },
 
         CLASS_NAME: "octopus.WidgetManager"
