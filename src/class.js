@@ -131,51 +131,6 @@
         return prefix + o.util.lastSeqId;
     };
 
-    /**
-     * @method octopus.g
-     * @desc 靠id拿个节点 由于只是简单支持 没有必要写得那么高级
-     * @return {DOMElement}
-     */
-    o.g = function() {
-        var elements = [];
-        for(var i = 0, len = arguments.length; i < len; i++) {
-            var element = arguments[i];
-            if(typeof element == 'string') {
-                element = document.getElementById(element);
-            }
-            if(arguments.length == 1) {
-                return element;
-            }
-            elements.push(element);
-        }
-        return elements || null;
-    };
-
-    /**
-     * @method octopus.$
-     * @desc 不想重复的去写这么多
-     * @param filter {String}
-     * @param el {String | DOMElement}
-     * @returns {NodeList}
-     */
-    o.$ = function(filter, el) {
-		el = o.g(el) || document;
-        return el.querySelectorAll(filter) || null;
-    };
-
-    /**
-     * @method octopus.one
-     * @param filter {String}
-     * @param el {DOMElement}
-     */
-    o.one = function(filter, el) {
-        el = o.g(el) || document;
-        return el.querySelector(filter) || null;
-    };
-
-    if(!window.$) {
-        window.$ = o.$;
-    }
     window.octopus = o;
 
 })(window);

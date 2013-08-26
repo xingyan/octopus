@@ -11,13 +11,56 @@
 
     "use strict";
 
-    var u = o.util;
+    var
+        /**
+         * @desc 工具函数的命名空间
+         */
+        u = o.util,
+
+        /**
+         * @desc 声明document
+         */
+        doc = document;
 
     /**
      * @namespace octopus.dom
      * @desc 一些基础的dom操作
      */
     o.dom = {
+        /**
+         * @method octopus.dom.g
+         * @param el
+         * @desc 靠id拿个节点 由于只是简单支持 没有必要写得那么高级
+         */
+        g: function(el) {
+            var el = (u.isString(el) ? doc.getElementById(el) : (u.isObject(el) && el));
+            return el || null;
+        },
+
+        /**
+         * @method octopus.dom.$
+         * @param filter
+         * @param el
+         * @desc 不想重复的去写这么多 拿到一个节点集合
+         */
+        $: function(filter, el) {
+            var el = el || doc,
+                _el = o.g(el);
+            return o.util.isNode(_el) ? _el.querySelectorAll(filter) : null;
+        },
+
+        /**
+         * @method octopus.dom.one
+         * @param filter
+         * @param el
+         * @desc 拿到指定节点下的文档流里的第一个节点
+         */
+        one: function(filter, el) {
+            var el = el || doc,
+                _el = o.g(el);
+            return o.util.isNode(_el) ? _el.querySelector(filter) : null;
+        },
+
         /**
          * @method octopus.dom.hasClass
          * @desc 判断节点有class
@@ -39,6 +82,8 @@
          */
         addClass: function(el, name) {
             el = o.g(el);
+            name = name || null;
+            if(!name)   return false;
             var classList = el.classList;
             if(!!classList) {
                 if(!classList.contains(name)) {
@@ -59,9 +104,9 @@
          * @param name {String}
          */
         removeClass: function(el, name) {
-            var names;
             el = o.g(el);
-            var classList = el.classList;
+            var names,
+                classList = el.classList;
             if(!!classList) {
                 if(classList.contains(name)) {
                     el.classList.remove(name);
@@ -187,9 +232,9 @@
             if (el && el.style) {
                 value = el.style[u.camelize(style)];
                 if (!value) {
-                    if (document.defaultView &&
-                        document.defaultView.getComputedStyle) {
-                        var css = document.defaultView.getComputedStyle(el, null);
+                    if (doc.defaultView &&
+                        doc.defaultView.getComputedStyle) {
+                        var css = doc.defaultView.getComputedStyle(el, null);
                         value = css ? css.getPropertyValue(style) : null;
                     } else if (el.currentStyle) {
                         value = el.currentStyle[u.camelize(style)];
@@ -283,7 +328,7 @@
          * @param stys {Object} dom样式名值对
          */
         createDom: function(type, atts, stys) {
-            var dom = document.createElement(type);
+            var dom = doc.createElement(type);
             atts && u.each(atts, function(v, att) {
                 dom.setAttribute(att, v);
             });
@@ -423,4 +468,16 @@
             return vs;
         }
     };
+
+    /**
+     * @desc 将常用的选择器方法的命名空间提前
+     */
+    o.g = o.dom.g;
+
+    o.$ = o.dom.$;
+
+    o.one = o.dom.one;
+
+    !!window.$ && (window.$ = o.$);
+
 })(octopus);
