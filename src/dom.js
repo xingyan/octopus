@@ -53,7 +53,7 @@
         $: function(filter, el) {
             var el = el || doc,
                 _el = o.g(el);
-            return o.util.isNode(_el) ? _el.querySelectorAll(filter) : null;
+            return (o.util.isNode(_el) || _el == doc) ? _el.querySelectorAll(filter) : null;
         },
 
         /**
@@ -65,7 +65,7 @@
         one: function(filter, el) {
             var el = el || doc,
                 _el = o.g(el);
-            return o.util.isNode(_el) ? _el.querySelector(filter) : null;
+            return (o.util.isNode(_el) || _el == doc) ? _el.querySelector(filter) : null;
         },
 
         /**
@@ -503,6 +503,6 @@
 
     o.one = o.dom.one;
 
-    !!window.$ && (window.$ = o.$);
+    !window.$ && (window.$ = o.$);
 
 })(octopus);
