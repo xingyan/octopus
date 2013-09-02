@@ -191,10 +191,11 @@
         /**
          * @method octopus.dom.insertAfter
          * @desc 插到指定节点后面
-         * @param newdom {DOMELement}
+         * @param newdom {DOMElement}
          * @param tardom {DOMElement}
          */
         insertAfter: function(newdom, tardom) {
+            newdom = o.g(newdom);
             tardom = o.g(tardom);
             tardom.parentNode.insertBefore(newdom, tardom.nextSibling);
             return newdom;
@@ -366,10 +367,12 @@
          * @desc clone节点 可以将事件一起clone 该事件必须是通过此框架加上的
          * @param el {DOMElement} 待clone的节点
          * @param ev {Boolean} 是否clone事件监听
+         * @param c {Boolean} 是否拷贝子节点
          */
-        cloneNode: function(el, ev) {
+        cloneNode: function(el, ev, c) {
             ev = ev || false;
-            var cloneEl = o.g(el).cloneNode(true);
+            c = c || false;
+            var cloneEl = o.g(el).cloneNode(!c);
             if(!ev || !el._eventCacheID) return cloneEl;
             var obs = o.event.observers[el._eventCacheID];
             u.each(obs, function(item, i) {
