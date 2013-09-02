@@ -171,6 +171,13 @@
 
         /**
          * @private
+         * @property delay
+         * @type {Number}
+         */
+        delay: null,
+
+        /**
+         * @private
          * @constructor octopus.Tween
          */
         initialize: function(el, pro, startv, endv, duration, func, options) {
@@ -191,10 +198,18 @@
                 "border-top-width", "border-right-width", "border-bottom-width"];
             var legality = this.check();
             this.ease = this.ease || (this.isTransform ? "ease-out" : o.easing.linear.easeOut);
+            this.delay = this.delay || 0;
             if(!legality) throw new Error("Illegal arguments!");
             if(o.util.isObject(this.ease) && !this.isTransform) {
                 this.requestAnimation = o.util.requestAnimation;
-                this.executeWithJs();
+                if(this.delay > 0) {
+                    var that = this;
+                    window.setTimeout(function() {
+                        that.executeWithJs();
+                    }, this.delay * 1000);
+                } else {
+                    this.executeWithJs();
+                }
             } else {
                 this.vector = {"" : "", Webkit: "webkit", Moz: "", O: "o", ms: "MS"};
                 for(var k in this.vector) {
@@ -340,26 +355,21 @@
          */
         executeWithCss: function() {
             if(this.isOffCss) this.duration = 0;
-            var i = 0,
-                proarr = this.propertyName,
+            var proarr = this.propertyName,
                 len = proarr.length,
+                that = this,
+                transitionArr = [],
                 _prefix = this.prefix + "transition";
             this.el.style[_prefix] = "";
-            for(; i < len; i++) {
-                var curValue = this.startValue[i];
-                this.el.style[proarr[i]] = this.getValue(curValue, i);
-            }
-            var transitionArr = [],
-                that = this;
-            o.event.on(this.el, this.endEvent, o.util.bindAsEventListener(this.onEndEventCompleted, this))
+            o.util.each(proarr, function(item, index) {
+                that.el.style[item] = that.getValue(that.startValue[index], index);
+                transitionArr.push(item + " " + that.duration + "s " + that.ease);
+            });
+            o.event.on(this.el, this.endEvent, o.util.bindAsEventListener(this.onEndEventCompleted, this), false);
             window.setTimeout(function() {
-                var j = 0;
-                for(; j < len; j++) {
-                    transitionArr.push(proarr[j] + ' ' + that.duration + 's ' + that.ease);
-                }
                 that.el.style[_prefix] = transitionArr.join(", ");
                 var _this = that;
-                setTimeout(function() {
+                window.setTimeout(function() {
                     var z = 0;
                     for(; z < len; z++) {
                         var curValue = _this.endValue[z];
@@ -368,7 +378,7 @@
                     _this.clearEventTimer();
                     _this.eventTimer = setTimeout(o.util.bind(_this.onFinish, _this), _this.duration * 1000);
 
-                }, 0);
+                }, that.delay * 1000);
             }, 0);
         },
 
