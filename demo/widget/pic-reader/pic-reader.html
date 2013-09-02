@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+        <title>pic-reader demo</title>
+        <meta name="description" content="pic-reader demo" />
+        <meta name="author" content="xingyan" />
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+        <link rel="stylesheet" type="text/css" href="../../octopus.css" />
+        <link rel="stylesheet" type="text/css" href="../../../src/widget/pic-reader/pic-reader.css" />
+        <link rel="stylesheet" type="text/css" href="../../../src/widget/mask/mask.css" />
+        <link rel="stylesheet" type="text/css" href="../../../src/widget/slider/slider.css" />
+
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+        <script type="text/javascript" src="../../../src/class.js"></script>
+        <script type="text/javascript" src="../../../src/util.js"></script>
+        <script type="text/javascript" src="../../../src/dom.js"></script>
+        <script type="text/javascript" src="../../../src/events.js"></script>
+        <script type="text/javascript" src="../../../src/gestures.js"></script>
+        <script type="text/javascript" src="../../../src/tween.js"></script>
+        <script type="text/javascript" src="../../../src/animate.js"></script>
+
+        <script type="text/javascript" src="../../../src/widget/widget.js"></script>
+        <script type="text/javascript" src="../../../src/widget/mask/mask.js"></script>
+        <script type="text/javascript" src="../../../src/widget/slider/slider.js"></script>
+
+        <script type="text/javascript" src="../../../src/widget/pic-reader/pic-reader.js"></script>
+
+        <script type="text/javascript" src="pic-reader.js"></script>
+        <style>
+            #pic-reader_container {
+                width: 700px;
+                margin: auto;
+                text-align: justify;
+            }
+
+            .img-container, .img-container img {
+                display: inline-block;
+                width: 60px;
+                margin: 20px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="pic-reader_container">
+            <div class="img-container">
+                <img src="../../img/10.jpg" />
+            </div>
+            <div class="img-container">
+                <img src="../../img/11.jpg" data-octopusui-reader-src="https://github.global.ssl.fastly.net/images/modules/dashboard/bootcamp/octocat_setup.png?0e767b60" />
+            </div>
+            <div class="img-container">
+                <img src="../../img/9.jpg" />
+            </div>
+            <div class="img-container">
+                <img src="../../img/8.jpg" />
+            </div>
+            <div class="img-container">
+                <img src="../../img/7.jpg" />
+            </div>
+        </div>
+    </body>
+</html>
