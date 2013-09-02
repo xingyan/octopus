@@ -660,7 +660,7 @@
         var len = source.length,
             i = len;
         for(; i--; ) {
-            if(source[i] == item) {
+            if(source[i] === item) {
                 source.splice(i, 1);
             }
         }
