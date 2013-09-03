@@ -155,9 +155,9 @@
      * @desc 对字符串中的html进行编码
      * @param str {String}
      */
-    util.htmlDecodeDict = {"quot": '"', "lt": "<", "gt": ">", "amp": "&"};
+    util.htmlDecodeDict = {"quot": '"', "lt": "<", "gt": ">", "amp": "&", "#39": "'"};
     util.decodeHtml = function(str) {
-        return String(str).replace(/&(quot|lt|gt|amp|nbsp);/ig, function(all, key) {
+        return String(str).replace(/&(quot|lt|gt|amp|#39);/ig, function(all, key) {
             return util.htmlDecodeDict[key];
         }).replace(/&#u([a-f\d]{4});/ig, function(all, hex) {
                 return String.fromCharCode(parseInt("0x" + hex));
