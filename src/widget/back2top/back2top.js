@@ -137,7 +137,7 @@
          * @constructor
          */
         initialize: function() {
-            this.superclass.initialize.apply(this, arguments);
+            o.Widget.prototype.initialize.apply(this, arguments);
             o.dom.addClass(this.el, "octopusui-back2top");
             this.loop = {};
             this.initFixed();
@@ -358,6 +358,92 @@
         },
 
         CLASS_NAME: "octopus.Widget.Back2Top"
+    });
+
+    /**
+     * @method octopus.Widget.back2top
+     * @desc 生成与html模版相绑定的回到顶部 所有的参数都以html模版形式传入
+     * @param el
+     * @returns {o.Widget.HtmlBack2Top}
+     */
+    o.Widget.back2top = function(el) {
+        return new o.Widget.HtmlBack2Top({
+            el: el
+        });
+    };
+
+    /**
+     * @class octopus.Widget.HtmlBack2Top
+     * @parent octopus.Widget.Back2Top
+     * @desc 参数与octopus.Widget.Back2Top 不同的是 这个类仅限于对已有符合规范的html模版的改造与封装
+     * 符合条件的html模版属性包括
+     * data-octopusui-back2top-direction 可以指定控件的左右 "left" || "right"
+     * data-octopusui-back2top-fast 如果设置此属性 使用高性能（即当滚动时隐藏控件）模式
+     * data-octopusui-back2top-animate 如果设置此属性 返回顶部会使用动画
+     * data-octopusui-back2top-bottom 设置距底部的距离 默认为10
+     * data-octopusui-back2top-offset 设置距左｜右的距离 默认为10
+     * data-octopusui-back2top-customize 如果设置此属性 则需要自定义点击后的事件
+     */
+    o.Widget.HtmlBack2Top = o.define(o.Widget.Back2Top, {
+
+        /**
+         * @private
+         * @constructor
+         */
+        initialize: function(opts) {
+            o.Widget.prototype.initialize.apply(this, arguments);
+            this.loop = {};
+            this.direction = o.dom.data(this.el, "octopusui-back2top-direction") || this.direction;
+            this.isFast = o.dom.data(this.el, "octopusui-back2top-fast");
+            this.animation = o.dom.data(this.el, "octopusui-back2top-animate");
+            this.bottom = o.dom.data(this.el, "octopusui-back2top-bottom") || this.bottom;
+            this.offsetV = o.dom.data(this.el, "octopusui-back2top-offset") || this.offsetV;
+            this.customize = o.dom.data(this.el, "octopusui-back2top-customize");
+            this.testFixableDom = o.dom.createDom("div", null, {
+                top: "5px",
+                position: "fixed"
+            });
+            if(this.isShow) {
+                this.isShow = false;
+                this.show();
+            }
+            if(!this.active) {
+                this.activate();
+            }
+            this.checkDom();
+            this.initEvent();
+        },
+
+        /**
+         * @private
+         * @method render
+         * @desc 防止被调用
+         */
+        render: function() {
+            throw new Error("this class can't render! :)");
+        },
+
+        /**
+         * @private
+         * @method checkDom
+         * @desc 初始化dom
+         */
+        checkDom: function() {
+            this.el.style.display = "none";
+            this.isShow = false;
+            o.dom.addClass(this.el, "octopusui-back2top");
+            this.initFixed();
+            var parent = this.el.parentNode,
+                body = document.body;
+            this.container = body;
+            if(parent != body) {
+                parent.removeChild(this.el);
+                body.appendChild(this.el);
+            }
+            body.appendChild(this.testFixableDom);
+        },
+
+        CLASS_NAME: "octopus.Widget.HtmlBack2Top"
     });
 
 })(octopus);

@@ -67,7 +67,7 @@
          * @constructor
          */
         initialize: function() {
-            this.superclass.initialize.apply(this, arguments);
+            o.Widget.prototype.initialize.apply(this, arguments);
             o.dom.addClass(this.el, "octopusui-mask");
         },
 
@@ -111,7 +111,7 @@
             if(this.animation == "scale" && origin) {
                 this.origin = origin;
             }
-            this.superclass.render.apply(this, arguments);
+            o.Widget.prototype.render.apply(this, arguments);
         },
 
         /**
@@ -120,7 +120,7 @@
          * @desc 复写父类方法 在节点扔进dom流后做的初始化
          */
         activate: function() {
-            this.superclass.activate.apply(this, arguments);
+            o.Widget.prototype.activate.apply(this, arguments);
             this.refreshSize();
             this.initEvent();
             this.isShow = false;

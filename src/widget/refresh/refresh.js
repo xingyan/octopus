@@ -202,8 +202,10 @@
          * @constructor
          */
         initialize: function() {
-            this.superclass.initialize.apply(this, arguments);
-            this.el.setAttribute("class", "octopusui-refresh octopusui-refresh" + o.util.camelize(this.direction));
+            o.Widget.prototype.initialize.apply(this, arguments);
+            o.dom.attr(this.el, {
+                "class": "octopusui-refresh octopusui-refresh" + o.util.camelize(this.direction)
+            });
             this.buildSelf();
         },
 
@@ -269,7 +271,7 @@
          * @method octopus.Widget.Refresh.render
          */
         render: function() {
-            this.superclass.render.apply(this, arguments);
+            o.Widget.prototype.render.apply(this, arguments);
             if(this.height == null) {
                 this.height = o.dom.getHeight(this.el);
             }

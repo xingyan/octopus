@@ -228,7 +228,7 @@
          * @param config.timeout {Number} 超时时间
          * @return {XMLHttpRequest} Request object.
          */
-        get: function(config) {
+        "get": function(config) {
             config = o.extend(config, {type: "GET"});
             return o.ajax.request(config);
         },
@@ -275,7 +275,7 @@
          * @param config {Object} 同get
          * @return {XMLHttpRequest} Request object.
          */
-        delete: function(config) {
+        "delete": function(config) {
             config = o.extend(config, {type: "DELETE"});
             return o.ajax.request(config);
         },

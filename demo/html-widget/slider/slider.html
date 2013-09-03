@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+
+        <title>slider demo</title>
+        <meta name="description" content="slider demo"/>
+        <meta name="author" content="xingyan"/>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+        <link rel="stylesheet" type="text/css" href="../../octopus.css"/>
+        <link rel="stylesheet" type="text/css" href="../../../src/widget/slider/slider.css"/>
+
+        <link rel="shortcut icon" href="/favicon.ico"/>
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+
+        <script type="text/javascript" src="../../../src/class.js"></script>
+        <script type="text/javascript" src="../../../src/util.js"></script>
+        <script type="text/javascript" src="../../../src/dom.js"></script>
+        <script type="text/javascript" src="../../../src/events.js"></script>
+        <script type="text/javascript" src="../../../src/gestures.js"></script>
+        <script type="text/javascript" src="../../../src/tween.js"></script>
+        <script type="text/javascript" src="../../../src/imglazyload.js"></script>
+
+        <script type="text/javascript" src="../../../src/widget/widget.js"></script>
+        <script type="text/javascript" src="../../../src/widget/slider/slider.js"></script>
+
+        <style>
+            body {
+                text-align: center;
+            }
+
+            #slider_container {
+                width: 300px;
+                margin: 20px auto;
+            }
+
+            #slider_container .octopusui-container {
+                width: 300px;
+                height: 300px;
+                border: 1px solid rgba(78, 153, 255, .27);
+                box-shadow: 0px 3px 10px 1px rgba(0, 0, 0, .26);
+                margin: 20px 0;
+
+            }
+            img {
+                max-width: 100%;
+                height: auto;
+            }
+
+            #test-slider {
+                background: rgba(44, 154, 219, 0.8);
+            }
+
+            #test-slider div.child {
+                line-height: 300px;
+            }
+
+        </style>
+    </head>
+    <body>
+        <div id="slider_container">
+            <div class="octopusui-container" data-octopusui-type="slider" data-octopusui-slider-loop="true">
+                <img src="../../img/7dd98d1001e939015663bdfa7bec54e737d19694.jpg" data-octopusui-slider-title="梅西获金球奖 4连冠成历史第一人" data-octopusui-slider-url="http:\/\/sports.huanqiu.com\/pictures\/list\/2013-01\/2679090.html" />
+                <img data-src="../../img/83025aafa40f4bfb1628ae90034f78f0f636187d.jpg" data-octopusui-slider-title="江西种粮大户给农民发百万年终奖" data-octopusui-slider-url="http:\/\/www.chinanews.com\/tp\/hd2011\/2013\/01-08\/163662.shtml#nextpage" />
+                <img data-src="../../img/d52a2834349b033b15bbce1e15ce36d3d439bdc6.jpg" data-octopusui-slider-title="美国前州长和谷歌总裁到达朝鲜" data-octopusui-slider-url="http:\/\/news.ifeng.com\/photo\/hdnews\/detail_2013_01\/08\/20942777_0.shtml#p=1" />
+            </div>
+            <div class="octopusui-container" id="test-slider" data-octopusui-type="slider" data-octopusui-slider-notauto="true">
+                <div class="child">1</div>
+                <div class="child">2</div>
+                <div class="child">3</div>
+            </div>
+            <div class="octopusui-container" id="test-slider2" data-octopusui-type="slider" data-octopusui-slider-notauto="true" data-octopusui-slider-nobutton="true" data-octopusui-slider-nogizmos="true">
+                <img data-src="../../img/8cb1cb1349540923f48d2ebc9258d109b2de490f.jpg" data-octopusui-slider-title="特写：奥巴马的2012" data-octopusui-slider-url="http:\/\/news.xinhuanet.com\/photo\/2013-01\/06\/c_124189526.htm" />
+                <img data-src="../../img/a8ec8a13632762d0ab03417ea0ec08fa513dc636.jpg" data-octopusui-slider-title="济南一路段1公里设10组红绿灯" data-octopusui-slider-url="http:\/\/www.china.com.cn\/photochina\/2013-01\/06\/content_27595674.htm" />
+                <img data-src="../../img/4e4a20a4462309f721e913d0720e0cf3d6cad66a.jpg" data-octopusui-slider-title="成都机场大雾 上万名旅客滞留" data-octopusui-slider-url="http:\/\/www.chinanews.com\/tp\/hd2011\/2013\/01-06\/162961.shtml#nextpage" />
+            </div>
+        </div>
+        <div class="octopusui-container" id="test-slider3" data-octopusui-type="slider" data-octopusui-slider-notauto="true" data-octopusui-slider-adaptive="true">
+            <img data-src="../../img/37d3d539b6003af3e9e460a2352ac65c1138b692.jpg" data-octopusui-slider-title="河北邯郸民众因水污染抢购矿泉水" />
+            <img data-src="../../img/8326cffc1e178a8283218262f603738da877e8d7.jpg" />
+            <img data-src="../../img/d62a6059252dd42aa2ccfc69033b5bb5c8eab82f.jpg" data-octopusui-slider-title="朝鲜内部一瞥:金正恩领导的朝鲜" data-octopusui-slider-url="http:\/\/world.gmw.cn\/2013-01\/06\/content_6269998.htm#Content_Title" />
+        </div>
+        <script type="text/javascript" src="slider.js"></script>
+    </body>
+</html>

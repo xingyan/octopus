@@ -378,13 +378,12 @@
          * @desc 与父类保持一致
          */
         initialize: function() {
-            this.superclass.initialize.apply(this, arguments);
+            o.Widget.prototype.initialize.apply(this, arguments);
             this.dataField = this.dataField || {
                 title: "title",
                 url: "url",
                 image_url: "image_url"
             };
-            this.el.style.cssText = "overflow: hidden; width: 100%; height: 100%; position: relative;";
             this.doms = this.children || [];
             this.unloadImage = [];
             this.length = this.doms.length == 0 ? this.data.length : this.doms.length;
@@ -392,7 +391,22 @@
                 index: 0,
                 dom: null
             };
-            this.calcCurrent = o.util.bind(this._calcCurrent, this);
+            this.buildDoms(this.el);
+            this.buildSlider();
+            this.el.style.cssText = "overflow: hidden; width: 100%; height: 100%; position: relative;";
+            //如果是自动渲染生成 必须传入宽度与高度 否则抛错
+            if(this.autoActivate) {
+                if(this.width == null || this.height == null) throw new Error("Require the Slider's width and height!");
+                this.activate();
+            }
+        },
+
+        /**
+         * @private
+         * @method buildDoms
+         * @param el {DOMElement}
+         */
+        buildDoms: function(el) {
             this.viewDiv = this.viewDiv || o.dom.createDom("div", {
                 style: "position: relative; text-align: center; -webkit-transform: translate3d(0, 0, 0);" +
                     " -webkit-backface-visibility: hidden; -webkit-user-select: none; -webkit-user-drag: none;" +
@@ -411,10 +425,17 @@
                     style: btnCssText,
                     "class": "octopusui-slider-button octopusui-slider-nextbutton"
                 });
-                this.gesture(this.preDom).on("tap", o.util.bind(this._selectPre, this));
-                this.gesture(this.nextDom).on("tap", o.util.bind(this._selectNext, this));
-                this.el.appendChild(this.preDom);
-                this.el.appendChild(this.nextDom);
+                var that = this;
+                this.gesture(this.preDom).on("tap", function() {
+                    that._selectPre();
+                    that.start();
+                });
+                this.gesture(this.nextDom).on("tap", function() {
+                    that._selectNext();
+                    that.start();
+                });
+                el.appendChild(this.preDom);
+                el.appendChild(this.nextDom);
             }
             if(this.hasGizmos) {
                 this.gizmosDoms = new Array(this.length);
@@ -437,13 +458,7 @@
                 }
                 this.currentGizmos = this.gizmosDoms[0];
                 rodom.appendChild(fragment);
-                this.el.appendChild(rodom);
-            }
-            this.buildSlider();
-            //如果是自动渲染生成 必须传入宽度与高度 否则抛错
-            if(this.autoActivate) {
-                if(this.width == null || this.height == null) throw new Error("Require the Slider's width and height!");
-                this.activate();
+                el.appendChild(rodom);
             }
         },
 
@@ -556,7 +571,7 @@
          * @param func {Function} 事件监听函数
          */
         on: function(type, func) {
-            this.superclass.on.apply(this, arguments);
+            o.Widget.prototype.on.apply(this, arguments);
             if(type == "slider-item-ontap" && !this.isDisableA) {
                 this.isDisableA = true;
             }
@@ -637,7 +652,7 @@
          * @desc 复写父类的render方法
          */
         render: function() {
-            this.superclass.render.apply(this, arguments);
+            o.Widget.prototype.render.apply(this, arguments);
             if(this.autoPlay) {
                 this.start();
             }
@@ -650,7 +665,7 @@
          * @desc 轮播图生成后加入页面需要激活
          */
         activate: function() {
-            this.superclass.activate.apply(this, arguments);
+            o.Widget.prototype.activate.apply(this, arguments);
             this.calcSelfSize();
             if(!this.disableAll) {
                 this.initSelfEvent();
@@ -855,7 +870,7 @@
          */
         start: function() {
             this.stop();
-            this.timer = window.setTimeout(this.calcCurrent, this.autoPlayTime);
+            this.timer = window.setTimeout(o.util.bind(this._calcCurrent, this), this.autoPlayTime);
         },
 
         /**
@@ -1025,4 +1040,179 @@
 
         CLASS_NAME: "octopus.Widget.Slider"
     });
+
+    /**
+     * @method octopus.Widget.slider
+     * @param el {DOMElement}
+     * @returns {o.Widget.HtmlSlider}
+     * @desc 生成与html模版相绑定的轮播图 所有的参数都以html模版形式传入
+     */
+    o.Widget.slider = function(el) {
+        return new o.Widget.HtmlSlider({
+            el: el
+        });
+    };
+
+    /**
+     * @class octopus.Widget.HtmlSlider
+     * @parent octopus.Widget.Slider
+     * @desc 参数与octopus.Widget.Slider相同 不同的是 这个类仅限于对已有符合规范的html模版的改造与封装
+     * 符合条件的html模版属性包括
+     * data-octopusui-slider-loop 如果无此属性则轮播图不前后循环
+     * data-octopusui-slider-nobutton 如果设置此属性 则不包含上一个下一个按钮
+     * data-octopusui-slider-disable 如果设置此属性 则除了不包含按钮外 也没有任何事件监听 可用于单张图
+     * data-octopusui-slider-nogizmos 如果设置此属性 则不包含右下角的角标
+     * data-octopusui-slider-notauto 如果设置此属性 则不自动触发轮播
+     * data-octopusui-slider-adaptive 如果设置此属性 则轮播图以默认大小自动撑开
+     * data-octopusui-slider-notitle 如果设置此属性 则不包含轮播图的title
+     */
+    o.Widget.HtmlSlider = o.define(o.Widget.Slider, {
+
+        /**
+         * @private
+         * @property fragment
+         * @type {DocumentFragment}
+         * @desc 文档碎片 用来生成改造后的实际dom
+         */
+        fragment: null,
+
+        /**
+         * @private
+         * @property adaptive
+         * @type {String}
+         * @desc 用来确认当前轮播图是否自动撑开
+         */
+        adaptive: null,
+
+        /**
+         * @private
+         * @constructor
+         */
+        initialize: function() {
+            //虽然继承自octopus.Widget.Slider 但是构造函数这里希望使用octopus.Widget的构造函数
+            o.Widget.prototype.initialize.apply(this, arguments);
+            this.dataField = {
+                title: "title",
+                url: "url"
+            };
+            this.container = this.el.parentNode;
+            this.fragment = document.createDocumentFragment();
+            this.unloadImage = [];
+            this.loop = o.dom.data(this.el, "octopusui-slider-loop");
+            this.hasButton = !o.dom.data(this.el, "octopusui-slider-nobutton");
+            this.hasGizmos = !o.dom.data(this.el, "octopusui-slider-nogizmos");
+            this.disableAll = o.dom.data(this.el, "octopusui-slider-disable");
+            this.autoPlay = !o.dom.data(this.el, "octopusui-slider-notauto");
+            this.adaptive = o.dom.data(this.el, "octopusui-slider-adaptive");
+            this.hasTitle = !o.dom.data(this.el, "octopusui-slider-notitle");
+            this.buildSelf();
+            if(!this.isShow) {
+                this.show();
+            }
+            if(!this.active) {
+                this.activate();
+            }
+            if(this.autoPlay) {
+                this.start();
+            }
+            this.notify("slider-ui-afterrender");
+        },
+
+        /**
+         * @private
+         * @method buildSelf
+         * @desc 生成自身节点
+         */
+        buildSelf: function() {
+            var children = this.el.children,
+                len = children.length;
+            if(len < 2) return;
+            this.length = len;
+            this.data = [];
+            this.doms = [];
+            this.fragment = document.createDocumentFragment();
+            var node = this.el.cloneNode(false);
+            this.buildDoms(node);
+            this.buildSlider(children);
+            node.appendChild(this.viewDiv);
+            this.el.parentNode.replaceChild(node, this.el);
+            this.el = node;
+            this.el.style.cssText = "overflow: hidden; position: relative;";
+        },
+
+        /**
+         * @private
+         * @method buildSlider
+         * @desc 生成轮播图
+         */
+        buildSlider: function(items) {
+            o.util.each(items, o.util.bind(this.buildItem, this));
+            if(this.loop) {
+                var fristdom = this.doms[0].cloneNode(true),
+                    lastdom = this.doms[this.length - 1].cloneNode(true);
+                this.doms.push(fristdom);
+                this.doms.push(lastdom);
+                this.fragment.appendChild(fristdom);
+                this.fragment.appendChild(lastdom);
+                this.length += 2;
+            }
+            this.setCurrent({
+                dom: this.doms[0],
+                index: 0
+            });
+            this.viewDiv.appendChild(this.fragment);
+        },
+
+        /**
+         * @private
+         * @method render
+         * @desc 防止被调用
+         */
+        render: function() {
+            throw new Error("this class can't render! :)");
+        },
+
+        /**
+         * @private
+         * @method buildItem
+         * @desc 生成每张单张的轮播图
+         */
+        buildItem: function(item, index) {
+            if(!o.util.isNode(item)) return;
+            this.data.push({
+                url: o.dom.data(item, "octopusui-slider-url"),
+                title: o.dom.data(item, "octopusui-slider-title")
+            });
+            var dom = o.dom.createDom("div", {
+                    "class": "octopusui-slider-children",
+                    "style": "-webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); position: relative;"
+                }),
+                _item = item.cloneNode(true),
+                _itemcssText = "width: 100%;";
+            !this.adaptive && (_itemcssText += " position: absolute; left: 0; right: 0; top: 0; bottom: 0; margin: auto;", true);
+            _item.style.cssText = _itemcssText;
+            dom.appendChild(_item);
+            var title = this.getDataBy(index, "title");
+            if(this.hasTitle && title) {
+                var titledom = o.dom.createDom("div", {
+                        "class": "octopusui-slider-imgTitle"
+                    }),
+                    titlecontent = o.dom.createDom("div", {
+                        "class": "octopusui-slider-imgTitleContent octopusui-text-limit"
+                    });
+                titlecontent.innerHTML = o.util.encodeHtml(title);
+                titledom.appendChild(titlecontent);
+                dom.appendChild(titledom);
+            }
+            var that = this;
+            this.gesture(dom).on("tap", function() {
+                that.notify("slider-item-ontap", that.data[index]);
+            });
+            this.fragment.appendChild(dom);
+            this.doms.push(dom);
+        },
+
+        CLASS_NAME: "octopus.Widget.HtmlSlider"
+    });
+
 })(octopus);
