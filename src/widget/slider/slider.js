@@ -1206,7 +1206,7 @@
             });
             var dom = o.dom.createDom("div", {
                     "class": "octopusui-slider-children",
-                    "style": "-webkit-transform: translate3d(0, 0, 0); position: relative;"
+                    "style": "-webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); position: relative;"
                 }),
                 _item = item.cloneNode(true),
                 _itemcssText = "width: 100%;";
