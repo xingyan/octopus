@@ -62,7 +62,7 @@
          * @return {Boolean}
          */
         isLeftClick: function(event) {
-            return (((event.which) && (event.which == 1)) ||
+            return !!(((event.which) && (event.which == 1)) ||
                 ((event.button) && (event.button == 1)));
         },
 
@@ -73,7 +73,7 @@
          * @return {Boolean}
          */
         isRightClick: function(event) {
-            return (((event.which) && (event.which == 3)) ||
+            return !!(((event.which) && (event.which == 3)) ||
                 ((event.button) && (event.button == 2)));
         },
 

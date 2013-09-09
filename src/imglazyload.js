@@ -188,16 +188,23 @@
          */
         check: function() {
             this.isScroll = false;
+            var len = this.imgs.length;
+            if(len == 0)    return;
             var t = this.container.scrollTop,
-                h = o.dom.getHeight(this.container),
-                that = this;
+                h = o.dom.getHeight(this.container);
             if(this.container == document.body) {
                 var _h = o.dom.getScreenHeight();
                 h > _h && (h = _h);
             }
-            o.util.each(this.imgs, function(item) {
-                that.checkImg(item, t, h);
-            });
+            var i = len;
+            for(; i--; ) {
+                var item = this.imgs[i];
+                if(o.dom.data(item, "loaded")) {
+                    this.imgs.splice(i, 1);
+                    continue;
+                }
+                this.checkImg(item, t, h);
+            }
             return this;
         },
 
@@ -223,7 +230,7 @@
                         src: src,
                         "data-loaded": "loaded"
                     });
-                    u.removeItem(that.imgs, item);
+
                 }, function() {
                     that.notify("imglazyload-core-loadimgfaile", item);
                 });
