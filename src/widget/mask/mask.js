@@ -123,8 +123,6 @@
             o.Widget.prototype.activate.apply(this, arguments);
             this.refreshSize();
             this.initEvent();
-            this.isShow = false;
-            this.show();
         },
 
         /**
@@ -197,11 +195,11 @@
          */
         fade: function(out) {
             if(out) {
-                new o.Tween(this.el, "opacity", 0, 1, .4, o.util.empty, {
+                new o.Tween(this.el, "opacity", 0, 1, .3, o.util.empty, {
                     ease: "ease-out"
                 });
             } else {
-                new o.Tween(this.el, "opacity", 1, 0, .4, o.util.bind(this._hidden, this), {
+                new o.Tween(this.el, "opacity", 1, 0, .3, o.util.bind(this._hidden, this), {
                     ease: "ease-out"
                 });
             }
@@ -214,9 +212,9 @@
          */
         scale: function(out) {
             if(out) {
-                new o.Tween(this.el, ["opacity", "-webkit-transform"], [0, "scale(0)"], [1, "scale(1)"], .4);
+                new o.Tween(this.el, ["opacity", "-webkit-transform"], [0, "scale(0)"], [1, "scale(1)"], .3);
             } else {
-                new o.Tween(this.el, ["opacity", "-webkit-transform"], [1, "scale(1)"], [0, "scale(0)"], .4, o.util.bind(this._hidden, this));
+                new o.Tween(this.el, ["opacity", "-webkit-transform"], [1, "scale(1)"], [0, "scale(0)"], .3, o.util.bind(this._hidden, this));
             }
         },
 
@@ -229,9 +227,9 @@
             this.el.style.webkitTransformOrigin = "left bottom";
             var that = this;
             if(out) {
-                new o.Tween(this.el, ["opacity", "-webkit-transform"], [0, "rotate(-90deg)"], [1, "rotate(0deg)"], .4);
+                new o.Tween(this.el, ["opacity", "-webkit-transform"], [0, "rotate(-90deg)"], [1, "rotate(0deg)"], .3);
             } else {
-                new o.Tween(this.el, ["opacity", "-webkit-transform"], [1, "rotate(0deg)"], [0, "rotate(90deg)"], .4, function() {
+                new o.Tween(this.el, ["opacity", "-webkit-transform"], [1, "rotate(0deg)"], [0, "rotate(90deg)"], .3, function() {
                     that._hidden();
                 });
             }

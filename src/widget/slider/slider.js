@@ -1,13 +1,15 @@
 /**
  * @file
  * @author oupeng-fe
- * @version 0.1
+ * @version 1.1
  * webapp通用组件
  * slider   -   轮播图
  * @require lib/class.js
  * @require lib/util.js
  * @require lib/dom.js
  * @require lib/event.js
+ * @require lib/tween.js
+ * @require lib/animate.js
  * @require widget/widget.js
  */
 ;(function(o, undefined) {
@@ -34,6 +36,7 @@
      * @param options.imgZoom {Boolean} 是否缩放图片至最佳效果 默认为true
      * @param options.hasTitle {Boolean} 是否有轮播图下方的title区域
      * @param options.hasGizmos {Boolean} 是否有轮播图下方的选择区域
+     * @param options.disScroll {Boolean} 是否阻止滚动条
      */
     o.Widget.Slider = o.define(o.Widget, {
 
@@ -186,6 +189,14 @@
          * @type {Boolean}
          */
         disableAll: false,
+
+        /**
+         * @private
+         * @property disScroll
+         * @type {Boolean}
+         * @desc 是否停掉滚动事件
+         */
+        disScroll: false,
 
         /**
          * @private
@@ -426,13 +437,15 @@
                     "class": "octopusui-slider-button octopusui-slider-nextbutton"
                 });
                 var that = this;
-                this.gesture(this.preDom).on("tap", function() {
+                this.gesture(this.preDom).on("tap", function(e) {
+                    o.event.stop(e);
                     that._selectPre();
-                    that.start();
+                    that.autoPlay && that.start();
                 });
-                this.gesture(this.nextDom).on("tap", function() {
+                this.gesture(this.nextDom).on("tap", function(e) {
+                    o.event.stop(e);
                     that._selectNext();
-                    that.start();
+                    that.autoPlay && that.start();
                 });
                 el.appendChild(this.preDom);
                 el.appendChild(this.nextDom);
@@ -526,12 +539,14 @@
                 }),
                 idom = o.dom.createDom("img", {
                     "class": "octopusui-slider-imgChildren",
-                    style: "width: 100%; height: auto; position: absolute; left: 0; right: 0; top: 0; bottom: 0; margin: auto;"
+                    style: "max-width: 100%; max-height: 100%; position: absolute; left: 0; right: 0; top: 0; bottom: 0; margin: auto;"
                 }),
                 __url = this.getDataBy(index, "url") || "",
                 __target = this.isNewTab ? "_blank" : "_self",
                 that = this;
-            this.gesture(idom).on("tap", function() {
+            this.gesture(idom, {
+                tap_max_touchtime: 150
+            }).on("tap", function() {
                 if(!that.isDisableA) {
                     window.open(__url, __target)
                     return;
@@ -605,8 +620,11 @@
             var _dom = o.one(".octopusui-slider-imgChildren", dom) || dom;
             o.util.loadImage(url, o.util.empty, function() {
                 _dom.src = url;
+                o.animation.fade(_dom, {
+                    out: false
+                });
             }, function() {
-                throw new Error("Image load failed!");
+                console.error("Image " + url + " load failed!");
             });
         },
 
@@ -748,6 +766,7 @@
          */
         onTouchStart: function(e) {
             if(this.eventTimer || this.isSlide) return;
+            this.disScroll && o.event.stop(e);
             var touches = e.touches;
             if(!touches || touches.length > 1)  return;
             this.viewDiv.style.webkitTransitionDuration = "0ms";
@@ -808,11 +827,12 @@
                 pageY: this.touchStartPixelY
             }
             var angle = o.util.getDirection(pixel, touch);
+            this.pageDragTempC = dc;
+            if(this.disScroll)  return o.event.stop(e);
             if((this.isLon && (angle == "up" || angle == "down")) ||
                 (!this.isLon && (angle == "left" || angle == "right"))) {
                 o.event.stop(e);
             }
-            this.pageDragTempC = dc;
         },
 
         /**
@@ -1105,6 +1125,7 @@
             this.autoPlay = !o.dom.data(this.el, "octopusui-slider-notauto");
             this.adaptive = o.dom.data(this.el, "octopusui-slider-adaptive");
             this.hasTitle = !o.dom.data(this.el, "octopusui-slider-notitle");
+            this.disScroll = o.dom.data(this.el, "octopusui-slider-disscroll");
             this.buildSelf();
             if(!this.isShow) {
                 this.show();
@@ -1205,7 +1226,10 @@
                 dom.appendChild(titledom);
             }
             var that = this;
-            this.gesture(dom).on("tap", function() {
+            this.gesture(dom, {
+                tap_max_touchtime: 150
+            }).on("tap", function(e) {
+                o.event.stop(e);
                 that.notify("slider-item-ontap", that.data[index]);
             });
             this.fragment.appendChild(dom);
