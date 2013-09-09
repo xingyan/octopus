@@ -140,7 +140,6 @@
             var that = this;
             o.event.on(window, "ortchange", function() {
                 if(!that.isResize) {
-                    var _this = that;
                     o.util.requestAnimation(o.util.bind(that.checkSize, that));
                     that.isResize = true;
                 }
