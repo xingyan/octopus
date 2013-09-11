@@ -544,15 +544,13 @@
                 __url = this.getDataBy(index, "url") || "",
                 __target = this.isNewTab ? "_blank" : "_self",
                 that = this;
-            this.gesture(idom, {
-                tap_max_touchtime: 150
-            }).on("tap", function() {
+            o.event.on(idom, "click", function() {
                 if(!that.isDisableA) {
                     window.open(__url, __target)
                     return;
                 }
                 that.notify("slider-item-ontap", that.data[index]);
-            });
+            }, false);
             if((index < Math.ceil(this.loadImageNumber / 2)) ||
                 index >= Math.floor(this.length - this.loadImageNumber / 2)) {
                 this.setImageLoad(index, idom);
