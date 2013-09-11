@@ -1,0 +1,14 @@
+.octopusui-sidebar-container {
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+    -webkit-perspective: 1800px;
+    perspective: 1800px;
+    -webkit-perspective-origin: 0% 50%;
+    perspective-origin: 0% 50%;
+}
+
+.octopusui-sidebar {
+    position: absolute;
+    background: #336ca6;
+    box-shadow: 1px 0 2px rgba(0, 0, 0, 0.2);
+}
