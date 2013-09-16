@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+        <title>sidebar demo</title>
+        <meta name="description" content="sidebar demo" />
+        <meta name="author" content="xingyan" />
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+        <link rel="stylesheet" type="text/css" href="../../octopus.css" />
+        <link rel="stylesheet" type="text/css" href="../../../src/widget/sidebar/sidebar.css" />
+
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+        <script type="text/javascript" src="../../../src/class.js"></script>
+        <script type="text/javascript" src="../../../src/util.js"></script>
+        <script type="text/javascript" src="../../../src/dom.js"></script>
+        <script type="text/javascript" src="../../../src/events.js"></script>
+        <script type="text/javascript" src="../../../src/gestures.js"></script>
+        <script type="text/javascript" src="../../../src/tween.js"></script>
+
+        <script type="text/javascript" src="../../../src/widget/widget.js"></script>
+        <script type="text/javascript" src="../../../src/widget/sidebar/sidebar.js"></script>
+
+        <script type="text/javascript" src="sidebar.js"></script>
+        <style>
+            body {
+                background: rgba(0, 0, 0, .75);
+            }
+
+            #sidebar_container {
+                height: 100%;
+            }
+
+            .octopusui-sidebar {
+                color: #ffffff;
+                text-align: center;
+                line-height: 5em;
+            }
+
+            #content_container {
+                position: absolute;
+                background: #34495e;
+                left: 0px;
+                right: 0px;
+                top: 0px;
+                bottom: 0px;
+                text-align: center;
+                font-size: 1.5em;
+                color: #ffffff;
+            }
+
+            .btn {
+                font-size: 0.5em;
+                border: none;
+                font-family: inherit;
+                color: inherit;
+                background: #49a7df;
+                cursor: pointer;
+                padding: 5px 15px;
+                margin: .4em 10px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                font-weight: 700;
+                outline: none;
+                position: relative;
+                display: inline-block;
+                line-height: 2em;
+            }
+
+            .btn:after {
+                content: '';
+                position: absolute;
+                z-index: -1;
+            }
+
+            #container_content {
+                position: absolute;
+                left: 0;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                margin: auto;
+                height: 70%;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="sidebar_container">
+            <div id="content_container">
+                <div id="container_content">
+                    <div>Side Bar Demo</div>
+                    <div id="show_cover" class="btn">Left-Cover</div>
+                    <div id="show_push" class="btn">Left-Push</div>
+                    <div id="show_rotate" class="btn">Left-Rotate</div>
+                    <p></p>
+                    <div id="r_show_cover" class="btn">Right-Cover</div>
+                    <div id="r_show_push" class="btn">Right-Push</div>
+                    <div id="r_show_reveal" class="btn">Right-Reveal</div>
+                    <p></p>
+                    <div id="t_show_cover" class="btn">Top-Cover</div>
+                    <div id="t_show_push" class="btn">Top-Push</div>
+                    <p></p>
+                    <div id="b_show_cover" class="btn">Bottom-Cover</div>
+                    <div id="b_show_push" class="btn">Bottom-Push</div>
+                    <div id="b_show_reveal" class="btn">Bottom-Reveal</div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

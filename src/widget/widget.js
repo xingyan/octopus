@@ -159,11 +159,11 @@
                     this.appendChild(this.el, this.container);
                 }
             }
-            if(!this.isShow) {
-                this.show();
-            }
             if(!this.active) {
                 this.activate();
+            }
+            if(!this.isShow) {
+                this.show();
             }
         },
 
