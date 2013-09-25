@@ -398,9 +398,11 @@
          * @method onFinish
          */
         onFinish: function() {
-            o.event.stopEventObserver(this.el, this.endEvent);
+            if(this.el) {
+                o.event.stopEventObserver(this.el, this.endEvent);
+                this.el.style[this.prefix + "transition"] = "";
+            }
             this.func && this.func();
-            this.el.style[this.prefix + "transition"] = "";
             this.destroy();
         },
 
@@ -423,8 +425,10 @@
                 this.stopRequest = true;
             } else {
                 this.func && this.func();
-                o.event.stopEventObserver(this.el, this.endEvent);
-                this.el.style[this.prefix + "transition"] = "";
+                if(this.el) {
+                    o.event.stopEventObserver(this.el, this.endEvent);
+                    this.el.style[this.prefix + "transition"] = "";
+                }
             }
             this.destroy();
         },
@@ -434,9 +438,7 @@
          * @desc 看名字就知道干嘛的
          */
         destroy: function() {
-            for(var k in this) {
-                this[k] = null;
-            }
+            this.el = null;
         },
 
         /**

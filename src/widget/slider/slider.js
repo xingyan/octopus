@@ -288,6 +288,14 @@
 
         /**
          * @private
+         * @property isTimer
+         * @type {Boolean}
+         * @desc 标志位 一些手机无法使用removeEventListener去掉事件 导致transitionEnd事件绑上后无法卸载 因此使用标志位解决
+         */
+        isTimer: false,
+
+        /**
+         * @private
          * @property pageDragC
          * @type {Number}
          * @desc 拖拽点 横向与纵向分别对应x与y
@@ -424,7 +432,7 @@
                     " -webkit-transition: -webkit-transform 0ms " + this.animationType + ";",
                 "class": "octopusui-slider-view"
             });
-            if(this.hasButton && !this.disableAll) {
+            if(this.hasButton && !this.disableAll && this.length > 1) {
                 var btnCssText = "display: block; text-decoration: none;";
                 this.preDom = o.dom.createDom("div", {
                     href: "",
@@ -505,7 +513,7 @@
             } else {
                 fragment = this.buildDomSlider();
             }
-            if(this.loop) {
+            if(this.loop && this.length > 1) {
                 var fristdom = this.doms[0].cloneNode(true),
                     lastdom = this.doms[this.length - 1].cloneNode(true);
                 if(this._type == "img") {
@@ -544,13 +552,15 @@
                 __url = this.getDataBy(index, "url") || "",
                 __target = this.isNewTab ? "_blank" : "_self",
                 that = this;
-            o.event.on(idom, "click", function() {
+            this.gesture(idom, {
+                tap_max_touchtime: 150
+            }).on("tap", function() {
                 if(!that.isDisableA) {
                     window.open(__url, __target)
                     return;
                 }
                 that.notify("slider-item-ontap", that.data[index]);
-            }, false);
+            });
             if((index < Math.ceil(this.loadImageNumber / 2)) ||
                 index >= Math.floor(this.length - this.loadImageNumber / 2)) {
                 this.setImageLoad(index, idom);
@@ -669,7 +679,7 @@
          */
         render: function() {
             o.Widget.prototype.render.apply(this, arguments);
-            if(this.autoPlay) {
+            if(this.autoPlay && this.length > 1) {
                 this.start();
             }
             this.notify("slider-ui-afterrender");
@@ -736,7 +746,7 @@
 				if(isFloat) {
                     item.style.float = "left";
                 }
-                if(i == len - 1 && that.loop) {
+                if(i == len - 1 && that.loop && that.length > 1) {
                     var __style = that.isLon ? "top" : "left";
                     item.style[__style] = 0 - _spro * len + "px";
                 }
@@ -749,10 +759,12 @@
          * @desc 给轮播图绑定事件
          */
         initSelfEvent: function() {
-            o.event.on(this.el, "touchstart", o.util.bindAsEventListener(this.onTouchStart, this));
-            o.event.on(this.el, "touchmove", o.util.bindAsEventListener(this.onTouchMove, this));
-            o.event.on(this.el, "touchend", o.util.bindAsEventListener(this.onTouchEnd, this));
-            o.event.on(this.el, "touchcancel", o.util.bindAsEventListener(this.onTouchEnd, this));
+            if(this.length > 1) {
+                o.event.on(this.el, "touchstart", o.util.bindAsEventListener(this.onTouchStart, this));
+                o.event.on(this.el, "touchmove", o.util.bindAsEventListener(this.onTouchMove, this));
+                o.event.on(this.el, "touchend", o.util.bindAsEventListener(this.onTouchEnd, this));
+                o.event.on(this.el, "touchcancel", o.util.bindAsEventListener(this.onTouchEnd, this));
+            }
             o.event.on(window, "ortchange", o.util.bind(this.onOrtChanged, this), false);
         },
 
@@ -900,7 +912,7 @@
             var index = this.current.index;
             var length = this.loop ? this.length - 2 : this.length;
             index = (++index == length) ? 0 : index;
-            this.select(index);
+            this.select(index, "next");
             this.start();
         },
 
@@ -925,8 +937,9 @@
         select: function(index) {
             this.isSlide = true;
             this.viewDiv.style.webkitTransitionDuration = this.animationTime + "ms";
+
             if(this.loop) {
-                this.selectLoop(index);
+                this.selectLoop(index, arguments[1]);
             } else {
                 this.selectNoLoop(index);
             }
@@ -986,14 +999,21 @@
                 temp,
                 _temp = temp = "translate3d(";
             if((index == 0 && _index == (len - 1)) || (_index == 0 && index == (len - 1))) {
-                var that = this;
+                var that = this,
+                    d = arguments[1];
+                if(len == 2 && d && ((index == 0 && _index == (len - 1) && d == "pre")
+                    || (index == (len - 1) && _index == 0 && d == "next"))) {
+                    this.selectNoLoop(index);
+                    return;
+                }
+                this.isTimer = true;
                 var onChanged = function(e) {
+                    o.event.un(that.viewDiv, "webkitTransitionEnd", onChanged, false);
+                    if(!that.isTimer) return;
                     if(that.eventTimer) {
                         window.clearTimeout(that.eventTimer);
                         that.eventTimer = null;
                     }
-                    o.event.stop(e);
-                    o.event.un(that.viewDiv, "webkitTransitionEnd", onChanged);
                     that.viewDiv.style.webkitTransitionDuration = "0ms";
                     that.viewDiv.style.webkitTransform = _temp;
                 }
@@ -1006,7 +1026,6 @@
                     } else {
                         temp += (0 - this.width * len) + "px, 0, 0)";
                     }
-
                 } else if(index == (len - 1) && _index == 0) {
                     if(this.isLon) {
                         temp += "0, " + this.height + "px, 0)";
@@ -1020,10 +1039,11 @@
                 }
                 this.viewDiv.style.webkitTransform = temp;
                 this.eventTimer = window.setTimeout(function() {
-                    o.event.un(that.viewDiv, "webkitTransitionEnd", onChanged);
+                    o.event.un(that.viewDiv, "webkitTransitionEnd", onChanged, false);
                     that.viewDiv.style.webkitTransitionDuration = "0ms";
                     that.viewDiv.style.webkitTransform = _temp;
                     that.eventTimer = null;
+                    that.isTimer = false;
                 }, this.animationTime - 50 < 0 ? 0 : this.animationTime - 50);
             } else {
                 this.selectNoLoop(index);
@@ -1040,7 +1060,7 @@
             var len = this.loop ? this.length - 2 : this.length;
             var index = (this.current.index - 1) < 0 ? (len - 1) : this.current.index - 1;
             this.pageDragDirection = true;
-            this.select(index);
+            this.select(index, "pre");
         },
 
         /**
@@ -1053,7 +1073,7 @@
             var len = this.loop ? this.length - 2 : this.length;
             var index = (this.current.index + 1) > (len - 1) ? 0 : this.current.index + 1;
             this.pageDragDirection = false;
-            this.select(index);
+            this.select(index, "next");
         },
 
         CLASS_NAME: "octopus.Widget.Slider"
@@ -1131,7 +1151,7 @@
             if(!this.active) {
                 this.activate();
             }
-            if(this.autoPlay) {
+            if(this.autoPlay && this.length > 1) {
                 this.start();
             }
             this.notify("slider-ui-afterrender");
@@ -1166,7 +1186,7 @@
          */
         buildSlider: function(items) {
             o.util.each(items, o.util.bind(this.buildItem, this));
-            if(this.loop) {
+            if(this.loop && this.length > 1) {
                 var fristdom = this.doms[0].cloneNode(true),
                     lastdom = this.doms[this.length - 1].cloneNode(true);
                 this.doms.push(fristdom);
