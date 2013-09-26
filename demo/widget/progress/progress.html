@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+        <title>progress demo</title>
+        <meta name="description" content="progress demo" />
+        <meta name="author" content="xingyan" />
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+        <link rel="stylesheet" type="text/css" href="../../octopus.css"/>
+        <link rel="stylesheet" type="text/css" href="../../../src/widget/progress/progress.css"/>
+
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+        <script type="text/javascript" src="../../../src/class.js"></script>
+        <script type="text/javascript" src="../../../src/dom.js"></script>
+        <script type="text/javascript" src="../../../src/util.js"></script>
+        <script type="text/javascript" src="../../../src/events.js"></script>
+        <script type="text/javascript" src="../../../src/gestures.js"></script>
+        <script type="text/javascript" src="../../../src/tween.js"></script>
+
+        <script type="text/javascript" src="../../../src/widget/widget.js"></script>
+        <script type="text/javascript" src="../../../src/widget/progress/progress.js"></script>
+
+        <script type="text/javascript" src="progress.js"></script>
+        <style>
+            body {
+                background: #fcd04b;
+            }
+
+            .btn {
+                border: none;
+                color: #ffffff;
+                cursor: pointer;
+                padding: 15px 20px;
+                display: inline-block;
+                margin: 15px 30px;
+                letter-spacing: 1px;
+                font-weight: 700;
+                text-transform: uppercase;
+                outline: none;
+                position: relative;
+                background: #fcad26;
+            }
+
+            select {
+                background: transparent;
+                color: #ffffff;
+                border: 1px solid #fcad26;
+                outline: 0;
+            }
+
+            .btn:before {
+                border-right: 2px solid rgba(255,255,255,0.5);
+            }
+
+            #progress_container {
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="progress_container">
+            <div class="btn" id="load_auto">load auto</div>
+            <div class="btn" id="load_trick">load trick</div>
+            <div class="btn" id="load_stop">stop</div>
+            <div class="btn">set to<select id="load_value">
+                <option>0</option>
+                <option>1</option>
+                <option>20</option>
+                <option>26</option>
+                <option>50</option>
+                <option>78</option>
+                <option>100</option>
+            </select></div>
+        </div>
+    </body>
+</html>
