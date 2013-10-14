@@ -33,7 +33,6 @@
      * @param options.animationTime {Number} 轮播图单次动画运行时间 单位ms 默认为400ms
      * @param options.animationType {String} 轮播图的动化类型 默认为"ease-out"
      * @param options.loop {Boolean} 是否是循环轮播 默认为true
-     * @param options.imgZoom {Boolean} 是否缩放图片至最佳效果 默认为true
      * @param options.hasTitle {Boolean} 是否有轮播图下方的title区域
      * @param options.hasGizmos {Boolean} 是否有轮播图下方的选择区域
      * @param options.disScroll {Boolean} 是否阻止滚动条
@@ -359,14 +358,6 @@
 
         /**
          * @private
-         * @property imgZoom
-         * @type {Boolean}
-         * @desc 是否缩放超大图片
-         */
-        imgZoom: true,
-
-        /**
-         * @private
          * @property eventTimer
          */
         eventTimer: null,
@@ -541,9 +532,8 @@
          */
         buildSliderItem: function(index) {
             var dom = o.dom.createDom("div", {
-                    "class": "octopusui-slider-children"
-                }, {
-                    "-webkit-transform": "translate3d(0, 0, 0)"
+                    "class": "octopusui-slider-children",
+                    "style": "position: relative; -webkit-transform: translate3d(0, 0, 0); overflow: hidden;"
                 }),
                 idom = o.dom.createDom("img", {
                     "class": "octopusui-slider-imgChildren",
@@ -552,11 +542,9 @@
                 __url = this.getDataBy(index, "url") || "",
                 __target = this.isNewTab ? "_blank" : "_self",
                 that = this;
-            this.gesture(idom, {
-                tap_max_touchtime: 150
-            }).on("tap", function() {
+            o.event.on(idom, "click", function() {
                 if(!that.isDisableA) {
-                    window.open(__url, __target)
+                    window.open(__url, __target);
                     return;
                 }
                 that.notify("slider-item-ontap", that.data[index]);
@@ -635,26 +623,6 @@
                 console.error("Image " + url + " load failed!");
             });
         },
-
-        /**
-         * @private
-         * @method judgeIfLoadImage
-         * @desc 判断是否load图片
-         * @param index {Number} 图片的index
-         * @param dom {DOMElement} 图片的载体节点
-         * @param direction {Boolean} 标志位
-         */
-        judgeIfLoadImage: function(index, dom, direction) {
-            var current = this.current;
-            if(Math.abs(index - current.index) < this.loadImageNumber && !dom.__isloaded)    return true;
-            if(direction) {
-                if(index - current.index >= (this.length - this.loadImageNumber) && !dom.__isloaded) {
-                    return true;
-                }
-            }
-            return false;
-        },
-
 
         /**
          * @private
@@ -742,7 +710,6 @@
             o.util.each(this.doms, function(item, i) {
                 item.style[pro] = "100%";
                 item.style[spro] = _spro + "px";
-				item.style.position = "relative";
 				if(isFloat) {
                     item.style.float = "left";
                 }
@@ -800,18 +767,17 @@
                 that.pageDragEndC = that.pageDragTempC;
                 var dis = that.pageDragTempC - that.pageDragStartC;
                 that.pageDragStartC = that.pageDragTempC;
-                var tvalue,
-                    nvalue,
-                    otransform = that.viewDiv.style.webkitTransform;
+                var tvalue = that.translateValue,
+                    nvalue = tvalue + dis,
+                    ntransform;
                 if(that.isLon) {
-                    tvalue = parseInt(otransform.replace(/translate3d\(0\S*\s/g, "")) || 0;
-                    nvalue = "translate3d(0, " + (tvalue + dis) + "px, 0)";
+                    ntransform = "translate3d(0, " + nvalue + "px, 0)";
                 } else {
-                    tvalue = parseInt(otransform.replace(/translate3d\(/g, "")) || 0;
-                    nvalue = "translate3d(" + (tvalue + dis) + "px, 0, 0)";
+                    ntransform = "translate3d(" + nvalue + "px, 0, 0)";
                 }
-                that.changeDis = that.translateValue - tvalue;
-                that.viewDiv.style.webkitTransform = nvalue;
+                that.updateTranslateValue(nvalue);
+                that.changeDis += dis;
+                that.viewDiv.style.webkitTransform = ntransform;
             }, 16);
         },
 
@@ -862,15 +828,15 @@
             if(Math.abs(this.changeDis) <= this.springBackDis) {
                 this.select(this.current.index);
             } else if(this.loop) {
-                if(this.changeDis > 0) {
+                if(this.changeDis < 0) {
                     this._selectNext();
                 } else {
                     this._selectPre();
                 }
             } else if(!this.loop) {
-                if(this.changeDis > 0 && this.current.index != this.length - 1) {
+                if(this.changeDis < 0 && this.current.index != this.length - 1) {
                     this._selectNext();
-                } else if(this.changeDis < 0 && this.current.index != 0) {
+                } else if(this.changeDis > 0 && this.current.index != 0) {
                     this._selectPre();
                 } else {
                     this.select(this.current.index);
@@ -1044,7 +1010,7 @@
                     that.viewDiv.style.webkitTransform = _temp;
                     that.eventTimer = null;
                     that.isTimer = false;
-                }, this.animationTime - 50 < 0 ? 0 : this.animationTime - 50);
+                }, this.animationTime - 5 < 0 ? 0 : this.animationTime - 5);
             } else {
                 this.selectNoLoop(index);
             }

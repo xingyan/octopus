@@ -157,13 +157,6 @@
 
         /**
          * @private
-         * @property startTime
-         * @type {Number}
-         */
-        startTime: 0,
-
-        /**
-         * @private
          * @property limitV
          * @type {Number}
          */
@@ -330,14 +323,13 @@
             }
             var touches = e.touches;
             if(!touches || touches.length > 1)  return;
-            this.startTime = Date.now();
             this.stopDragTween();
             this.stop = false;
             this.isDrag = true;
             var touch = touches[0];
             this.touchStartPixelX = touch.pageX;
             this.touchStartPixelY = touch.pageY;
-            this.pageDragStartC = this.pageDragTempC = touch.pageX;;
+            this.pageDragStartC = this.pageDragTempC = touch.pageX;
             var that = this;
 
             o.util.requestAnimation(function() {
