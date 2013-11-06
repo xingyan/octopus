@@ -34,21 +34,11 @@
 
         /**
          * @private
-         * @method registerInterface
-         * @param id
-         * @param func
-         */
-        function registerInterface(id, func) {
-            initialize(undefined).registerInterface(id, func);
-        }
-
-        /**
-         * @private
          * @method initialize
          * @param options
          */
         function initialize(options) {
-            return !app ? (app = new o.App(options), app) : (!!options ? (console.log("The app has already exist! Failure to set up the config"), app) : app);
+            return !app ? (app = new o.App(options), app) : (!!options ? (console.warn("The app has already exist! Failure to set up the config"), app) : app);
         }
 
         return {
@@ -61,15 +51,6 @@
              * @desc 注册一个模块
              */
             registerModule: registerModule,
-
-            /**
-             * @public
-             * @method octopus.app.registerInterface
-             * @param id
-             * @param func
-             * @desc 注册一个通用Api模块
-             */
-            registerInterface: registerInterface,
 
             /**
              * @public
@@ -131,10 +112,10 @@
 
         /**
          * @private
-         * @property cacheCreator
-         * @desc 生成器 包括模块、interface
+         * @property moduleCreator
+         * @desc 生成器
          */
-        cacheCreator: null,
+        moduleCreator: null,
 
         /**
          * @private
@@ -257,23 +238,22 @@
          * @public
          * @method octopus.App.registerModule
          * @param id {String}
-         * @param module {Object | octopus.Module}
+         * @param m {Object | octopus.Module}
          * @param immediate {Boolean}
          */
-        registerModule: function(id, module, immediate) {
-            this.register2CacheCreator(id, "module", module);
-            return (this.isLoad || !!immediate) ? (this.startCreator(id, "module"), true) : false;
+        registerModule: function(id, m, immediate) {
+            this.register2ModuleCreator(id, m);
+            return (this.isLoad || !!immediate) ? (this.startModule(id), true) : false;
         },
 
         /**
          * @private
-         * @method register2CacheCreator
+         * @method register2ModuleCreator
          * @param id {String} 注册的id
-         * @param type {String} 注册的类型 "module" | "interface"
          * @param creator {Object | Function} 构造器
          */
-        register2CacheCreator: function(id, type, creator) {
-            return this.cacheCreator[type][id] = {
+        register2ModuleCreator: function(id, creator) {
+            return this.moduleCreator[id] = {
                 creator: creator,
                 instance: null
             };
@@ -281,35 +261,19 @@
 
         /**
          * @private
-         * @method startCreator
+         * @method startModule
          * @param id {String}
-         * @param type {String}
          */
-        startCreator: function(id, type) {
-            var creator = this.cacheCreator[type][id];
+        startModule: function(id) {
+            var creator = this.moduleCreator[id];
             if(creator.instance)   return;
             creator.instance = creator.creator(this);
+            if(!creator.instance) {
+                console.error("Module " + id + " didn't work for its invalid returns! It should be an object!");
+            } else if(!creator.instance.initialize) {
+                console.error("Module " + id + " didn't work for its invalid returns! It should has the method 'initialize'!");
+            }
             creator.instance.initialize && creator.instance.initialize();
-        },
-
-        /**
-         * @public
-         * @method octopus.App.registerInterface
-         * @param id {String}
-         * @param inter {Function}
-         */
-        registerInterface: function(id, inter) {
-            var instance = this.register2CacheCreator(id, "interface", inter);
-            this.startCreator(id, "interface");
-        },
-
-        /**
-         * @private
-         * @method octopus.App.getInterface
-         * @param id {String}
-         */
-        getInterface: function(id) {
-            return this.getBy("interface", id);
         },
 
         /**
@@ -318,17 +282,7 @@
          * @param id {String}
          */
         getModule: function(id) {
-            return this.getBy("module", id);
-        },
-
-        /**
-         * @private
-         * @method octopus.getBy
-         * @param type
-         * @param id
-         */
-        getBy: function(type, id) {
-            return this.cacheCreator[type][id].instance;
+            return this.moduleCreator[id].instance;
         },
 
         /**
@@ -453,20 +407,13 @@
         },
 
         /**
-         * @private
-         * @method startModule
-         */
-        startModule: function(creator, id) {
-            this.startCreator(id, "module");
-        },
-
-        /**
          * @public
          * @method octopus.App.addLayer
          * @desc 给当前dom上增加图层 如果不存在this.el 则此方法没实际效果
          * @param layer {octopus.Layer}
          */
         addLayer: function(layer) {
+            if(!this.layers)    this.layers = [];
             if(this.layers.indexOf(layer) != -1)  return;
             var el = layer.getEl();
             o.dom.addClass(el, "octopus-app-layer");
