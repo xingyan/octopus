@@ -144,9 +144,9 @@
                 this.setStyle(value);
                 func && func();
             } else {
-                var s = "translate3d(" + String(this.value) + "%, 0, 0); ",
-                    t = " " + d + "s linear; ",
-                    cssText = "display: block; -webkit-transition: -webkit-transform" + t + "transition: transform" + t,
+                var t = " " + d + "s linear; ",
+                    cssText = "display: block; -webkit-transition: -webkit-transform" + t + "transition: transform" + t +
+                        "-webkit-transform: " + this.el.style.webkitTransform + "; transform: " + this.el.style.transform + ";",
                     that = this;
                 this.el.style.cssText = cssText;
                 window.setTimeout(function() {
@@ -155,9 +155,10 @@
                         window.clearTimeout(that.timer);
                         that.timer = null;
                     }
+                    var self = that;
                     that.timer = window.setTimeout(function() {
-                        that.el.style.webkitTransition = "";
-                        that.el.style.transition = "";
+                        self.el.style.webkitTransition = "";
+                        self.el.style.transition = "";
                         func && func();
                     }, d * 1000);
                 }, 0);
