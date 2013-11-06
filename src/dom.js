@@ -356,7 +356,11 @@
         createDom: function(type, atts, stys) {
             var dom = doc.createElement(type);
             atts && u.each(atts, function(v, att) {
-                dom.setAttribute(att, v);
+                if(att == "innerHTML" || att == "innerText") {
+                    dom[att] = o.util.encodeHtml(v);
+                } else {
+                    dom.setAttribute(att, v);
+                }
             });
             stys && o.dom.setStyles(dom, stys, true);
             return dom;
