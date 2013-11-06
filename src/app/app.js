@@ -175,19 +175,25 @@
 
         /**
          * @private
+         * @property isInitDom
+         */
+        isInitDom: false,
+
+        /**
+         * @private
          * @constructor
          */
         initialize: function(options) {
             var config = this.config = o.extend({}, options);
-            this.cacheCreator = {"module": {}, "interface": {}};
+            this.moduleCreator = {};
             this.eventCaches = [];
             this.id = config.id || o.util.createUniqueID(this.CLASS_NAME + "_");
 
             //监听window事件 启动模块
-            o.event.on(window, "ready", o.util.bind(this.onWindowLoad, this));
-            o.event.on(window, "resize", o.util.bind(this.onWindowResize, this));
+            o.event.on(window, "ready", o.util.bind(this.onWindowLoad, this), false);
+            o.event.on(window, "resize", o.util.bind(this.onWindowResize, this), false);
             if("orientationchange" in window) {
-                o.event.on(window, "orientationchange", o.util.bind(this.onOrientationChanged, this));
+                o.event.on(window, "orientationchange", o.util.bind(this.onOrientationChanged, this), false);
             }
             this.events = new o.Events(this);
             if(config.eventListeners && o.util.isObject(config.eventListeners)) {
@@ -326,10 +332,10 @@
          * @desc 监听onload事件
          */
         onWindowLoad: function() {
-            if(this.config.el) {
-                this.initDomMode();
-            }
-            o.util.each(this.cacheCreator["module"], o.util.bind(this.startModule, this))
+            var that = this;
+            o.util.each(this.moduleCreator, function(item, k) {
+                that.startModule(k);
+            });
             this.isLoad = true;
             if(this.eventCaches) {
                 var item;
@@ -341,35 +347,42 @@
         },
 
         /**
+         * @public
+         * @method octopus.App.render
+         */
+        render: function(el) {
+            if(!this.isLoad)    console.error("The page hasn't loaded!");
+            el = o.g(el);
+            if(!el)    console.error("Invalid node to render!");
+            this.initDomMode(el);
+        },
+
+        /**
          * @private
          * @method initDomMode
          */
-        initDomMode: function() {
+        initDomMode: function(el) {
             //节点模式
+            this.isInitDom = true;
             var config = this.config,
-                node = o.g(config.el),
+                node = el,
                 id = this.id + "_Octopus_ViewPort";
             this.el = o.dom.cloneNode(node, true);
             this.viewEl = o.dom.createDom("div", {
-                id: id
-            }, {
-                width: "100%",
-                height: "100%",
-                position: "relative",
-                "z-index": 300,
-                overflow: "hidden"
+                id: id,
+                "class": "octopus-viewport",
+                style: "width: 100%; height: 100%; position: relative; z-index: 300; overflow: hidden"
             });
             this.el.appendChild(this.viewEl);
             //如果是节点模式且拥有图层
-            this.layers = [];
             if(config.layers) {
                 o.util.each(config.layers, o.util.bind(this.addLayer, this));
             }
             //如果是节点模式且初始化widget控件
             if(config.widgets) {
-                this.widgets = [];
                 o.util.each(config.widgets, o.util.bind(this.addWidget, this));
             }
+            this.notify("Global-OctopusApp-BeforeAppCompleted");
             //把被搞得面目全非的el加入文档流
             if(node) {
                 node.parentNode.replaceChild(this.el, node);
@@ -538,19 +551,19 @@
          * @public
          * @method octopus.App.addWidget
          * @param widget {octopus.Widget}
+         * @param auto {Boolean}
          * @desc 添加widget到app里
          */
-        addWidget: function(widget) {
-            var i = 0,
-                len = this.widgets.length;
-            for(; i < len; i++) {
-                if (this.widgets[i] == widget) {
-                    return false;
-                }
+        addWidget: function(widget, auto) {
+            if(!this.widgets)    this.widgets = [];
+            var index = this.widgets.indexOf(widget);
+            if(index > -1)  return false;
+            this.widgets.push(widget)
+            if(!auto) {
+                widget.container = widget.outsideViewport ? this.el : this.viewEl;
+                widget.render();
             }
-            widget.setApp(this);
-            widget.container = widget.outsideViewport ? this.el : this.viewEl;
-            widget.render();
+            widget.setZIndex(this.Z_INDEX_BASE.Widget + this.widgets.length * 5);
         },
 
         /**
