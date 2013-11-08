@@ -189,7 +189,7 @@
         check: function() {
             this.isScroll = false;
             var len = this.imgs.length;
-            if(len == 0)    return;
+            if(len == 0)    return this;
             var t = this.container.scrollTop,
                 h = o.dom.getHeight(this.container);
             if(this.container == document.body) {
