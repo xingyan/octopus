@@ -123,19 +123,15 @@
          * @param useCapture {Boolean}
          */
         on: function(dom, name, fn, useCapture) {
-            var element = o.g(dom);
+            var names = name.split(" "),
+                len = names.length,
+                i = len;
+            if(len == 0)    return false;
+            var element = o.g(dom),
+                that = o.event;
             useCapture = useCapture || false;
-
-            if(name == "ortchange") {
-                name = "orientationchange" in window ? "orientationchange" : "resize";
-            }
-
-            if(name == "ready") {
-                name = "DOMContentLoaded";
-            }
-
-            if(!this.observers) {
-                this.observers = {};
+            if(!that.observers) {
+                that.observers = {};
             }
             if(!element._eventCacheID) {
                 var idPrefix = "eventCacheID_";
@@ -144,22 +140,45 @@
                 }
                 element._eventCacheID = o.util.createUniqueID(idPrefix);
             }
-            var cacheID = element._eventCacheID;
-            if(!this.observers[cacheID]) {
-                this.observers[cacheID] = [];
+            for(; i--; ) {
+                that._on(element, names[i], fn, useCapture);
             }
-            this.observers[cacheID].push({
-                'element': element,
+            return element;
+        },
+
+        /**
+         * @private
+         * @method octopus.event._on
+         * @desc 监听事件
+         * @param el {DOMElement}
+         * @param name {String}
+         * @param fn {Function}
+         * @param useCapture {Boolean}
+         */
+        _on: function(el, name, fn, useCapture) {
+            if(name == "ortchange") {
+                name = "orientationchange" in window ? "orientationchange" : "resize";
+            }
+            if(name == "ready") {
+                name = "DOMContentLoaded";
+            }
+
+            var cacheID = el._eventCacheID,
+                that = o.event;
+            if(!that.observers[cacheID]) {
+                that.observers[cacheID] = [];
+            }
+            that.observers[cacheID].push({
+                'element': el,
                 'name': name,
                 'observer': fn,
                 'useCapture': useCapture
             });
-            if(element.addEventListener) {
-                element.addEventListener(name, fn, useCapture);
-            } else if (element.attachEvent) {
-                element.attachEvent('on' + name, fn);
+            if(el.addEventListener) {
+                el.addEventListener(name, fn, useCapture);
+            } else if (el.attachEvent) {
+                el.attachEvent('on' + name, fn);
             }
-            return element;
         },
 
         /**
@@ -181,7 +200,8 @@
          */
         stopEventObserver: function(dom, event) {
             var cacheID = o.g(dom)._eventCacheID,
-                elementObservers = o.event.observers[cacheID];
+                that = o.event,
+                elementObservers = that.observers[cacheID];
             if (elementObservers) {
                 var i = elementObservers.length;
                 for(; i--; ) {
@@ -191,7 +211,7 @@
                             entry.name,
                             entry.observer,
                             entry.useCapture);
-                        o.event.un.apply(this, args);
+                        that.un.apply(this, args);
                     }
                 }
             }
@@ -224,29 +244,49 @@
          * @param name {String}
          * @param fn {Function}
          * @param useCapture {Boolean}
-         * @return: 返回解除监听是否成功 {Boolean}
+         * @return {Boolean} 返回解除监听是否成功
          */
         un: function(dom, name, fn, useCapture) {
-            var element = o.g(dom);
-            var cacheID = element._eventCacheID;
+            var names = name.split(" "),
+                len = names.length,
+                i = len;
+            if(len == 0)    return false;
+            var element = o.g(dom),
+                cacheID = element._eventCacheID,
+                foundEntry = false;
             useCapture = useCapture || false;
+            for(; i--; ) {
+                foundEntry = o.event._un(element, names[i], fn, useCapture, cacheID);
+            }
+            return foundEntry;
+        },
 
+        /**
+         * @private
+         * @method octopus.event.un
+         * @desc 单删一个指定事件监听
+         * @param el {DOMElement}
+         * @param name {String}
+         * @param fn {Function}
+         * @param useCapture {Boolean}
+         * @param id {String}
+         * @return {Boolean} 返回解除监听是否成功
+         */
+        _un: function(el, name, fn, useCapture, id) {
             if(name == "ortchange") {
                 name = "orientationchange" in window ? "orientationchange" : "resize";
             }
-
             if(name == "ready") {
                 name = "DOMContentLoaded";
             }
-
-            if (name == 'keypress') {
+            if(name == 'keypress') {
                 if ( navigator.appVersion.match(/Konqueror|Safari|KHTML/) ||
-                    element.detachEvent) {
+                    el.detachEvent) {
                     name = 'keydown';
                 }
             }
-            var foundEntry = false;
-            var elementObservers = o.event.observers[cacheID];
+            var foundEntry = false,
+                elementObservers = o.event.observers[id];
             if (elementObservers) {
                 var i=0;
                 while(!foundEntry && i < elementObservers.length) {
@@ -256,7 +296,7 @@
                         (cacheEntry.useCapture == useCapture)) {
                         elementObservers.splice(i, 1);
                         if (elementObservers.length == 0) {
-                            o.event.observers[cacheID] = null;
+                            o.event.observers[id] = null;
                         }
                         foundEntry = true;
                         break;
@@ -265,10 +305,10 @@
                 }
             }
             if (foundEntry) {
-                if (element.removeEventListener) {
-                    element.removeEventListener(name, fn, useCapture);
-                } else if (element && element.detachEvent) {
-                    element.detachEvent('on' + name, fn);
+                if (el.removeEventListener) {
+                    el.removeEventListener(name, fn, useCapture);
+                } else if (el && el.detachEvent) {
+                    el.detachEvent('on' + name, fn);
                 }
             }
             return foundEntry;
