@@ -121,18 +121,15 @@
             var el = el,
                 fromOpacity = 1,
                 toOpacity = 1,
-                curZ = o.dom.getStyle(el, "z-index") || 0,
-                zIndex = curZ,
                 out = options.out;
             if (out) {
                 toOpacity = 0;
             } else {
-                zIndex = Math.abs(curZ) + 1;
                 fromOpacity = 0;
             }
-            var fv = [fromOpacity, zIndex],
-                ev = [toOpacity, zIndex];
-            return new o.Tween(el, ["opacity", "z-index"], fv, ev, options.duration, func, {
+            var fv = [fromOpacity],
+                ev = [toOpacity];
+            return new o.Tween(el, ["opacity"], fv, ev, options.duration, func, {
                 ease: options.ease
             });
         },
