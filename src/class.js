@@ -2,7 +2,7 @@
  * @file
  * webapp通用组件基础库文件，主要用于通用组件的类结构声明
  * @author oupeng-fe
- * @version 0.1
+ * @version 1.1
  */
 ;(function(window, undefined) {
 
@@ -16,7 +16,7 @@
      * @type {object}
      */
     var octopus,
-        o = octopus = {version: "0.1"};
+        o = octopus = {version: "1.1"};
 
     /**
      * @method octopus.define

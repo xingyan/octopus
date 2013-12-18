@@ -144,23 +144,23 @@
                 this.setStyle(value);
                 func && func();
             } else {
-                var s = "translate3d(" + String(this.value) + "%, 0, 0); ",
-                    t = " " + d + "s linear; ",
-                    cssText = "display: block; -webkit-transition: -webkit-transform" + t + "transition: transform" + t,
+                var t = " " + d + "s linear",
                     that = this;
-                this.el.style.cssText = cssText;
+                this.el.style.webkitTransition = "-webkit-transform" + t;
+                this.el.style.transition = "transform" + t;
                 window.setTimeout(function() {
                     that.setStyle(value);
                     if(that.timer) {
                         window.clearTimeout(that.timer);
                         that.timer = null;
                     }
+                    var self = that;
                     that.timer = window.setTimeout(function() {
-                        that.el.style.webkitTransition = "";
-                        that.el.style.transition = "";
+                        self.el.style.webkitTransition = "";
+                        self.el.style.transition = "";
                         func && func();
-                    }, d * 1000);
-                }, 0);
+                    }, d * 1000 + 150);
+                }, 100);    //当页面动画非常多的时候 这个时候给一个0ms的延时对于控件自身的动画显得杯水车薪
             }
             this.setV(v);
         },

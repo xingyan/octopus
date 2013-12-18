@@ -5,7 +5,7 @@
  * @require lib/class.js
  * @require lib/util.js
  * @author oupeng-fe
- * @version 0.1
+ * @version 1.1
  */
 ;(function(o, undefined) {
 
@@ -123,19 +123,15 @@
          * @param useCapture {Boolean}
          */
         on: function(dom, name, fn, useCapture) {
-            var element = o.g(dom);
+            var names = name.split(" "),
+                len = names.length,
+                i = len;
+            if(len == 0)    return false;
+            var element = o.g(dom),
+                that = o.event;
             useCapture = useCapture || false;
-
-            if(name == "ortchange") {
-                name = "orientationchange" in window ? "orientationchange" : "resize";
-            }
-
-            if(name == "ready") {
-                name = "DOMContentLoaded";
-            }
-
-            if(!this.observers) {
-                this.observers = {};
+            if(!that.observers) {
+                that.observers = {};
             }
             if(!element._eventCacheID) {
                 var idPrefix = "eventCacheID_";
@@ -144,22 +140,45 @@
                 }
                 element._eventCacheID = o.util.createUniqueID(idPrefix);
             }
-            var cacheID = element._eventCacheID;
-            if(!this.observers[cacheID]) {
-                this.observers[cacheID] = [];
+            for(; i--; ) {
+                that._on(element, names[i], fn, useCapture);
             }
-            this.observers[cacheID].push({
-                'element': element,
+            return element;
+        },
+
+        /**
+         * @private
+         * @method octopus.event._on
+         * @desc 监听事件
+         * @param el {DOMElement}
+         * @param name {String}
+         * @param fn {Function}
+         * @param useCapture {Boolean}
+         */
+        _on: function(el, name, fn, useCapture) {
+            if(name == "ortchange") {
+                name = "orientationchange" in window ? "orientationchange" : "resize";
+            }
+            if(name == "ready") {
+                name = "DOMContentLoaded";
+            }
+
+            var cacheID = el._eventCacheID,
+                that = o.event;
+            if(!that.observers[cacheID]) {
+                that.observers[cacheID] = [];
+            }
+            that.observers[cacheID].push({
+                'element': el,
                 'name': name,
                 'observer': fn,
                 'useCapture': useCapture
             });
-            if(element.addEventListener) {
-                element.addEventListener(name, fn, useCapture);
-            } else if (element.attachEvent) {
-                element.attachEvent('on' + name, fn);
+            if(el.addEventListener) {
+                el.addEventListener(name, fn, useCapture);
+            } else if (el.attachEvent) {
+                el.attachEvent('on' + name, fn);
             }
-            return element;
         },
 
         /**
@@ -181,7 +200,8 @@
          */
         stopEventObserver: function(dom, event) {
             var cacheID = o.g(dom)._eventCacheID,
-                elementObservers = o.event.observers[cacheID];
+                that = o.event,
+                elementObservers = that.observers[cacheID];
             if (elementObservers) {
                 var i = elementObservers.length;
                 for(; i--; ) {
@@ -191,7 +211,7 @@
                             entry.name,
                             entry.observer,
                             entry.useCapture);
-                        o.event.un.apply(this, args);
+                        that.un.apply(this, args);
                     }
                 }
             }
@@ -224,29 +244,49 @@
          * @param name {String}
          * @param fn {Function}
          * @param useCapture {Boolean}
-         * @return: 返回解除监听是否成功 {Boolean}
+         * @return {Boolean} 返回解除监听是否成功
          */
         un: function(dom, name, fn, useCapture) {
-            var element = o.g(dom);
-            var cacheID = element._eventCacheID;
+            var names = name.split(" "),
+                len = names.length,
+                i = len;
+            if(len == 0)    return false;
+            var element = o.g(dom),
+                cacheID = element._eventCacheID,
+                foundEntry = false;
             useCapture = useCapture || false;
+            for(; i--; ) {
+                foundEntry = o.event._un(element, names[i], fn, useCapture, cacheID);
+            }
+            return foundEntry;
+        },
 
+        /**
+         * @private
+         * @method octopus.event.un
+         * @desc 单删一个指定事件监听
+         * @param el {DOMElement}
+         * @param name {String}
+         * @param fn {Function}
+         * @param useCapture {Boolean}
+         * @param id {String}
+         * @return {Boolean} 返回解除监听是否成功
+         */
+        _un: function(el, name, fn, useCapture, id) {
             if(name == "ortchange") {
                 name = "orientationchange" in window ? "orientationchange" : "resize";
             }
-
             if(name == "ready") {
                 name = "DOMContentLoaded";
             }
-
-            if (name == 'keypress') {
+            if(name == 'keypress') {
                 if ( navigator.appVersion.match(/Konqueror|Safari|KHTML/) ||
-                    element.detachEvent) {
+                    el.detachEvent) {
                     name = 'keydown';
                 }
             }
-            var foundEntry = false;
-            var elementObservers = o.event.observers[cacheID];
+            var foundEntry = false,
+                elementObservers = o.event.observers[id];
             if (elementObservers) {
                 var i=0;
                 while(!foundEntry && i < elementObservers.length) {
@@ -256,7 +296,7 @@
                         (cacheEntry.useCapture == useCapture)) {
                         elementObservers.splice(i, 1);
                         if (elementObservers.length == 0) {
-                            o.event.observers[cacheID] = null;
+                            o.event.observers[id] = null;
                         }
                         foundEntry = true;
                         break;
@@ -265,10 +305,10 @@
                 }
             }
             if (foundEntry) {
-                if (element.removeEventListener) {
-                    element.removeEventListener(name, fn, useCapture);
-                } else if (element && element.detachEvent) {
-                    element.detachEvent('on' + name, fn);
+                if (el.removeEventListener) {
+                    el.removeEventListener(name, fn, useCapture);
+                } else if (el && el.detachEvent) {
+                    el.detachEvent('on' + name, fn);
                 }
             }
             return foundEntry;
@@ -326,19 +366,19 @@
 
         /**
          * @private
-         * @property object
+         * @property obj
          * @type {object}
          * @desc 事件对象所属的主体
          */
-        object: null,
+        obj: null,
 
         /**
          * @private
-         * @property element
+         * @property el
          * @type {DOMELement}
          * @desc 事件绑定的节点
          */
-        element: null,
+        el: null,
 
         /**
          * @private
@@ -377,20 +417,20 @@
         /**
          * @private
          * @constructos: octopus.Events.initialize
-         * @param object {Object} 观察订阅事件的对象 必需
-         * @param element {DOMElement} 一个响应浏览器事件的dom 非必需 如果指定了此值 则表示要对该节点进行一次惨绝人寰的封装
+         * @param obj {Object} 观察订阅事件的对象 必需
+         * @param el {DOMElement} 一个响应浏览器事件的dom 非必需 如果指定了此值 则表示要对该节点进行一次惨绝人寰的封装
          * @param fallThrough {Boolean}
          * @param options {Object}
          */
-        initialize: function(object, element, fallThrough, options) {
+        initialize: function(obj, el, fallThrough, options) {
             o.extend(this, options);
-            this.object = object;
+            this.obj = obj;
             this.fallThrough = fallThrough;
             this.listeners = {};
             this.extensions = {};
             this.extensionCount = {};
-            if (element != null) {
-                this.attachToElement(element);
+            if (el != null) {
+                this.attachToElement(el);
             }
         },
 
@@ -406,12 +446,12 @@
                 }
             }
             this.extensions = null;
-            if (this.element) {
-                o.event.stopObservingElement(this.element);
+            if (this.el) {
+                o.event.stopObservingElement(this.el);
             }
-            this.element = null;
+            this.el = null;
             this.listeners = null;
-            this.object = null;
+            this.obj = null;
             this.fallThrough = null;
             this.eventHandler = null;
         },
@@ -419,24 +459,24 @@
         /**
          * @private
          * @method attachToElement
-         * @param element {DOMElement}
+         * @param el {DOMElement}
          */
-        attachToElement: function(element) {
-            if (this.element) {
-                o.event.stopObservingElement(this.element);
+        attachToElement: function(el) {
+            if (this.el) {
+                o.event.stopObservingElement(this.el);
             } else {
                 this.eventHandler = o.util.bindAsEventListener(
                     this.handleBrowserEvent, this
                 );
             }
-            this.element = element;
+            this.el = el;
             var i = 0,
                 len = this.BROWSER_EVENTS.length;
             for (; i < len; i++) {
-                o.event.on(element, this.BROWSER_EVENTS[i], this.eventHandler);
+                o.event.on(el, this.BROWSER_EVENTS[i], this.eventHandler);
             }
             // 不去掉ie下会2掉
-            o.event.on(element, "dragstart", o.event.stop);
+            o.event.on(el, "dragstart", o.event.stop);
         },
 
         /**
@@ -481,7 +521,7 @@
             }
             if (func != null) {
                 if (obj == null || obj == undefined)  {
-                    obj = this.object;
+                    obj = this.obj;
                 }
                 var listeners = this.listeners[type];
                 if (!listeners) {
@@ -511,7 +551,7 @@
          */
         un: function(type, func, obj) {
             if (obj == null)  {
-                obj = this.object;
+                obj = this.obj;
             }
             var listeners = this.listeners[type];
             if (listeners != null) {
@@ -536,8 +576,8 @@
             if (evt == null) {
                 evt = {};
             }
-            evt.object = this.object;
-            evt.element = this.element;
+            evt.obj = this.obj;
+            evt.el = this.el;
             if(!evt.type) {
                 evt.type = type;
             }
@@ -576,12 +616,12 @@
         /**
          * @method octopus.Events.register
          * @desc 批量增加事件
-         * @param object {Object}
+         * @param evs {Object}
          */
-        register: function(object) {
-            for(var type in object) {
-                if(type != "scope" && object.hasOwnProperty(type)) {
-                    this.on(type, object[type], object.scope, false);
+        register: function(evs) {
+            for(var type in evs) {
+                if(type != "scope" && evs.hasOwnProperty(type)) {
+                    this.on(type, evs[type], evs.scope, false);
                 }
             }
         },
@@ -589,12 +629,12 @@
         /**
          * @method octopus.Events.unregister
          * @desc 批量去除事件
-         * @param object {Object}
+         * @param evs {Object}
          */
-        unregister: function(object) {
-            for(var type in object) {
-                if(type != "scope" && object.hasOwnProperty(type)) {
-                    this.un(type, object[type], object.scope);
+        unregister: function(evs) {
+            for(var type in evs) {
+                if(type != "scope" && evs.hasOwnProperty(type)) {
+                    this.un(type, evs[type], evs.scope);
                 }
             }
         },

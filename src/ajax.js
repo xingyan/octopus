@@ -1,7 +1,7 @@
 /**
  * @file
  * @author oupeng-fe
- * @version 0.1
+ * @version 1.1
  * webapp通用组件基础库
  * ajax方法
  * @require lib/class.js
@@ -357,7 +357,7 @@
                 timer,
                 that = this,
                 url = options["url"],
-                callback = options["complete"] || options["success"],
+                callback = options["success"] || options["complete"],
                 error = options["error"] || o.util.empty;
             if(o.util.isString(callback)) {
                 callbackName = callback;
@@ -369,24 +369,23 @@
                 timer = setTimeout(getCallBack(1), timeOut);
             }
             script.onerror = function() {
-                that._removeScriptTag();
+                that._removeScriptTag(script);
                 if(callbackName in window) {
                     window[callbackName] = function(){};
                 }
                 error();
             };
-            url = o.util.urlAppend(url,
-                o.util.getParameterString(data || {})) + "&callback=" + callbackName;
+            url = o.util.urlAppend(o.util.urlAppend(url,
+                o.util.getParameterString(data || {})), "callback=" + callbackName);
             this._createScriptTag(script, url, charset);
-            function getCallBack(onTimeOut){
-                return function(){
+            function getCallBack(onTimeOut) {
+                return function() {
                     try {
-                        if( onTimeOut ){
+                        if( onTimeOut ) {
                             error();
-                        }else{
+                        } else {
                             clearTimeout(timer);
                             callback.apply(window, arguments);
-
                         }
                         window[callbackName] = o.util.empty;
                     } catch (exception) {}

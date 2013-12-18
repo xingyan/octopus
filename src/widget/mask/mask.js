@@ -1,7 +1,7 @@
 /**
  * @file
  * @author oupeng-fe
- * @version 0.1
+ * @version 1.1
  * webapp通用组件
  * mask   -   浮层
  * @require lib/class.js

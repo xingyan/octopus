@@ -29,24 +29,38 @@
             innerHTML: "bottom"
         }),
         currentSidebar;
-
+    var bars = {
+        "left": leftsidebar,
+        "right": rightsidebar,
+        "top": topsidebar,
+        "bottom": bottomsidebar
+    }
     function onReady() {
         var d = o.g("content_container");
         o.gesture(d).on("tap", function(e) {
             var t = e.target;
-            if(!o.dom.hasClass(t, "btn") || leftsidebar.isShow || rightsidebar.isShow
-                || topsidebar.isShow || bottomsidebar.isShow)   return;
+            if(!o.dom.hasClass(t, "btn") || leftsidebar.isShow
+                || rightsidebar.isShow || topsidebar.isShow ||
+                bottomsidebar.isShow || leftsidebar.locked || rightsidebar.locked
+                || topsidebar.locked || bottomsidebar.locked) {
+                return;
+            }
             var h = t.innerHTML.toLowerCase().split("-"),
                 direction = h[0],
-                type = h[1];
-            var r = direction + "sidebar.active ? " + direction + "sidebar.show('" + type + "') : " + direction
-                + "sidebar.render('sidebar_container', null, '" + type + "');" +
-                "if(currentSidebar != " + direction + "sidebar) { currentSidebar = " + direction + "sidebar; }";
-            eval(r);
+                type = h[1],
+                bar = bars[direction];
+            bar.active ? bar.show(type) : bar.render("sidebar_container", null, type);
+            if(currentSidebar != bar) {
+                currentSidebar = bar;
+            }
         });
         o.gesture(document).on("tap", function(e) {
             var t = e.target;
-            if(!currentSidebar || t == currentSidebar.getEl() || !currentSidebar.isShow) return;
+            if(!currentSidebar || t == currentSidebar.getEl()
+                || !currentSidebar.isShow || leftsidebar.locked || rightsidebar.locked
+                || topsidebar.locked || bottomsidebar.locked) {
+                return;
+            }
             o.event.stop(e);
             currentSidebar.hidden();
         });

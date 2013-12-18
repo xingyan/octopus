@@ -3,7 +3,7 @@
  * webapp通用组件结构文件
  * 定义图层基类
  * @author oupeng-fe
- * @version 0.1
+ * @version 1.1
  */
 ;(function(o, undefined) {
 
@@ -79,7 +79,7 @@
             this.isCurrent = config.isCurrent || this.isCurrent;
             this.isBaseLayer = config.isBaseLayer || this.isBaseLayer;
             if(this.isCurrent || this.isBaseLayer) {
-                o.dom.addClass(this.el, "octopus-layer-show");
+                o.dom.addClass(this.el, "octopus-layer-base");
             }
             this.event = new o.Events(this);
         },

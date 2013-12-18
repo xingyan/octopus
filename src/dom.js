@@ -5,7 +5,7 @@
  * @require lib/class.js
  * @require lib/util.js
  * @author oupeng-fe
- * @version 0.1
+ * @version 1.1
  */
 ;(function(o, undefined) {
 
@@ -356,7 +356,11 @@
         createDom: function(type, atts, stys) {
             var dom = doc.createElement(type);
             atts && u.each(atts, function(v, att) {
-                dom.setAttribute(att, v);
+                if(att == "innerHTML" || att == "innerText") {
+                    dom[att] = o.util.encodeHtml(v);
+                } else {
+                    dom.setAttribute(att, v);
+                }
             });
             stys && o.dom.setStyles(dom, stys, true);
             return dom;

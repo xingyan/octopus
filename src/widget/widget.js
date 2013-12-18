@@ -2,7 +2,7 @@
  * @file
  * webapp通用组件父类
  * @author oupeng-fe
- * @version 0.1
+ * @version 1.1
  * @require lib/class.js
  * @require lib/util.js
  * @require lib/dom.js
@@ -182,6 +182,7 @@
          */
         activate: function() {
             if(this.active) return;
+            o.dom.addClass(this.el, "activate");
             this.active = true;
         },
 
@@ -192,6 +193,7 @@
          */
         deactivate: function() {
             if(!this.active)    return;
+            o.dom.removeClass(this.el, "activate");
             this.active = false;
         },
 
@@ -340,6 +342,16 @@
          */
         setManager: function(m) {
             this.widgetManager = m;
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.setZIndex
+         * @desc 设置控件的zindex值
+         * @param z {String}
+         */
+        setZIndex: function(z) {
+            this.el.style.zIndex = z;
         },
 
         CLASS_NAME: "octopus.Widget"

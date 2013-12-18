@@ -7,7 +7,7 @@
  * @require lib/dom.js
  * @require lib/event.js
  * @author oupeng-fe
- * @version 0.1
+ * @version 1.1
  */
 ;(function(o, undefined) {
 
@@ -34,21 +34,11 @@
 
         /**
          * @private
-         * @method registerInterface
-         * @param id
-         * @param func
-         */
-        function registerInterface(id, func) {
-            initialize(undefined).registerInterface(id, func);
-        }
-
-        /**
-         * @private
          * @method initialize
          * @param options
          */
         function initialize(options) {
-            return !app ? (app = new o.App(options), app) : (!!options ? (console.log("The app has already exist! Failure to set up the config"), app) : app);
+            return !app ? (app = new o.App(options), app) : (!!options ? (console.warn("The app has already exist! Failure to set up the config"), app) : app);
         }
 
         return {
@@ -61,15 +51,6 @@
              * @desc 注册一个模块
              */
             registerModule: registerModule,
-
-            /**
-             * @public
-             * @method octopus.app.registerInterface
-             * @param id
-             * @param func
-             * @desc 注册一个通用Api模块
-             */
-            registerInterface: registerInterface,
 
             /**
              * @public
@@ -131,10 +112,10 @@
 
         /**
          * @private
-         * @property cacheCreator
-         * @desc 生成器 包括模块、interface
+         * @property moduleCreator
+         * @desc 生成器
          */
-        cacheCreator: null,
+        moduleCreator: null,
 
         /**
          * @private
@@ -194,19 +175,25 @@
 
         /**
          * @private
+         * @property isInitDom
+         */
+        isInitDom: false,
+
+        /**
+         * @private
          * @constructor
          */
         initialize: function(options) {
             var config = this.config = o.extend({}, options);
-            this.cacheCreator = {"module": {}, "interface": {}};
+            this.moduleCreator = {};
             this.eventCaches = [];
             this.id = config.id || o.util.createUniqueID(this.CLASS_NAME + "_");
 
             //监听window事件 启动模块
-            o.event.on(window, "ready", o.util.bind(this.onWindowLoad, this));
-            o.event.on(window, "resize", o.util.bind(this.onWindowResize, this));
+            o.event.on(window, "ready", o.util.bind(this.onWindowLoad, this), false);
+            o.event.on(window, "resize", o.util.bind(this.onWindowResize, this), false);
             if("orientationchange" in window) {
-                o.event.on(window, "orientationchange", o.util.bind(this.onOrientationChanged, this));
+                o.event.on(window, "orientationchange", o.util.bind(this.onOrientationChanged, this), false);
             }
             this.events = new o.Events(this);
             if(config.eventListeners && o.util.isObject(config.eventListeners)) {
@@ -257,23 +244,22 @@
          * @public
          * @method octopus.App.registerModule
          * @param id {String}
-         * @param module {Object | octopus.Module}
+         * @param m {Object | octopus.Module}
          * @param immediate {Boolean}
          */
-        registerModule: function(id, module, immediate) {
-            this.register2CacheCreator(id, "module", module);
-            return (this.isLoad || !!immediate) ? (this.startCreator(id, "module"), true) : false;
+        registerModule: function(id, m, immediate) {
+            this.register2ModuleCreator(id, m);
+            return (this.isLoad || !!immediate) ? (this.startModule(id), true) : false;
         },
 
         /**
          * @private
-         * @method register2CacheCreator
+         * @method register2ModuleCreator
          * @param id {String} 注册的id
-         * @param type {String} 注册的类型 "module" | "interface"
          * @param creator {Object | Function} 构造器
          */
-        register2CacheCreator: function(id, type, creator) {
-            return this.cacheCreator[type][id] = {
+        register2ModuleCreator: function(id, creator) {
+            return this.moduleCreator[id] = {
                 creator: creator,
                 instance: null
             };
@@ -281,35 +267,19 @@
 
         /**
          * @private
-         * @method startCreator
+         * @method startModule
          * @param id {String}
-         * @param type {String}
          */
-        startCreator: function(id, type) {
-            var creator = this.cacheCreator[type][id];
+        startModule: function(id) {
+            var creator = this.moduleCreator[id];
             if(creator.instance)   return;
             creator.instance = creator.creator(this);
+            if(!creator.instance) {
+                console.error("Module " + id + " didn't work for its invalid returns! It should be an object!");
+            } else if(!creator.instance.initialize) {
+                console.error("Module " + id + " didn't work for its invalid returns! It should has the method 'initialize'!");
+            }
             creator.instance.initialize && creator.instance.initialize();
-        },
-
-        /**
-         * @public
-         * @method octopus.App.registerInterface
-         * @param id {String}
-         * @param inter {Function}
-         */
-        registerInterface: function(id, inter) {
-            var instance = this.register2CacheCreator(id, "interface", inter);
-            this.startCreator(id, "interface");
-        },
-
-        /**
-         * @private
-         * @method octopus.App.getInterface
-         * @param id {String}
-         */
-        getInterface: function(id) {
-            return this.getBy("interface", id);
         },
 
         /**
@@ -318,17 +288,7 @@
          * @param id {String}
          */
         getModule: function(id) {
-            return this.getBy("module", id);
-        },
-
-        /**
-         * @private
-         * @method octopus.getBy
-         * @param type
-         * @param id
-         */
-        getBy: function(type, id) {
-            return this.cacheCreator[type][id].instance;
+            return this.moduleCreator[id].instance;
         },
 
         /**
@@ -372,10 +332,10 @@
          * @desc 监听onload事件
          */
         onWindowLoad: function() {
-            if(this.config.el) {
-                this.initDomMode();
-            }
-            o.util.each(this.cacheCreator["module"], o.util.bind(this.startModule, this))
+            var that = this;
+            o.util.each(this.moduleCreator, function(item, k) {
+                that.startModule(k);
+            });
             this.isLoad = true;
             if(this.eventCaches) {
                 var item;
@@ -387,35 +347,42 @@
         },
 
         /**
+         * @public
+         * @method octopus.App.render
+         */
+        render: function(el) {
+            if(!this.isLoad)    console.error("The page hasn't loaded!");
+            el = o.g(el);
+            if(!el)    console.error("Invalid node to render!");
+            this.initDomMode(el);
+        },
+
+        /**
          * @private
          * @method initDomMode
          */
-        initDomMode: function() {
+        initDomMode: function(el) {
             //节点模式
+            this.isInitDom = true;
             var config = this.config,
-                node = o.g(config.el),
+                node = el,
                 id = this.id + "_Octopus_ViewPort";
             this.el = o.dom.cloneNode(node, true);
             this.viewEl = o.dom.createDom("div", {
-                id: id
-            }, {
-                width: "100%",
-                height: "100%",
-                position: "relative",
-                "z-index": 300,
-                overflow: "hidden"
+                id: id,
+                "class": "octopus-viewport",
+                style: "width: 100%; height: 100%; position: relative; z-index: 300; overflow: hidden"
             });
             this.el.appendChild(this.viewEl);
             //如果是节点模式且拥有图层
-            this.layers = [];
             if(config.layers) {
                 o.util.each(config.layers, o.util.bind(this.addLayer, this));
             }
             //如果是节点模式且初始化widget控件
             if(config.widgets) {
-                this.widgets = [];
                 o.util.each(config.widgets, o.util.bind(this.addWidget, this));
             }
+            this.notify("Global-OctopusApp-BeforeAppCompleted");
             //把被搞得面目全非的el加入文档流
             if(node) {
                 node.parentNode.replaceChild(this.el, node);
@@ -453,20 +420,13 @@
         },
 
         /**
-         * @private
-         * @method startModule
-         */
-        startModule: function(creator, id) {
-            this.startCreator(id, "module");
-        },
-
-        /**
          * @public
          * @method octopus.App.addLayer
          * @desc 给当前dom上增加图层 如果不存在this.el 则此方法没实际效果
          * @param layer {octopus.Layer}
          */
         addLayer: function(layer) {
+            if(!this.layers)    this.layers = [];
             if(this.layers.indexOf(layer) != -1)  return;
             var el = layer.getEl();
             o.dom.addClass(el, "octopus-app-layer");
@@ -495,6 +455,7 @@
                 this.currentLayer.setCurrent(false);
             }
             this.currentLayer = layer;
+            this.topLayer(layer);
             layer.setCurrent(true);
             this.notify("Global-OctopusApp-CurrentLayerChanged", {layer: layer});
         },
@@ -548,11 +509,11 @@
          * @method octopus.App.topLayer
          */
         topLayer: function(layer) {
-            var topIndex = this.getTopZindex(),
-                index = layer.div.style.zIndex;
+            var topIndex = this.getTopZIndex(),
+                index = layer.el.style.zIndex;
             if(topIndex == index)	return;
-            layer.div.style.zIndex = topIndex.zindex;
-            this.layers[topIndex.index].div.style.zIndex = index;
+            layer.el.style.zIndex = topIndex.zindex;
+            this.layers[topIndex.index].el.style.zIndex = index;
         },
 
         /**
@@ -591,19 +552,19 @@
          * @public
          * @method octopus.App.addWidget
          * @param widget {octopus.Widget}
+         * @param auto {Boolean}
          * @desc 添加widget到app里
          */
-        addWidget: function(widget) {
-            var i = 0,
-                len = this.widgets.length;
-            for(; i < len; i++) {
-                if (this.widgets[i] == widget) {
-                    return false;
-                }
+        addWidget: function(widget, auto) {
+            if(!this.widgets)    this.widgets = [];
+            var index = this.widgets.indexOf(widget);
+            if(index > -1)  return false;
+            this.widgets.push(widget)
+            if(!auto) {
+                widget.container = widget.outsideViewport ? this.el : this.viewEl;
+                widget.render();
             }
-            widget.setApp(this);
-            widget.container = widget.outsideViewport ? this.el : this.viewEl;
-            widget.render();
+            widget.setZIndex(this.Z_INDEX_BASE.Widget + this.widgets.length * 5);
         },
 
         /**
