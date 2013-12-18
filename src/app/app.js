@@ -7,7 +7,7 @@
  * @require lib/dom.js
  * @require lib/event.js
  * @author oupeng-fe
- * @version 0.1
+ * @version 1.1
  */
 ;(function(o, undefined) {
 
@@ -455,6 +455,7 @@
                 this.currentLayer.setCurrent(false);
             }
             this.currentLayer = layer;
+            this.topLayer(layer);
             layer.setCurrent(true);
             this.notify("Global-OctopusApp-CurrentLayerChanged", {layer: layer});
         },
@@ -508,11 +509,11 @@
          * @method octopus.App.topLayer
          */
         topLayer: function(layer) {
-            var topIndex = this.getTopZindex(),
-                index = layer.div.style.zIndex;
+            var topIndex = this.getTopZIndex(),
+                index = layer.el.style.zIndex;
             if(topIndex == index)	return;
-            layer.div.style.zIndex = topIndex.zindex;
-            this.layers[topIndex.index].div.style.zIndex = index;
+            layer.el.style.zIndex = topIndex.zindex;
+            this.layers[topIndex.index].el.style.zIndex = index;
         },
 
         /**

@@ -7,7 +7,7 @@
  * @require lib/event.js
  * @require lib/tween.js
  * @author oupeng-fe
- * @version 0.1
+ * @version 1.1
  */
 ;(function(o, undefined) {
 
@@ -52,23 +52,22 @@
                 toY = 0,
                 fromX = 0,
                 fromY = 0,
-                elH = o.dom.getHeight(el),
-                elW = o.dom.getWidth(el),
+                elOffset = 100,
                 ps = [],
                 fvs = [],
                 evs = [];
             if(direction == "left" || direction == "right") {
                 if(out) {
-                    toX = -elW;
+                    toX = -elOffset;
                 } else {
-                    fromX = elW;
+                    fromX = elOffset;
                 }
             } else if(direction == "up" || direction == "down") {
                 if(out) {
-                    toY = -elH;
+                    toY = -elOffset;
                 }
                 else {
-                    fromY = elH;
+                    fromY = elOffset;
                 }
             }
             if (direction == 'right' || direction == 'down') {
@@ -78,8 +77,8 @@
                 fromX *= -1;
             }
             ps.push("-webkit-transform");
-            fvs.push("translate3d(" + fromX + "px, " + fromY + "px, 0)");
-            evs.push("translate3d(" + toX + "px, " + toY + "px, 0)");
+            fvs.push("translate3d(" + fromX + "%, " + fromY + "%, 0)");
+            evs.push("translate3d(" + toX + "%, " + toY + "%, 0)");
             if(options.isFade) {
                 toOpacity = out ? 0 : 1;
                 currentOpacity = out ? 1 : 0;

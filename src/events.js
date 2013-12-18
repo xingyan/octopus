@@ -5,7 +5,7 @@
  * @require lib/class.js
  * @require lib/util.js
  * @author oupeng-fe
- * @version 0.1
+ * @version 1.1
  */
 ;(function(o, undefined) {
 
@@ -366,19 +366,19 @@
 
         /**
          * @private
-         * @property object
+         * @property obj
          * @type {object}
          * @desc 事件对象所属的主体
          */
-        object: null,
+        obj: null,
 
         /**
          * @private
-         * @property element
+         * @property el
          * @type {DOMELement}
          * @desc 事件绑定的节点
          */
-        element: null,
+        el: null,
 
         /**
          * @private
@@ -417,20 +417,20 @@
         /**
          * @private
          * @constructos: octopus.Events.initialize
-         * @param object {Object} 观察订阅事件的对象 必需
-         * @param element {DOMElement} 一个响应浏览器事件的dom 非必需 如果指定了此值 则表示要对该节点进行一次惨绝人寰的封装
+         * @param obj {Object} 观察订阅事件的对象 必需
+         * @param el {DOMElement} 一个响应浏览器事件的dom 非必需 如果指定了此值 则表示要对该节点进行一次惨绝人寰的封装
          * @param fallThrough {Boolean}
          * @param options {Object}
          */
-        initialize: function(object, element, fallThrough, options) {
+        initialize: function(obj, el, fallThrough, options) {
             o.extend(this, options);
-            this.object = object;
+            this.obj = obj;
             this.fallThrough = fallThrough;
             this.listeners = {};
             this.extensions = {};
             this.extensionCount = {};
-            if (element != null) {
-                this.attachToElement(element);
+            if (el != null) {
+                this.attachToElement(el);
             }
         },
 
@@ -446,12 +446,12 @@
                 }
             }
             this.extensions = null;
-            if (this.element) {
-                o.event.stopObservingElement(this.element);
+            if (this.el) {
+                o.event.stopObservingElement(this.el);
             }
-            this.element = null;
+            this.el = null;
             this.listeners = null;
-            this.object = null;
+            this.obj = null;
             this.fallThrough = null;
             this.eventHandler = null;
         },
@@ -459,24 +459,24 @@
         /**
          * @private
          * @method attachToElement
-         * @param element {DOMElement}
+         * @param el {DOMElement}
          */
-        attachToElement: function(element) {
-            if (this.element) {
-                o.event.stopObservingElement(this.element);
+        attachToElement: function(el) {
+            if (this.el) {
+                o.event.stopObservingElement(this.el);
             } else {
                 this.eventHandler = o.util.bindAsEventListener(
                     this.handleBrowserEvent, this
                 );
             }
-            this.element = element;
+            this.el = el;
             var i = 0,
                 len = this.BROWSER_EVENTS.length;
             for (; i < len; i++) {
-                o.event.on(element, this.BROWSER_EVENTS[i], this.eventHandler);
+                o.event.on(el, this.BROWSER_EVENTS[i], this.eventHandler);
             }
             // 不去掉ie下会2掉
-            o.event.on(element, "dragstart", o.event.stop);
+            o.event.on(el, "dragstart", o.event.stop);
         },
 
         /**
@@ -521,7 +521,7 @@
             }
             if (func != null) {
                 if (obj == null || obj == undefined)  {
-                    obj = this.object;
+                    obj = this.obj;
                 }
                 var listeners = this.listeners[type];
                 if (!listeners) {
@@ -551,7 +551,7 @@
          */
         un: function(type, func, obj) {
             if (obj == null)  {
-                obj = this.object;
+                obj = this.obj;
             }
             var listeners = this.listeners[type];
             if (listeners != null) {
@@ -576,8 +576,8 @@
             if (evt == null) {
                 evt = {};
             }
-            evt.object = this.object;
-            evt.element = this.element;
+            evt.obj = this.obj;
+            evt.el = this.el;
             if(!evt.type) {
                 evt.type = type;
             }
@@ -616,12 +616,12 @@
         /**
          * @method octopus.Events.register
          * @desc 批量增加事件
-         * @param object {Object}
+         * @param evs {Object}
          */
-        register: function(object) {
-            for(var type in object) {
-                if(type != "scope" && object.hasOwnProperty(type)) {
-                    this.on(type, object[type], object.scope, false);
+        register: function(evs) {
+            for(var type in evs) {
+                if(type != "scope" && evs.hasOwnProperty(type)) {
+                    this.on(type, evs[type], evs.scope, false);
                 }
             }
         },
@@ -629,12 +629,12 @@
         /**
          * @method octopus.Events.unregister
          * @desc 批量去除事件
-         * @param object {Object}
+         * @param evs {Object}
          */
-        unregister: function(object) {
-            for(var type in object) {
-                if(type != "scope" && object.hasOwnProperty(type)) {
-                    this.un(type, object[type], object.scope);
+        unregister: function(evs) {
+            for(var type in evs) {
+                if(type != "scope" && evs.hasOwnProperty(type)) {
+                    this.un(type, evs[type], evs.scope);
                 }
             }
         },

@@ -729,8 +729,7 @@
             if(this.length > 1) {
                 o.event.on(this.el, "touchstart", o.util.bindAsEventListener(this.onTouchStart, this));
                 o.event.on(this.el, "touchmove", o.util.bindAsEventListener(this.onTouchMove, this));
-                o.event.on(this.el, "touchend", o.util.bindAsEventListener(this.onTouchEnd, this));
-                o.event.on(this.el, "touchcancel", o.util.bindAsEventListener(this.onTouchEnd, this));
+                o.event.on(this.el, "touchend touchcancel", o.util.bindAsEventListener(this.onTouchEnd, this));
             }
             o.event.on(window, "ortchange", o.util.bind(this.onOrtChanged, this), false);
         },

@@ -1,7 +1,7 @@
 /**
  * @file
  * @author oupeng-fe
- * @version 0.1
+ * @version 1.1
  * webapp通用组件
  * menu   -   菜单
  * @require lib/class.js

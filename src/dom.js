@@ -5,7 +5,7 @@
  * @require lib/class.js
  * @require lib/util.js
  * @author oupeng-fe
- * @version 0.1
+ * @version 1.1
  */
 ;(function(o, undefined) {
 

@@ -3,7 +3,7 @@
  * webapp通用组件结构文件
  * 定义命令管理类
  * @author oupeng-fe
- * @version 0.1
+ * @version 1.1
  */
 ;(function(o, undefined) {
 

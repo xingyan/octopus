@@ -96,6 +96,13 @@
 
         /**
          * @private
+         * @property locked
+         * @type {Boolean}
+         */
+        locked: false,
+
+        /**
+         * @private
          * @constructor
          */
         initialize: function() {
@@ -157,7 +164,7 @@
                 this.type = type;
                 this.serialCSS();
             }
-            this.el.style.visibility = "visible";
+            this.el.style.display = "block";
             this.calcSelfSize();
             this["animate" + this.type.charAt(0).toUpperCase() + this.type.substring(1)](true);
         },
@@ -185,6 +192,9 @@
          */
         animate: function(svs, evs, t, el) {
             var that = this;
+            var pn = this.container.parentNode || this.container;
+            pn.style.overflow = "hidden";
+            this.locked = true;
             return new o.Tween(el, ["-webkit-transform"], [svs], [evs], .3, function() {
                 that.isShow = t;
                 if(t && (that.position == "right" || that.position == "bottom")) {
@@ -196,8 +206,10 @@
                         dom = null;
                     }, 0);
                 } else if(!t) {
-                    that.el.style.visibility = "hidden";
+                    that.el.style.display = "none";
                 }
+                pn.style.overflow = "";
+                that.locked = false;
             });
         },
 

@@ -1,7 +1,7 @@
 /**
  * @file
  * @author oupeng-fe
- * @version 0.1
+ * @version 1.1
  * webapp通用组件
  * refresh   -   上拉下拉刷新
  * @require lib/class.js

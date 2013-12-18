@@ -3,7 +3,7 @@
  * webapp通用组件基础库文件
  * util -   工具函数部分
  * @author oupeng-fe
- * @version 0.1
+ * @version 1.1
  */
 ;(function(o, undefined) {
 
