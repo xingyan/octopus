@@ -116,8 +116,8 @@
             if (customRequestedWithHeader === false || !config.crossDomain) {
                 headers['X-Requested-With'] = 'XMLHttpRequest';
             }
-            config.url = o.util.urlAppend(url,
-                o.util.getParameterString(data || {}));
+            data =  o.util.getParameterString(data || {});
+            config.url = o.util.urlAppend(url, data);
             var mime = this.accepts[dataType],
                 baseHeaders = {},
                 xhr = this.xhr(), abortTimeout;
@@ -145,11 +145,11 @@
                 }
             };
             if(config.async === false) {
-                xhr.send(config.data ? config.data : null);
+                xhr.send(data ? data : null);
             } else {
                 window.setTimeout(function(){
                     if (xhr.readyState !== 0) { // W3C: 0-UNSENT
-                        xhr.send(config.data? config.data : null);
+                        xhr.send(data ? data : null);
                     }
                 }, 0);
             }
