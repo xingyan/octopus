@@ -117,7 +117,9 @@
                 headers['X-Requested-With'] = 'XMLHttpRequest';
             }
             data =  o.util.getParameterString(data || {});
-            config.url = o.util.urlAppend(url, data);
+            if(config.type != "POST") {
+                config.url = o.util.urlAppend(url, data);
+            }
             var mime = this.accepts[dataType],
                 baseHeaders = {},
                 xhr = this.xhr(), abortTimeout;
