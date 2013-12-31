@@ -113,7 +113,7 @@
                     customRequestedWithHeader = true;
                 }
             }
-            if (customRequestedWithHeader === false || !config.crossDomain) {
+            if(customRequestedWithHeader === false || !config.crossDomain) {
                 headers['X-Requested-With'] = 'XMLHttpRequest';
             }
             data =  o.util.getParameterString(data || {});
@@ -123,9 +123,9 @@
             var mime = this.accepts[dataType],
                 baseHeaders = {},
                 xhr = this.xhr(), abortTimeout;
-            if (mime) {
+            if(mime) {
                 baseHeaders['Accept'] = mime;
-                if (mime.indexOf(',') > -1) {
+                if(mime.indexOf(',') > -1) {
                     mime = mime.split(',', 2)[0];
                 }
                 xhr.overrideMimeType && xhr.overrideMimeType(mime)
@@ -150,12 +150,12 @@
                 xhr.send(data ? data : null);
             } else {
                 window.setTimeout(function(){
-                    if (xhr.readyState !== 0) { // W3C: 0-UNSENT
+                    if(xhr.readyState !== 0) { // W3C: 0-UNSENT
                         xhr.send(data ? data : null);
                     }
                 }, 0);
             }
-            if (config.timeout > 0) {
+            if(config.timeout > 0) {
                 abortTimeout = setTimeout(function(){
                     xhr.onreadystatechange = o.util.empty;
                     xhr.abort()
@@ -197,14 +197,14 @@
             complete(request);
             var result, error = false,
                 dataType = config.dataType;
-            if ((request.status >= 200 && request.status < 300) || request.status == 304 ||
+            if((request.status >= 200 && request.status < 300) || request.status == 304 ||
                 (request.status == 0 && o.util.createUrlObject(config.url).protocol == "file:")) {
                 dataType = dataType || this.mimeToDataType(request.getResponseHeader('content-type'));
                 result = request.responseText;
                 try {
-                    if (dataType == 'script')    (1,eval)(result)
-                    else if (dataType == 'xml')  result = request.responseXML
-                    else if (dataType == 'json') result = this.BLANK_REGEX.test(result) ? null : JSON.parse(result)
+                    if(dataType == 'script')    (1,eval)(result)
+                    else if(dataType == 'xml')  result = request.responseXML
+                    else if(dataType == 'json') result = this.BLANK_REGEX.test(result) ? null : JSON.parse(result)
                 } catch (e) { error = e }
                 options.result = result;
                 if(success) {
