@@ -430,6 +430,18 @@
     };
 
     /**
+     * @method octopus.util.format
+     * @param str {String} 待转换的字符串
+     * @param data {} 数据
+     * @returns {String}
+     */
+    util.format = function(str, data) {
+        return str.replace(/(#)\{(.*?)\}/g, function(all, flag, param) {
+            return data && typeof data[param] != "undefined" ? data[param] : "";
+        });
+    };
+
+    /**
      * @method octopus.util.applyDefaults
      * @desc 将一个对象里没有的参数复制给另一个对象 与extend的区别在于 如果不会复制已存在属性
      * @param to {Object}

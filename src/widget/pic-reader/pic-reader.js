@@ -161,7 +161,7 @@
         },
 
         /**
-         * @pirvate
+         * @private
          * @method buildSlider
          * @desc 生成节点
          */

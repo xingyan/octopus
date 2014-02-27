@@ -132,7 +132,6 @@
          * @private
          * @method _goTo
          * @param opvs {Object}
-         * @desc
          */
         _goTo: function(opvs) {
             var v = Math.max(Math.min(100 - Math.abs(opvs.value), 100), 0),

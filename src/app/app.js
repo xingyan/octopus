@@ -23,7 +23,7 @@
 
         /**
          * @private
-         * @method registerModule
+         * @method octopus.app.registerModule
          * @param id
          * @param func
          * @param immediate

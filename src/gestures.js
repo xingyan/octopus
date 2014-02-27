@@ -407,10 +407,7 @@
                 pointerType : pointerType,
                 srcEvent    : ev,
 
-                /**
-                 * prevent the browser default actions
-                 * mostly used to disable scrolling of the browser
-                 */
+
                 preventDefault: function() {
                     if(this.srcEvent.preventManipulation) {
                         this.srcEvent.preventManipulation();
@@ -421,18 +418,10 @@
                     }
                 },
 
-                /**
-                 * stop bubbling the event up to its parents
-                 */
                 stopPropagation: function() {
                     this.srcEvent.stopPropagation();
                 },
 
-                /**
-                 * immediately stop gesture detection
-                 * might be useful after a swipe was detected
-                 * @return {*}
-                 */
                 stopDetect: function() {
                     return Hammer.detection.stopDetect();
                 }

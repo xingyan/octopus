@@ -101,7 +101,7 @@
         animation: false,
 
         /**
-         * @pirvate
+         * @private
          * @property loop
          * @type {Object}
          * @desc 动画的内存寻址

@@ -479,7 +479,7 @@
                     if(isEnd) {
                         curValue = this.endValue[i];
                     } else {
-                        curValue = Math.ceil(this.ease(curTime, this.startValue[i], this.endValue[i] - this.startValue[i], this.duration * 1000));
+                        curValue = this.ease(curTime, this.startValue[i], this.endValue[i] - this.startValue[i], this.duration * 1000);
                     }
                 }
                 valueInfo.push({
@@ -506,9 +506,6 @@
                 var propertyName = valueInfo[i].propertyName,
                     curValue = valueInfo[i].curValue,
                     isColor = valueInfo[i].isColor;
-                if(propertyName == 'opacity'){
-                    curValue = curValue / 100;
-                }
                 if(propertyName == 'scrollLeft' || propertyName == 'scrollTop') {
                     this.el[propertyName] = this.getValue(curValue, i);
                 } else {
