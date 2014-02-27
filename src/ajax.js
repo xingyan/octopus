@@ -103,6 +103,9 @@
                 data = config.data || {},
                 headers = config.headers || {},
                 urlobj = o.util.createUrlObject(url);
+            if(config.type == "jsonp") {
+                return o.ajax.ajaxJSONP(options);
+            }
             if(!config.crossDomain) {
                 config.crossDomain = urlobj.host != window.location.host;
             }
