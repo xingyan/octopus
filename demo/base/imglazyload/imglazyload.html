@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+        <title>imglazyload demo</title>
+        <meta name="description" content="imglazyload demo" />
+        <meta name="author" content="xingyan" />
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+        <link rel="stylesheet" type="text/css" href="../../octopus.css" />
+        <link rel="stylesheet" type="text/css" href="../../../src/widget/refresh/refresh.css" />
+
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+        <script type="text/javascript" src="../../../src/class.js"></script>
+        <script type="text/javascript" src="../../../src/util.js"></script>
+        <script type="text/javascript" src="../../../src/dom.js"></script>
+        <script type="text/javascript" src="../../../src/events.js"></script>
+        <script type="text/javascript" src="../../../src/tween.js"></script>
+        <script type="text/javascript" src="../../../src/animate.js"></script>
+        <script type="text/javascript" src="../../../src/imglazyload.js"></script>
+
+        <script type="text/javascript" src="../../../src/widget/widget.js"></script>
+        <script type="text/javascript" src="../../../src/widget/refresh/refresh.js"></script>
+
+        <style>
+            #view_container {
+                margin: auto;
+                width: 300px;
+            }
+
+            #imglazyload_container li {
+                width: 300px;
+                height: 500px;
+                position: relative;
+            }
+
+            #imglazyload_container li img {
+                width: 100%;
+                height: auto;
+                min-height: 20px;
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                margin: auto;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="imglazyload_container">
+            <div id="view_container">
+                <li><img data-src="../../img/1.jpg" /></li>
+                <li><img data-src="../../img/2.jpg" /></li>
+                <li><img data-src="../../img/3.jpg" /></li>
+                <li><img data-src="../../img/4.jpg" /></li>
+            </div>
+        </div>
+        <script type="text/javascript" src="imglazyload.js"></script>
+    </body>
+</html>

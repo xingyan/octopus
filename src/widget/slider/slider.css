@@ -1,0 +1,57 @@
+.octopusui-slider-button {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: #000000;
+    opacity: .7;
+    top: 45%;
+    z-index: 9999;
+}
+
+.octopusui-slider-imgTitle {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background-color: rgba(0, 0, 0, .5);
+    color: #ffffff;
+    text-align: left;
+    text-indent: 10px;
+    padding: 5px 0;
+    z-index: 9999;
+}
+
+.octopusui-slider-imgTitleContent {
+    width: 58%;
+}
+
+.octopusui-slider-prebutton {
+    left: 0px;
+}
+
+.octopusui-slider-nextbutton {
+    right: 0px;
+}
+
+.octopusui-slider-gizmos {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    text-align: center;
+}
+
+.octopusui-slider-gizmositem {
+    z-index: 1;
+    width: .5em;
+    height: .5em;
+    background: rgba(144, 144, 144, 0.8);
+    display: inline-block;
+    margin-left: 5px;
+    border-radius: 50%;
+    position: relative;
+    bottom: 6px;
+    right: 5px;
+}
+
+.octopusui-slider-gizmositem.octopusui-slider-currentgizmositem {
+    background: #fff;
+}

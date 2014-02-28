@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+        <title>animate demo</title>
+        <meta name="description" content="animate demo" />
+        <meta name="author" content="xingyan" />
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+        <link rel="stylesheet" type="text/css" href="../../octopus.css" />
+
+        <link rel="shortcut icon" href="/favicon.ico"/>
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+
+        <script type="text/javascript" src="../../../src/class.js"></script>
+        <script type="text/javascript" src="../../../src/util.js"></script>
+        <script type="text/javascript" src="../../../src/dom.js"></script>
+        <script type="text/javascript" src="../../../src/events.js"></script>
+        <script type="text/javascript" src="../../../src/gestures.js"></script>
+        <script type="text/javascript" src="../../../src/tween.js"></script>
+        <script type="text/javascript" src="../../../src/animate.js"></script>
+
+        <style>
+            body {
+                background: #4593e3;
+            }
+            header {
+                padding: 20px 30px 0px 30px;
+                margin: 0px 20px 0px 20px;
+                position: relative;
+                display: block;
+                text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+                text-align: center;
+            }
+            #animate_container {
+                width: 320px;
+                height: auto;
+                position: relative;
+                margin: 0px auto 20px;
+                overflow: hidden;
+            }
+
+            input[type="button"] {
+                font-family: inherit;
+                font-size: inherit;
+                cursor: pointer;
+                padding: 10px 15px;
+                display: inline-block;
+                margin: 5px 10px 15px 5px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                font-weight: 700;
+                background: transparent;
+                color: #226fbe;
+                outline: none;
+                -webkit-transition: all 0.3s;
+                transition: all 0.3s;
+                border: 4px solid #226fbe;
+            }
+
+            input[class*="current"] {
+                background: #226fbe;
+                color: #fff;
+            }
+
+            #wrap {
+                height: 450px;
+                margin-top: 10px;
+            }
+
+            .image-item {
+                width: 320px;
+                height: 450px;
+                background-size: contain;
+                background: #ffffff center center no-repeat;
+                visibility: hidden;
+                position: absolute;
+            }
+
+            .image-item.current-image {
+                visibility: visible;
+            }
+
+            .image-item:nth-child(1) {
+                background-image: url("../../img/1.jpg");
+            }
+            .image-item:nth-child(2) {
+                background-image: url("../../img/2.jpg");
+            }
+            .image-item:nth-child(3) {
+                background-image: url("../../img/3.jpg");
+            }
+            .image-item:nth-child(4) {
+                background-image: url("../../img/4.jpg");
+            }
+            .image-item:nth-child(5) {
+                background-image: url("../../img/5.jpg");
+            }
+            #controller {
+                height: 35px;
+                position: relative;
+            }
+            .btn {
+                padding: 3px 10px;
+                font-weight: bold;
+                cursor: pointer;
+                border: 4px double #226fbe;
+                position: relative;
+            }
+            #next_button {
+                float: right;
+            }
+            #pre_button {
+                float: left;
+            }
+
+            #fade, #scale {
+                position: absolute;
+                border: 2px dotted #226fbe;
+                border-radius: 10px;
+                line-height: 18px;
+                line-height: 22px;
+            }
+
+            #fade.select, #scale.select {
+                color: #fff;
+                background: #226fbe;
+            }
+
+            #fade {
+                left: 86px;
+            }
+
+            #scale {
+                right: 90px;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <input value="slide-left" class="current" type="button" id="slider_left" />
+            <input value="slide-right" type="button" id="slider_right" />
+            <input value="slide-up" type="button" id="slider_up" />
+            <input value="slide-down" type="button" id="slider_down" />
+            <input value="flip-left" type="button" id="flip_left" />
+            <input value="flip-right" type="button" id="flip_right" />
+            <input value="flip-up" type="button" id="flip_up" />
+            <input value="flip-down" type="button" id="flip_down" />
+            <input value="fade" type="button" />
+            <input value="pop" type="button" />
+            <input value="wipe" type="button" />
+            <input value="roll" type="button" />
+            <input value="rotate" type="button" />
+            <input value="rotate-up-left" type="button" />
+            <input value="rotate-up-right" type="button" />
+            <input value="rotate-down-left" type="button" />
+            <input value="rotate-down-right" type="button" />
+            <input value="fold-left" type="button" />
+            <input value="fold-right" type="button" />
+            <input value="fold-up" type="button" />
+            <input value="fold-down" type="button" />
+            <input value="carousel-left" type="button" />
+            <input value="carousel-right" type="button" />
+            <input value="carousel-up" type="button" />
+            <input value="carousel-down" type="button" />
+        </header>
+        <div id="animate_container">
+            <div id="controller">
+                <div id="pre_button" class="btn">pre</div>
+                <div id="fade" class="btn select">fade</div>
+                <div id="scale" class="btn select">scale</div>
+                <div id="next_button" class="btn">next</div>
+            </div>
+            <div id="wrap">
+                <div id="image_container">
+                    <div id="image_item1" class="image-item current-image"></div>
+                    <div id="image_item2" class="image-item"></div>
+                    <div id="image_item3" class="image-item"></div>
+                    <div id="image_item4" class="image-item"></div>
+                    <div id="image_item5" class="image-item"></div>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript" src="animate.js"></script>
+    </body>
+</html>

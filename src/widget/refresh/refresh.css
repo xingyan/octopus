@@ -1,0 +1,84 @@
+.octopusui-refresh {
+    display: -webkit-box;
+    width: 100%;
+    position: relative;
+    height: 4.5em;
+    overflow: hidden;
+}
+
+.octopusui-refresh-refreshcontainer {
+    display: -webkit-flex;
+    display: -webkit-box;
+    display: flex;
+    -webkit-box-orient: horizontal;
+    flex-direction: row;
+    -webkit-box-align: center;
+    align-items: center;
+    -webkit-box-pack: center;
+    justify-content: center;
+    -webkit-box-direction: normal;
+    flex-direction: row;
+    position: absolute;
+    top: 0em;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.octopusui-refresh-arrowup, .octopusui-refresh-arrowdown {
+    background: center center url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAA8CAYAAAAUufjgAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAjFJREFUeNrsmU8oREEYwOexdtNuKBfFwdVhCyfuysnFiXISS+1BLopyUpKLXETkRLaUi1LK3Q2lpPbiQLnIn03a/Hm+z86Ttv0zM++bfbOar36Hbad5v535Zp7v47iuy0wOpyoEHccRHV9L9NxPkUE/bhKCOKiOSPAdn69DsJ5I8E2HYA0QJRJ8Bb50CDYRCT7pEMQD0kwk+CByUFQEW4gE73UIhoA2IsFb4ENEMCQ5MdU1IxwygpT3oKNLMGyyYFVscdhusc8tDpu+xRG7xf95BW0O2kNiV1AgIvaQ2BzUJNgJNJYZGyUU7OG1cal4Bi68oqkDPszy2teEwJp5Cdyu/lZ1g8CwIYJ7wEF+2YmrNw90Byx3BizgKhaqizEP1wg7CLLxCEzy/CtauMeBlQDyEfNuGrgU6SyM8F9SyVgHdmRaH6tAb4XkToEp2d4M5mOK0TWMigU2koa8vJMRZPxEb2ss2LEVPMpPLlMRxBgDZjQJLgNbxb6Uab9tAn3EcifAeKkBMoLY+j0GWonk7oB+lmsFkwhidAGHBPmIeTcAnJcbKCuIMQEs+hScAzZEBqoIYuzyFVCJI36lMJ2CDfxibZeUu+EX/4uMIFP8ZyLejxkgK0hG5a8kP4IYSZbr1IuQVHmAX0HGX4VuGfZVJ6cQxPd1uoRcWqDW0SroFVzZAnJZ/h0LWhAjUUAw4XdSSsH8fExRTEgtGAOuOTETBb16Jk412e+bxOSwglYw6PgWYABvLk8P7zGJFwAAAABJRU5ErkJggg==") no-repeat;
+    background-size: 2em 3em;
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+    width: 2.5em;
+    height: 4.5em;
+}
+
+.octopusui-refresh-changed .octopusui-refresh-arrowup {
+    -webkit-transform: rotate(0deg);
+}
+
+.octopusui-refresh-changed .octopusui-refresh-arrowdown {
+    -webkit-transform: rotate(180deg);
+}
+
+.octopusui-refresh-arrowup {
+    -webkit-transform: rotate(180deg);
+    transform: rotate(180deg);
+}
+
+.octopusui-refresh-textcontainer {
+    width: 13em;
+    font-size: 0.7em;
+}
+
+.octopusui-refresh-pulltext {
+    margin-bottom: 0.1em;
+    font-weight: bold;
+    font-size: 1.3em;
+    text-align: -webkit-center;
+}
+
+.octopusui-refresh-statustext {
+    text-align: -webkit-center;
+}
+
+.octopusui-refresh-loading {
+    font-size: 250%;
+    height: 1em;
+    width: 1em;
+    position: relative;
+    display: none;
+    background: -webkit-canvas(octopusui-loading);
+}
+
+.octopusui-refreshup {
+    bottom: 0px;
+    vertical-align: bottom;
+}
+
+.octopusui-refreshdown {
+    top: -4.5em;
+    position: absolute;
+    vertical-align: top;
+}
