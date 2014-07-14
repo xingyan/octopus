@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: app/layer.js</title>
+    
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+    
+    <h1 class="page-title">Source: app/layer.js</h1>
+    
+    
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source"><code>/**
+ * @file
+ * webapp通用组件结构文件
+ * 定义图层基类
+ * @author oupeng-fe
+ * @version 1.1
+ */
+;(function(o, undefined) {
+
+    "use strict";
+
+    o.Layer = o.define({
+        /**
+         * @private
+         * @property id
+         * @type {String}
+         */
+        id: null,
+
+        /**
+         * @private
+         * @property config
+         * @type {Object}
+         */
+        config: null,
+
+        /**
+         * @private
+         * @property isCurrent
+         * @type {Boolean}
+         */
+        isCurrent: false,
+
+        /**
+         * @private
+         * @property event
+         * @type {octopus.Events}
+         */
+        event: null,
+
+        /**
+         * @private
+         * @property el
+         * @type {DOMElement}
+         */
+        el: null,
+
+        /**
+         * @private
+         * @property octopus.Layer.isBaseLayer
+         * @type {Boolean}
+         */
+        isBaseLayer: false,
+
+        /**
+         * @private
+         * @property widgets
+         * @type {Array}
+         */
+        widgets: null,
+
+        /**
+         * @private
+         * @property app
+         * @type {octopus.App}
+         */
+        app: null,
+
+        /**
+         * @private
+         * @constructor
+         */
+        initialize: function(options) {
+            var config = this.config = o.extend({}, options);
+            this.id = config.id || o.util.createUniqueID(this.CLASS_NAME + "_");
+            this.el = o.dom.createDom("div", {
+                id: this.id
+            });
+            this.isCurrent = config.isCurrent || this.isCurrent;
+            this.isBaseLayer = config.isBaseLayer || this.isBaseLayer;
+            if(this.isCurrent || this.isBaseLayer) {
+                o.dom.addClass(this.el, "octopus-layer-base");
+            }
+            this.event = new o.Events(this);
+        },
+
+        /**
+         * @public
+         * @method octopus.Layer.getEl
+         * @return {DOMElement}
+         */
+        getEl: function() {
+            return this.el;
+        },
+
+        /**
+         * @public
+         * @method octopus.Layer.on
+         * @desc 事件监听
+         * @param type {String}
+         * @param func {Function}
+         */
+        on: function(type, func) {
+            this.events.on(type, func);
+        },
+
+        /**
+         * @public
+         * @method octopus.Layer.un
+         * @desc 事件取消监听
+         * @param type {String}
+         * @param func {Function}
+         */
+        un: function(type, func) {
+            this.events.un(type, func);
+        },
+
+        /**
+         * @public
+         * @method octopus.Layer.setApp
+         * @desc 绑定app
+         * @param app {octopus.App}
+         */
+        setApp: function(app) {
+            return app == this.app ? false : (this.app = app, true);
+        },
+
+        /**
+         * @public
+         * @method octopus.Layer.afterAdd
+         * @desc 绑定入app后调用
+         */
+        afterAdd: function() {
+
+        },
+
+        /**
+         * @public
+         * @method octopus.Layer.setCurrent
+         * @param current {Boolean}
+         */
+        setCurrent: function(current) {
+            if((current && this.isCurrent) || (!current && !this.isCurrent)) return;
+            this.isCurrent = current;
+            current ? o.dom.addClass(this.el, "octopus-layer-show") : o.dom.removeClass(this.el, "octopus-layer-show");
+        },
+
+        /**
+         * @public
+         * @method octopus.Layer.setZIndex
+         * @param zIndex {Number}
+         */
+        setZIndex: function(zIndex) {
+            this.el.style.zIndex = zIndex;
+        },
+
+        activate: function() {
+
+        },
+
+        deactivate: function() {
+
+        },
+
+        removeApp: function() {
+
+        },
+
+        CLASS_NAME: "octopus.Layer"
+    });
+})(octopus);</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="o.Widget.PicReader.html">PicReader</a></li><li><a href="octopus.ImgLazyLoad.html">ImgLazyLoad</a></li><li><a href="octopus.StepTween.html">StepTween</a></li><li><a href="octopus.Tween.html">Tween</a></li><li><a href="octopus.Widget.html">Widget</a></li><li><a href="octopus.Widget.Back2Top.html">Back2Top</a></li><li><a href="octopus.Widget.HtmlBack2Top.html">HtmlBack2Top</a></li><li><a href="octopus.Widget.HtmlSlider.html">HtmlSlider</a></li><li><a href="octopus.Widget.Mask.html">Mask</a></li><li><a href="octopus.Widget.Menu.html">Menu</a></li><li><a href="octopus.Widget.Progress.html">Progress</a></li><li><a href="octopus.Widget.Refresh.html">Refresh</a></li><li><a href="octopus.Widget.Sidebar.html">Sidebar</a></li><li><a href="octopus.Widget.Slider.html">Slider</a></li><li><a href="octopus.WidgetManager.html">WidgetManager</a></li></ul><h3>Namespaces</h3><ul><li><a href="octopus.html">octopus</a></li><li><a href="octopus.ajax.html">ajax</a></li><li><a href="octopus.animation.html">animation</a></li><li><a href="octopus.app.html">app</a></li><li><a href="octopus.dom.html">dom</a></li><li><a href="octopus.easing.html">easing</a></li><li><a href="octopus.template.html">template</a></li><li><a href="octopus.util.html">util</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a> on Thu Dec 19 2013 17:06:37 GMT+0800 (CST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

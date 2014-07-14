@@ -2268,6 +2268,9 @@
                 data = config.data || {},
                 headers = config.headers || {},
                 urlobj = o.util.createUrlObject(url);
+            if(config.type == "jsonp") {
+                return o.ajax.ajaxJSONP(options);
+            }
             if(!config.crossDomain) {
                 config.crossDomain = urlobj.host != window.location.host;
             }
@@ -2278,7 +2281,7 @@
                     customRequestedWithHeader = true;
                 }
             }
-            if (customRequestedWithHeader === false || !config.crossDomain) {
+            if(customRequestedWithHeader === false || !config.crossDomain) {
                 headers['X-Requested-With'] = 'XMLHttpRequest';
             }
             data =  o.util.getParameterString(data || {});
@@ -2288,9 +2291,9 @@
             var mime = this.accepts[dataType],
                 baseHeaders = {},
                 xhr = this.xhr(), abortTimeout;
-            if (mime) {
+            if(mime) {
                 baseHeaders['Accept'] = mime;
-                if (mime.indexOf(',') > -1) {
+                if(mime.indexOf(',') > -1) {
                     mime = mime.split(',', 2)[0];
                 }
                 xhr.overrideMimeType && xhr.overrideMimeType(mime)
@@ -2315,12 +2318,12 @@
                 xhr.send(data ? data : null);
             } else {
                 window.setTimeout(function(){
-                    if (xhr.readyState !== 0) { // W3C: 0-UNSENT
+                    if(xhr.readyState !== 0) { // W3C: 0-UNSENT
                         xhr.send(data ? data : null);
                     }
                 }, 0);
             }
-            if (config.timeout > 0) {
+            if(config.timeout > 0) {
                 abortTimeout = setTimeout(function(){
                     xhr.onreadystatechange = o.util.empty;
                     xhr.abort()
@@ -2362,14 +2365,14 @@
             complete(request);
             var result, error = false,
                 dataType = config.dataType;
-            if ((request.status >= 200 && request.status < 300) || request.status == 304 ||
+            if((request.status >= 200 && request.status < 300) || request.status == 304 ||
                 (request.status == 0 && o.util.createUrlObject(config.url).protocol == "file:")) {
                 dataType = dataType || this.mimeToDataType(request.getResponseHeader('content-type'));
                 result = request.responseText;
                 try {
-                    if (dataType == 'script')    (1,eval)(result)
-                    else if (dataType == 'xml')  result = request.responseXML
-                    else if (dataType == 'json') result = this.BLANK_REGEX.test(result) ? null : JSON.parse(result)
+                    if(dataType == 'script')    (1,eval)(result)
+                    else if(dataType == 'xml')  result = request.responseXML
+                    else if(dataType == 'json') result = this.BLANK_REGEX.test(result) ? null : JSON.parse(result)
                 } catch (e) { error = e }
                 options.result = result;
                 if(success) {
@@ -3046,7 +3049,7 @@
                     if(isEnd) {
                         curValue = this.endValue[i];
                     } else {
-                        curValue = Math.ceil(this.ease(curTime, this.startValue[i], this.endValue[i] - this.startValue[i], this.duration * 1000));
+                        curValue = this.ease(curTime, this.startValue[i], this.endValue[i] - this.startValue[i], this.duration * 1000);
                     }
                 }
                 valueInfo.push({
@@ -3073,9 +3076,6 @@
                 var propertyName = valueInfo[i].propertyName,
                     curValue = valueInfo[i].curValue,
                     isColor = valueInfo[i].isColor;
-                if(propertyName == 'opacity'){
-                    curValue = curValue / 100;
-                }
                 if(propertyName == 'scrollLeft' || propertyName == 'scrollTop') {
                     this.el[propertyName] = this.getValue(curValue, i);
                 } else {
@@ -3883,11 +3883,11 @@
 /**
  * @file
  * webapp通用组件基础库文件
- * 动画行为部分
+ * 简单实现指定容器下的lazyload
  * @require lib/class.js
  * @require lib/util.js
  * @require lib/event.js
- * @require lib/tween.js
+ * @require lib/dom.js
  * @author oupeng-fe
  * @version 1.1
  */
@@ -3896,443 +3896,1802 @@
     "use strict";
 
     /**
-     * @method octopus.animate
-     * @param options {Object}
-     * @param options.el {DOMElement} 进行动画的节点
-     * @param options.type {String} 进行动画的类型
-     * @param options.config {Object} 进行动画的参数
-     * @return octopus.animation
+     * @method octopus.lazyImg
+     * @param opts
      */
-    o.animate = function(options) {
-        return !!o.animation[options.type] ? (o.animation[options.type](options.el, options.config, options.func)) : null;
+    o.lazyImg = function(opts) {
+        return new o.ImgLazyLoad(opts || {}).check();
     };
 
     /**
-     * @namespace octopus.animation
+     * @class octopus.ImgLazyLoad
+     * @desc 用来对指定图片或者容器内的图片进行延后加载
+     * @param options 参数
+     * @param options.imgs {String | Array | DOMElement} 需要延后加载的图片数组或节点或节点id
+     * @param options.el {DOMElement | String} 需要延后加载的节点容器或节点容器id 如果已传入options.imgs 则此参数不生效
+     * @param options.container {DOMElement | String} 出滚动条的容器
+     * @param options.srcName {String} 延迟加载的图片的真实src属性字段默认为"src"
      */
-    octopus.animation = octopus.animation || {
+    o.ImgLazyLoad = o.define({
 
         /**
-         * @method octopus.animation.slide
+         * @private
+         * @property el
+         * @type {DOMElement | String}
+         * @desc 指定容器或图片
          */
-        slide: function(el, config, func) {
-            var options = o.extend({
-                direction: "left",
-                out: true,
-                duration: .4,
-                isFade: false,
-                ease: "ease-out",
-                isScale: false
-            }, config);
-            func = func || o.util.empty;
-            var el = el,
-                out = options.out,
-                currentOpacity,
-                toOpacity,
-                direction = options.direction,
-                toX = 0,
-                toY = 0,
-                fromX = 0,
-                fromY = 0,
-                elOffset = 100,
-                ps = [],
-                fvs = [],
-                evs = [];
-            if(direction == "left" || direction == "right") {
-                if(out) {
-                    toX = -elOffset;
+        el: null,
+
+        /**
+         * @private
+         * @property container
+         * @type {DOMElement | String}
+         * @desc 指定的滚动容器
+         */
+        container: null,
+
+        /**
+         * @private
+         * @property imgs
+         * @type {Array}
+         * @desc 需要后加载的集合
+         */
+        imgs: null,
+
+        /**
+         * @private
+         * @property srcName
+         * @type {String}
+         */
+        srcName: "src",
+
+        /**
+         * @private
+         * @property opts
+         * @desc 传入的参数
+         * @type {Object}
+         */
+        opts: null,
+
+        /**
+         * @private
+         * @property isScroll
+         * @type {Boolean}
+         * @desc 标志位
+         */
+        isScroll: false,
+
+        /**
+         * @private
+         * @property event
+         * @type {octopus.Event}
+         * @desc 自身事件
+         */
+        event: null,
+
+        /**
+         * @private
+         * @constructor
+         */
+        initialize: function(options) {
+            this.opts = o.extend({}, options);
+            this.container = o.g(options.container) || document.body;
+            var that = this,
+                pnode = (this.container == document.body) ? window : this.container;
+            var imgs = options.imgs;
+            this.imgs = [];
+            this.event = new o.Events(this);
+            this.setDoms(imgs)
+            o.event.on(pnode, "scroll", function() {
+                if(!that.isScroll) {
+                    o.util.requestAnimation(o.util.bind(that.check, that));
+                    that.isScroll = true;
+                }
+            }, false);
+            o.event.on(window, "ortchange", o.util.bind(this.reset, this), false);
+        },
+
+        /**
+         * @public
+         * @method octopus.ImgLazyLoad.on
+         * @param evt {String} 事件监听名
+         * @param func {Function} 回调函数
+         * @desc 添加监听器
+         */
+        on: function(evt, func) {
+            this.event.on(evt, func);
+        },
+
+        /**
+         * @public
+         * @method octopus.ImgLazyLoad.un
+         * @param evt {String} 事件监听名
+         * @param func {Function} 回调函数
+         * @desc 卸载监听器
+         */
+        un: function(evt, func) {
+            this.event.un(evt, func);
+        },
+
+        /**
+         * @private
+         * @method octopus.ImgLazyLoad.notify
+         */
+        notify: function(evt, opts) {
+            this.event.triggerEvent(evt, opts);
+        },
+
+        /**
+         * @private
+         * @method setDoms
+         * @desc 初始化图片节点
+         */
+        setDoms: function(imgs) {
+            if(imgs) {
+                if(o.util.isArray(imgs)) {
+                    this.imgs = this.imgs.concat(imgs);
                 } else {
-                    fromX = elOffset;
+                    var img = o.g(imgs);
+                    o.util.isNode(img) && this.imgs.push(img);
                 }
-            } else if(direction == "up" || direction == "down") {
-                if(out) {
-                    toY = -elOffset;
-                }
-                else {
-                    fromY = elOffset;
-                }
-            }
-            if (direction == 'right' || direction == 'down') {
-                toY *= -1;
-                toX *= -1;
-                fromY *= -1;
-                fromX *= -1;
-            }
-            ps.push("-webkit-transform");
-            fvs.push("translate3d(" + fromX + "%, " + fromY + "%, 0)");
-            evs.push("translate3d(" + toX + "%, " + toY + "%, 0)");
-            if(options.isFade) {
-                toOpacity = out ? 0 : 1;
-                currentOpacity = out ? 1 : 0;
-                fvs.push(currentOpacity);
-                evs.push(toOpacity);
-                ps.push("opacity");
-            }
-            if(options.isScale && out) {
-                var fromScale = 1,
-                    toScale = 0.8;
-                fvs.push("scale(" + fromScale + ")");
-                evs.push("scale(" + toScale + ")");
-                ps.push("-webkit-transform");
-                var _index = ps.indexOf("opacity");
-                if(_index == -1) {
-                    ps.push("opacity");
-                    evs.push(out ? 1 : 0);
-                    fvs.push(out ? 0 : 1);
-                } else {
-                    evs[_index] = out ? 1 : 0;
-                    fvs[_index] = out ? 0 : 1;
+            } else if(this.opts.el) {
+                this.el = this.el || o.g(this.opts.el);
+                var _imgs = o.$("img", this.el),
+                    len = _imgs.length;
+                if(len > 0) {
+                    var that = this;
+                    o.util.each(_imgs, function(item) {
+                        if(!o.util.isNode(item)) return;
+                        if(!o.dom.data(item, "loaded") && o.dom.data(item, that.srcName)) {
+                            that.imgs.push(item);
+                        }
+                    });
+                } else if(this.el.tagName.toLowerCase() == "img" && !o.dom.data(this.el, "loaded") && o.dom.data(this.el, this.srcName)) {
+                    this.imgs.push(this.el);
                 }
             }
-            return new o.Tween(el, ps, fvs, evs, options.duration, func, {
-                ease: options.ease
-            });
         },
 
         /**
-         * @method octopus.animation.fade
+         * @public
+         * @method octopus.ImgLazyLoad.reset
+         * @param imgs {String | Array | DOMELement} 新的需要加载的img 如果初始化时传入的是el 则此时不需要参数r
+         * @desc 重置加载
          */
-        fade: function(el, config, func) {
-            var options = o.extend({
-                out: true,
-                duration: .4,
-                ease: "ease-out"
-            }, config);
-            func = func || o.util.empty;
-            var el = el,
-                fromOpacity = 1,
-                toOpacity = 1,
-                out = options.out;
-            if (out) {
-                toOpacity = 0;
-            } else {
-                fromOpacity = 0;
-            }
-            var fv = [fromOpacity],
-                ev = [toOpacity];
-            return new o.Tween(el, ["opacity"], fv, ev, options.duration, func, {
-                ease: options.ease
-            });
+        reset: function(imgs) {
+            this.setDoms(imgs);
+            this.check();
         },
 
         /**
-         * @method octopus.animation.pop
+         * @public
+         * @method octopus.ImgLazyLoad.check
+         * @desc 查看当前是否符合加载条件
          */
-        pop: function(el, config, func) {
-            var options = o.extend({
-                out: true,
-                duration: .4,
-                ease: "ease-out",
-                scaleOnExit: true
-            }, config);
-            func = func || o.util.empty;
-            var el = el,
-                fromScale = 1,
-                toScale = 1,
-                fromOpacity = 1,
-                toOpacity = 1,
-                curZ = o.dom.getStyle(el, 'z-index') || 0,
-                fromZ = curZ,
-                toZ = curZ,
-                out = options.out;
-
-            if (!out) {
-                fromScale = 0.01;
-                fromZ = curZ + 1;
-                toZ = curZ + 1;
-                fromOpacity = 0;
-            } else {
-                if (options.scaleOnExit) {
-                    toScale = 0.01;
-                    toOpacity = 0;
-                } else {
-                    toOpacity = 0.8;
+        check: function() {
+            this.isScroll = false;
+            var len = this.imgs.length;
+            if(len == 0)    return this;
+            var t = this.container.scrollTop,
+                h = o.dom.getHeight(this.container);
+            if(this.container == document.body) {
+                var _h = o.dom.getScreenHeight();
+                h > _h && (h = _h);
+            }
+            var i = len;
+            for(; i--; ) {
+                var item = this.imgs[i];
+                if(o.dom.data(item, "loaded")) {
+                    this.imgs.splice(i, 1);
+                    continue;
                 }
+                this.checkImg(item, t, h);
             }
-            var ps = ["-webkit-transform", "-webkit-transform-origin", "opacity", "z-index"],
-                fvs = ["scale(" + fromScale + ")", "50% 50%", fromOpacity, fromZ],
-                evs = ["scale(" + toScale + ")", "50% 50%", toOpacity, toZ];
-            return new o.Tween(el, ps, fvs, evs, options.duration, func, {
-                ease: options.ease
-            });
+            return this;
         },
 
         /**
-         * @method octopus.animation.flip
+         * @private
+         * @method checkImg
          */
-        flip: function(el, config, func) {
-            var options = o.extend({
-                out: true,
-                duration: .4,
-                ease: "ease-out",
-                direction: "left"
-            }, config);
-            func = func || o.util.empty;
-            var el = el,
-                direction = options.direction,
-                rotateProp = 'Y',
-                fromScale = 1,
-                toScale = 1,
-                fromRotate = 0,
-                out = options.out,
-                toRotate = 0;
+        checkImg: function(item, t, h) {
+            var u = o.util;
+            if(!u.isNode(item)) return;
+            var d = o.dom,
+                loaded = d.data(item, "loaded"),
+                src = d.data(item, this.srcName);
+            if(loaded)  return;
+            var pos = d.getPosition(item),
+                height = d.getHeight(item),
+                top = pos.top;
+            if(t >= top - h && t <= top + height + h) {
+                var that = this;
+                u.loadImage(src, u.empty, function() {
+                    that.notify("imglazyload-core-loadimgsuccess", item);
+                    d.attr(item, {
+                        src: src,
+                        "data-loaded": "loaded"
+                    });
 
-            if (out) {
-                toRotate = -180;
-                toScale = 0.8;
-            } else {
-                fromRotate = 180;
-                fromScale = 0.8;
-            }
-
-            if (direction == 'up' || direction == 'down') {
-                rotateProp = 'X';
-            }
-
-            if (direction == 'right' || direction == 'left') {
-                toRotate *= -1;
-                fromRotate *= -1;
-            }
-            el.style.webkitBackfaceVisibility = "hidden"
-            return new o.Tween(el, "-webkit-transform", 'rotate' + rotateProp + '(' + fromRotate + 'deg) scale(' + fromScale + ')',
-                'rotate' + rotateProp + '(' + toRotate + 'deg) scale(' + toScale + ')', options.duration, func, {
-                ease: options.ease
-            });
-        },
-
-        /**
-         * @method octopus.animation.wipe
-         */
-        wipe: function(el, config, func) {
-            var options = o.extend({
-                out: true,
-                duration: .4,
-                ease: "ease-out"
-            }, config);
-            func = func || o.util.empty;
-            var el = el,
-                curZ = o.dom.getStyle(el, "z-index") || 0,
-                zIndex,
-                out = options.out,
-                mask = '';
-
-            if (!out) {
-                zIndex = curZ + 1;
-                mask = '-webkit-gradient(linear, left bottom, right bottom, from(transparent), to(#000), color-stop(66%, #000), color-stop(33%, transparent))';
-                var _width = o.dom.getWidth(el);
-                el.style.webkitMaskImage = mask;
-                el.style.maskImage = mask;
-                el.style.webkitMaskSize = _width * 3 + "px" + o.dom.getHeight(el) + "px";
-                el.style.maskSize = _width * 3 + "px" + o.dom.getHeight(el) + "px";
-                el.style.zIndex = zIndex;
-                return new o.Tween(el, "-webkit-mask-position-x", "0", 0 - _width + "px",  options.duration, func, {
-                    ease: options.ease
+                }, function() {
+                    that.notify("imglazyload-core-loadimgfaile", item);
                 });
             }
-            window.setTimeout(func, options.duration * 1000);
-            return null;
+        }
+    });
+
+})(octopus);/**
+ * @file
+ * webapp通用组件父类
+ * @author oupeng-fe
+ * @version 1.1
+ * @require lib/class.js
+ * @require lib/util.js
+ * @require lib/dom.js
+ * @require lib/event.js
+ */
+;(function(o, undefined) {
+
+    "use strict";
+
+    /**
+     * @class octopus.Widget
+     * @desc octopus-ui的父类
+     * @param options {Object}
+     * @param options.el {DOMElement} 根节点 如果没有则创建一个div
+     * @param options.id {String} widget的id 也会成为根节点的id
+     * @param options.eventListeners {Object} 用以批量添加事件
+     * @example
+     * var widget = new Widget({
+     *     id: "widget",
+     *     eventListeners: {
+     *         "onTouch": function onTouch() {},
+     *         "onMove": function onMove() {},
+     *         "scope": this
+     *     }
+     * });
+     * @return new Widget
+     */
+    o.Widget = o.define({
+
+        /**
+         * @private
+         * @property id
+         * @type {String}
+         */
+        id: null,
+
+        /**
+         * @private
+         * @property options
+         * @type {Object}
+         */
+        options: null,
+
+        /**
+         * @private
+         * @property el
+         * @desc widget的根节点
+         * @type {DOMELement}
+         */
+        el: null,
+
+        /**
+         * @private
+         * @property container
+         * @desc widget的容器
+         * @type {DOMElement}
+         */
+        container: null,
+
+        /**
+         * @private
+         * @property autoActivate
+         * @desc 是否对像生成完就直接渲染，标志位
+         * @type {Boolean}
+         */
+        autoActivate: false,
+
+        /**
+         * @private
+         * @property active
+         * @desc 是否处于激活状态
+         * @type {Boolean}
+         */
+        active: false,
+
+        /**
+         * @private
+         * @property events
+         * @type {octopus.Events}
+         */
+        events: null,
+
+        /**
+         * @private
+         * @property isShow
+         * @type {Boolean}
+         */
+        isShow: false,
+
+        /**
+         * @private
+         * @property gesture
+         * @type {octopus.gesture}
+         */
+        gesture: null,
+
+        /**
+         * @private
+         * @property eventListeners
+         * @type {Object}
+         * @desc 事件监听回调列表
+         */
+        eventListeners: null,
+
+        /**
+         * @private
+         * @property widgetManager
+         * @type {octopus.WidgetManager}
+         * @desc widget管理器
+         */
+        widgetManager: null,
+
+        /**
+         * @private
+         * @constructor octopus.Widget.initialize
+         * @desc 构造函数
+         * @param options  -   {Object}
+         */
+        initialize: function(options) {
+            options = options || {};
+            this.addOptions(options);
+            this.events = new o.Events(this);
+            this.gesture = o.gesture;
+            this.id = this.id || o.util.createUniqueID(this.CLASS_NAME + "_");
+            if(this.eventListeners instanceof Object) {
+                this.events.register(this.eventListeners);
+            }
+            this.el = this.el || document.createElement("div");
+            !!this.el.id ? this.id = this.el.id : this.el.id = this.id;
         },
 
         /**
-         * @method octopus.animation.roll
+         * @public
+         * @method octopus.Widget.render
+         * @desc 渲染
+         * @param container {DOMElement}
          */
-        roll: function(el, config, func) {
-            var options = o.extend({
-                out: true,
-                duration: .4,
-                ease: "ease-out",
-                isFade: false
-            }, config);
-            func = func || o.util.empty;
-            var el = el,
-                out = options.out,
-                fromTransform = "translateX(-100%) rotate(-120deg)",
-                toTransform = "translateX(0px) rotate(0deg)",
-                ps = ["-webkit-transform"],
-                fvs = [],
-                evs = [];
-            if(out) {
-                var temp = fromTransform;
-                fromTransform = toTransform;
-                toTransform = temp;
+        render: function(container) {
+            var len = arguments.length;
+            if(len == 0) {
+                this.container = this.container || document.body;
+            } else {
+                this.container = o.g(arguments[0]);
             }
-            fvs.push(fromTransform);
-            evs.push(toTransform);
-            if(options.isFade) {
-                ps.push("opacity");
-                fvs.push(options.out ? 1 : 0);
-                evs.push(options.out ? 0 : 1);
+            if(this.container.appendChild === undefined) {
+                throw new Error("Illegal Dom!")
+            } else {
+                if(!!arguments[1]) {
+                    var clonenode = o.dom.cloneNode(this.container, true);
+                    this.appendChild(this.el, clonenode);
+                    this.container.parentNode.replaceChild(clonenode, this.container);
+                    this.container = clonenode;
+                } else {
+                    this.appendChild(this.el, this.container);
+                }
             }
-            return new o.Tween(el, ps, fvs, evs, options.duration, func, {
-                ease: options.ease
+            if(!this.active) {
+                this.activate();
+            }
+            if(!this.isShow) {
+                this.show();
+            }
+        },
+
+        /**
+         * @private
+         * @method octopus.Widget.appendChild
+         */
+        appendChild: function(dom, container) {
+            container.appendChild(dom);
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.activate
+         * @desc 激活控件
+         */
+        activate: function() {
+            if(this.active) return;
+            o.dom.addClass(this.el, "activate");
+            this.active = true;
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.deactivate
+         * @desc 挂起控件
+         */
+        deactivate: function() {
+            if(!this.active)    return;
+            o.dom.removeClass(this.el, "activate");
+            this.active = false;
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.destroy
+         * @desc 摧毁
+         */
+        destroy: function() {
+            if(this.container) {
+                this.container.removeChild(this.el);
+                this.container = null;
+            }
+            this.el = null;
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.on
+         * @desc 监听自定义事件 如果为手势事件 则监听的是根节点触发的
+         * @param type {String}
+         * @param func {Function}
+         * @param opv {Object}
+         */
+        on: function(type, func, opv) {
+            var GESTURES = o.Widget.GESTURES;
+            if(GESTURES.indexOf(type) != -1) {
+                this.gesture(this.el, opv).on(type, func);
+                return;
+            }
+            this.events.on(type, func);
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.un
+         * @desc 去除监听 与on相对
+         * @param type {String}
+         * @param func {Function}
+         */
+        un: function(type, func) {
+            this.events.un(type, func);
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.notify
+         * @desc 触发某自定义事件
+         * @param type {String}
+         * @param evt {Object}
+         */
+        notify: function(type, evt) {
+            this.events.triggerEvent(type, evt);
+        },
+
+        /**
+         * @private
+         * @method addOptions
+         * @desc 深度绑定
+         * @param newOptions  -   {Object}
+         */
+        addOptions: function(newOptions) {
+            if (this.options == null) {
+                this.options = {};
+            }
+            o.extend(this.options, newOptions);
+            o.extend(this, newOptions);
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.show
+         * @desc 显示widget
+         */
+        show: function() {
+            if(this.isShow) return;
+            this.isShow = true;
+            this.el.style.display = "block";
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.hidden
+         * @desc 隐藏widget
+         */
+        hidden: function() {
+            if(!this.isShow)    return;
+            this.isShow = false;
+            this.el.style.display = "none";
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.toggleVisible
+         * @desc 切换显示状态
+         */
+        toggleVisible: function() {
+            if(this.isShow) {
+                this.hidden();
+            } else {
+                this.show();
+            }
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.clone
+         * @returns {*}
+         */
+        clone: function() {
+            return eval("new " + this.CLASS_NAME + "(o.util.clone(this.options))");
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.getEl
+         * @desc 拿widget的根节点
+         */
+        getEl: function() {
+            return this.el;
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.getHeight
+         * @desc 拿到widget的高度
+         */
+        getHeight: function() {
+            return o.dom.getHeight(this.el) || o.dom.getStyle(this.el, "height");
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.getWidth
+         * @desc 拿到widget的宽度
+         */
+        getWidth: function() {
+            return o.dom.getWidth(this.el) || o.dom.getStyle(this.el, "width");
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.setManager
+         * @desc widget被注册进widgetManager
+         * @param m
+         */
+        setManager: function(m) {
+            this.widgetManager = m;
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.setZIndex
+         * @desc 设置控件的zindex值
+         * @param z {String}
+         */
+        setZIndex: function(z) {
+            this.el.style.zIndex = z;
+        },
+
+        CLASS_NAME: "octopus.Widget"
+    });
+
+    o.Widget.GESTURES = ["tap", "lontap", "doubletap", "swipe", "swipeleft",
+        "swiperight", "swipeup", "swipedown", "drag", "drapleft", "dragright",
+        "dragup", "dragdown", "touch", "release"];
+
+    /**
+     * @method octopus.widgetManager
+     * @desc 返回一个widget的管理器
+     * @param el {DOMElement}
+     * @param opts {Object}
+     * @returns {o.WidgetManager}
+     */
+    o.widgetManager = function(el, opts) {
+        return new o.WidgetManager(el, opts);
+    };
+
+    /**
+     * @class octopus.WidgetManager
+     * @desc widget管理器
+     * @param el {DOMElement} 管理器覆盖的节点 必须有的参数
+     * @param opts {Object} 额外参数 非必需
+     * @param opts.classFilter {String} 符合条件的节点必需包括这个class 默认为"octopusui-container"
+     * @param opts.supportType {Array} 当前这个管理器支持的控件类型 默认为 slider refresh menu mask back2top
+     */
+    o.WidgetManager = o.define({
+
+        /**
+         * @private
+         * @property el
+         * @type {DOMElement}
+         * @desc 管理器覆盖的节点容器
+         */
+        el: null,
+
+        /**
+         * @private
+         * @property els
+         * @type {Array}
+         * @desc 符合条件的节点集合
+         */
+        els: null,
+
+        /**
+         * @private
+         * @property opts
+         * @desc 参数项
+         */
+        opts: null,
+
+        /**
+         * @private
+         * @property classFilter
+         * @type {String}
+         * @desc 符合条件节点的class
+         */
+        classFilter: null,
+
+        /**
+         * @private
+         * @property widgets
+         * @desc 管理器里已拿到的控件
+         * @type {Array}
+         */
+        widgets: null,
+
+        /**
+         * @private
+         * @property supportType
+         * @desc 支持的控件类型集合
+         */
+        supportType: null,
+
+        /**
+         * @private
+         * @property event
+         */
+        event: null,
+
+        /**
+         * @private
+         * @constructor
+         * @param el {String | DOMElement} 解析的容器
+         * @param opts {Object} 传入的参数
+         */
+        initialize: function(el, opts) {
+            this.opts = o.extend({}, opts || {});
+            this.el = o.g(el);
+            if(!o.util.isNode(this.el))  throw new Error("require a node to initialize!");
+            this.els = [];
+            this.event = new o.Events(this);
+            this.widgets = [];
+            this.supportType = this.opts.supportType || ["slider", "back2top"];
+            this.classFilter = this.opts.classFilter || ".octopusui-container";
+            return this;
+        },
+
+        /**
+         * @public
+         * @method octopus.WidgetManager.init
+         * @desc 开始对指定节点下的符合条件的html片段控件化
+         */
+        init: function() {
+            var els = o.$(this.classFilter, this.el),
+                that = this;
+            o.util.each(els, function(item) {
+                if(o.util.isNode(item)) {
+                    that.els.push(item);
+                }
+            });
+            if(this.els.length == 0)    return;
+            o.util.each(this.els, o.util.bind(this.initWidgets, this));
+        },
+
+        /**
+         * @private
+         * @method initWidgets
+         * @param item 单个widget的html片段的容器
+         */
+        initWidgets: function(item) {
+            var type = o.dom.data(item, "octopusui-type"),
+                index = this.supportType.indexOf(type);
+            if(index == -1 || o.dom.data(item, "octopusui-loaded"))   return;
+            var widget = this[this.supportType[index]](item);
+            this.register(widget);
+            o.dom.data(widget.el, {
+                "octopusui-loaded": "true"
+            });
+        },
+
+        /**
+         * @private
+         * @method getWidgetBy
+         * @param type {String} 获取类型
+         * @param filter {String} 获取节点的选择器
+         */
+        getWidgetBy: function(type, filter) {
+            var widgets = [],
+                len = this.widgets.length,
+                i = len;
+            for(; i--; ) {
+                var widget = this.widgets[i];
+                if(widget[type] == filter) {
+                    if(type == "id") return widget;
+                    widgets.push(widget);
+                }
+            }
+            return widgets;
+        },
+
+        /**
+         * @public
+         * @method octopus.WidgetManager.getWidgetById
+         * @param id {String}
+         * @desc 根据widget的id拿到widget对象
+         */
+        getWidgetById: function(id) {
+            return this.getWidgetBy("id", id);
+        },
+
+        /**
+         * @public
+         * @method octopus.WidgetManager.getWidgetByClass
+         * @param c {String}
+         * @desc 根据widget的class_name拿widget对象集合
+         */
+        getWidgetByClass: function(c) {
+            return this.getWidgetBy("CLASS_NAME", c);
+        },
+
+        /**
+         * @public
+         * @method octopus.WidgetManager.slider
+         * @desc 创建一个轮播图
+         * @param el {DOMElement}
+         */
+        slider: function(el) {
+            return o.Widget.slider(el);
+        },
+
+        /**
+         * @public
+         * @method octopus.WidgetManager.back2top
+         * @desc 创建一个fixed的元素
+         * @param el {DOMElement}
+         */
+        back2top: function(el) {
+            return o.Widget.back2top(el);
+        },
+
+        /**
+         * @public
+         * @method octopus.WidgetManager.register
+         */
+        register: function(widget) {
+            if(this.widgets.indexOf(widget) != -1)  return false;
+            this.widgets.push(widget);
+            widget.setManager(this);
+        },
+
+        /**
+         * @public
+         * @method octopus.WidgetManager.unregister
+         */
+        unregister: function(widget) {
+            var index = this.widgets.indexOf(widget);
+            if(index == -1) return false;
+            this.widgets[index].setManager(null);
+            this.widgets.splice(index, 1);
+        },
+
+        CLASS_NAME: "octopus.WidgetManager"
+    });
+
+})(octopus);/**
+ * @file
+ * webapp通用组件结构文件
+ * 定义模块管理
+ * @require lib/class.js
+ * @require lib/util.js
+ * @require lib/dom.js
+ * @require lib/event.js
+ * @author oupeng-fe
+ * @version 1.1
+ */
+;(function(o, undefined) {
+
+    "use strict";
+
+	/**
+	 * @namespace octopus.app
+	 * @desc octopus app模块结构
+	 */
+    o.app = (function() {
+
+        var app = null;
+
+        /**
+         * @private
+         * @method octopus.app.registerModule
+         * @param id
+         * @param func
+         * @param immediate
+         */
+        function registerModule(id, func, immediate) {
+            initialize(undefined).registerModule(id, func, immediate);
+        }
+
+        /**
+         * @private
+         * @method initialize
+         * @param options
+         */
+        function initialize(options) {
+            return !app ? (app = new o.App(options), app) : (!!options ? (console.warn("The app has already exist! Failure to set up the config"), app) : app);
+        }
+
+        return {
+            /**
+             * @public
+             * @method octopus.app.registerModule
+             * @param id
+             * @param func
+             * @param immediate
+             * @desc 注册一个模块
+             */
+            registerModule: registerModule,
+
+            /**
+             * @public
+             * @method octopus.app.initialize
+             * @param options
+             * @desc 初始化app对象 如果不被调用则按照默认属性初始化
+             * @returns {octopus.App|app}
+             */
+            initialize: initialize
+        };
+    })();
+
+    o.App = o.define({
+
+        /**
+         * @private
+         * @property id
+         * @type {String}
+         */
+        id: null,
+
+        /**
+         * @private
+         * @property el
+         * @type {DOMElement}
+         * @desc app的根节点
+         */
+        el: null,
+
+        /**
+         * @private
+         * @property viewEl
+         * @type {DOMElement}
+         * @desc 可视节点
+         */
+        viewEl: null,
+
+        /**
+         * @private
+         * @property layers
+         * @type {Array}
+         * @desc 管理的模块
+         */
+        layers: null,
+
+        /**
+         * @private
+         * @property currentLayer
+         * @type {o.Layer}
+         */
+        currentLayer: null,
+
+        /**
+         * @private
+         * @property cmds
+         * @type {Array}
+         */
+        cmds: null,
+
+        /**
+         * @private
+         * @property moduleCreator
+         * @desc 生成器
+         */
+        moduleCreator: null,
+
+        /**
+         * @private
+         * @property events
+         * @type {o.Events}
+         */
+        events: null,
+
+        /**
+         * @private
+         * @property eventListeners
+         * @type {Object}
+         */
+        eventListeners: null,
+
+        /**
+         * @private
+         * @property cmdManager
+         * @type {o.CmdManager}
+         */
+        cmdManager: null,
+
+        /**
+         * @private
+         * @property eventCaches
+         * @desc 事件缓存 主要防止 一些模块未就位时的事件分发
+         * @type {Array}
+         */
+        eventCaches: null,
+
+        /**
+         * @private
+         * @property isLoad
+         * @type {Boolean}
+         */
+        isLoad: false,
+
+        /**
+         * @private
+         * @property config
+         * @desc 配置项
+         */
+        config: null,
+
+        /**
+         * @private
+         * @property isResize
+         * @type {Boolean}
+         */
+        isResize: false,
+
+        /**
+         * @private
+         * @property widgets
+         */
+        widgets: null,
+
+        /**
+         * @private
+         * @property isInitDom
+         */
+        isInitDom: false,
+
+        /**
+         * @private
+         * @constructor
+         */
+        initialize: function(options) {
+            var config = this.config = o.extend({}, options);
+            this.moduleCreator = {};
+            this.eventCaches = [];
+            this.id = config.id || o.util.createUniqueID(this.CLASS_NAME + "_");
+
+            //监听window事件 启动模块
+            o.event.on(window, "ready", o.util.bind(this.onWindowLoad, this), false);
+            o.event.on(window, "resize", o.util.bind(this.onWindowResize, this), false);
+            if("orientationchange" in window) {
+                o.event.on(window, "orientationchange", o.util.bind(this.onOrientationChanged, this), false);
+            }
+            this.events = new o.Events(this);
+            if(config.eventListeners && o.util.isObject(config.eventListeners)) {
+                this.eventListeners = config.eventListeners;
+                this.events.register(this.eventListeners);
+            }
+            //命令搞上去
+            this.cmdManager = new o.CmdManager({
+                app: this
+            });
+            if(config.cmds) {
+                this.cmds = config.cmds;
+                o.util.each(this.cmds, o.util.bind(this.registerCmd, this));
+                this.cmds.length = 0;
+            }
+        },
+
+        /**
+         * @public
+         * @method octopus.App.registerCmd
+         * @param cmd {octopus.Cmd}
+         */
+        registerCmd: function(cmd) {
+            this.cmdManager.register(cmd);
+        },
+
+        /**
+         * @public
+         * @method octopus.App.executeCmd
+         * @param name {String}
+         * @param ops {Object}
+         * @desc 执行指定命令
+         */
+        executeCmd: function(name, ops) {
+            this.cmdManager.executeCommand(name, ops);
+        },
+
+        /**
+         * @public
+         * @method octopus.App.unregisterCmd
+         * @param name {String}
+         */
+        unregisterCmd: function(name) {
+            this.cmdManager.unregister(name);
+        },
+
+        /**
+         * @public
+         * @method octopus.App.registerModule
+         * @param id {String}
+         * @param m {Object | octopus.Module}
+         * @param immediate {Boolean}
+         */
+        registerModule: function(id, m, immediate) {
+            this.register2ModuleCreator(id, m);
+            return (this.isLoad || !!immediate) ? (this.startModule(id), true) : false;
+        },
+
+        /**
+         * @private
+         * @method register2ModuleCreator
+         * @param id {String} 注册的id
+         * @param creator {Object | Function} 构造器
+         */
+        register2ModuleCreator: function(id, creator) {
+            return this.moduleCreator[id] = {
+                creator: creator,
+                instance: null
+            };
+        },
+
+        /**
+         * @private
+         * @method startModule
+         * @param id {String}
+         */
+        startModule: function(id) {
+            var creator = this.moduleCreator[id];
+            if(creator.instance)   return;
+            creator.instance = creator.creator(this);
+            if(!creator.instance) {
+                console.error("Module " + id + " didn't work for its invalid returns! It should be an object!");
+            } else if(!creator.instance.initialize) {
+                console.error("Module " + id + " didn't work for its invalid returns! It should has the method 'initialize'!");
+            }
+            creator.instance.initialize && creator.instance.initialize();
+        },
+
+        /**
+         * @private
+         * @method octopus.App.getModule
+         * @param id {String}
+         */
+        getModule: function(id) {
+            return this.moduleCreator[id].instance;
+        },
+
+        /**
+         * @public
+         * @method octopus.App.on
+         * @param type {String} 事件名
+         * @param func {Function} 回调
+         */
+        on: function(type, func) {
+            this.events.on(type, func);
+        },
+
+        /**
+         * @public
+         * @method octopus.App.un
+         * @param type {String} 事件名
+         * @param func {Function} 回调
+         */
+        un: function(type, func) {
+            this.events.un(type, func);
+        },
+
+        /**
+         * @public
+         * @method octopus.App.notify
+         * @desc 触发某自定义事件
+         * @param type {String}
+         * @param evt {Object}
+         */
+        notify: function(type, evt) {
+            if(!this.isLoad) {
+                this.eventCaches.push([type, evt]);
+                return;
+            }
+            this.events.triggerEvent(type, evt);
+        },
+
+        /**
+         * @private
+         * @method onWindowLoad
+         * @desc 监听onload事件
+         */
+        onWindowLoad: function() {
+            var that = this;
+            o.util.each(this.moduleCreator, function(item, k) {
+                that.startModule(k);
+            });
+            this.isLoad = true;
+            if(this.eventCaches) {
+                var item;
+                while(item = this.eventCaches.shift()) {
+                    this.notify(item[0], item[1]);
+                }
+            }
+            this.notify("Global-OctopusApp-ModuleCompleted", {});
+        },
+
+        /**
+         * @public
+         * @method octopus.App.render
+         */
+        render: function(el) {
+            if(!this.isLoad)    console.error("The page hasn't loaded!");
+            el = o.g(el);
+            if(!el)    console.error("Invalid node to render!");
+            this.initDomMode(el);
+        },
+
+        /**
+         * @private
+         * @method initDomMode
+         */
+        initDomMode: function(el) {
+            //节点模式
+            this.isInitDom = true;
+            var config = this.config,
+                node = el,
+                id = this.id + "_Octopus_ViewPort";
+            this.el = o.dom.cloneNode(node, true);
+            this.viewEl = o.dom.createDom("div", {
+                id: id,
+                "class": "octopus-viewport",
+                style: "width: 100%; height: 100%; position: relative; z-index: 300; overflow: hidden"
+            });
+            this.el.appendChild(this.viewEl);
+            //如果是节点模式且拥有图层
+            if(config.layers) {
+                o.util.each(config.layers, o.util.bind(this.addLayer, this));
+            }
+            //如果是节点模式且初始化widget控件
+            if(config.widgets) {
+                o.util.each(config.widgets, o.util.bind(this.addWidget, this));
+            }
+            this.notify("Global-OctopusApp-BeforeAppCompleted");
+            //把被搞得面目全非的el加入文档流
+            if(node) {
+                node.parentNode.replaceChild(this.el, node);
+                this.notify("Global-OctopusApp-AppCompleted");
+            }
+        },
+
+        /**
+         * @private
+         * @method onOrientationChanged
+         * @desc 监听横竖屏切换事件
+         */
+        onOrientationChanged: function() {
+            this.notify("Global-OctopusApp-OnOrientationChanged");
+        },
+
+        /**
+         * @private
+         * @method onWindowResize
+         */
+        onWindowResize: function() {
+            if(!this.isResize) {
+                o.util.requestAnimation(o.util.bind(this.checkSize, this));
+                this.isResize = true;
+            }
+        },
+
+        /**
+         * @private
+         * @method checkSize
+         */
+        checkSize: function() {
+            this.isResize = false;
+            this.notify("Global-OctopusApp-OnWindowResize");
+        },
+
+        /**
+         * @public
+         * @method octopus.App.addLayer
+         * @desc 给当前dom上增加图层 如果不存在this.el 则此方法没实际效果
+         * @param layer {octopus.Layer}
+         */
+        addLayer: function(layer) {
+            if(!this.layers)    this.layers = [];
+            if(this.layers.indexOf(layer) != -1)  return;
+            var el = layer.getEl();
+            o.dom.addClass(el, "octopus-app-layer");
+            this.setLayerZIndex(layer, this.layers.length);
+            if(layer.isBaseLayer) {
+                this.el.appendChild(el);
+            } else {
+                this.viewEl.appendChild(el);
+            }
+            if(layer.isCurrent) {
+                this.setCurrentLayer(layer);
+            }
+            this.layers.push(layer);
+            layer.setApp(this);
+            this.notify("Global-OctopusApp-LayerAdd", {layer: layer});
+            layer.afterAdd();
+        },
+
+        /**
+         * @public
+         * @method octopus.App.setCurrentLayer
+         * @param layer
+         */
+        setCurrentLayer: function(layer) {
+            if(this.currentLayer) {
+                this.currentLayer.setCurrent(false);
+            }
+            this.currentLayer = layer;
+            this.topLayer(layer);
+            layer.setCurrent(true);
+            this.notify("Global-OctopusApp-CurrentLayerChanged", {layer: layer});
+        },
+
+        /**
+         * @private
+         * @method setLayerZIndex
+         * @desc 设置图层的index
+         * @param layer {octopus.Layer}
+         * @param zIdx {Number}
+         */
+        setLayerZIndex: function(layer, zIdx) {
+            layer.setZIndex(this.Z_INDEX_BASE[layer.isBaseLayer ? "BaseLayer" : "Layer"] + zIdx * 5);
+        },
+
+        /**
+         * @private
+         * @method octopus.App.resetLayersZIndex
+         * @desc reset图层zindex
+         */
+        resetLayersZIndex: function() {
+            var that = this;
+            o.util.each(this.layers, function(layer, i) {
+                that.setLayerZIndex(layer, i);
             })
         },
 
         /**
-         * @method octopus.animation.rotate
+         * @private
+         * @method getTopZIndex
          */
-        rotate: function(el, config, func) {
-            var options = o.extend({
-                out: true,
-                duration: .4,
-                ease: "ease-out",
-                horizon: "center",
-                direction: "center",
-                isFade: false
-            }, config);
-            func = func || o.util.empty;
-            var el = el,
-                out = options.out,
-                ps = ["-webkit-transform"],
-                fvs = [],
-                fromTransform = "rotate(200deg)",
-                toTransform = "rotate(0)",
-                evs = [];
-            if(options.direction == "up") {
-                options.direction = "top";
-            } else if(options.direction == "down") {
-                options.direction = "bottom";
-            }
-            el.style.webkitTransformOrigin = options.horizon + " " + options.direction;
-            if(options.horizon == "left") {
-                fromTransform = "rotate(90deg)";
-            } else if(options.horizon == "right") {
-                fromTransform = "rotate(-90deg)";
-            }
-            if(out) {
-                var temp = fromTransform;
-                fromTransform = toTransform;
-                toTransform = temp;
-            }
-            fvs.push(fromTransform);
-            evs.push(toTransform);
-            if(options.isFade) {
-                ps.push("opacity");
-                fvs.push(options.out ? 1 : 0);
-                evs.push(options.out ? 0 : 1);
-            }
-            return new o.Tween(el, ps, fvs, evs, options.duration, func, {
-                ease: options.ease
+        getTopZIndex: function() {
+            var topIndex = {
+                zindex: 0,
+                index: 0
+            };
+            o.util.each(this.layers, function(layer, i) {
+                var _zindex = layer.getEl().style.zIndex || 0;
+                if(_zindex > topIndex.zindex) {
+                    topIndex = {
+                        zindex: _zindex,
+                        index: i
+                    }
+                }
             });
+            return topIndex;
         },
 
         /**
-         * @method octopus.animation.fold
+         * @public
+         * @method octopus.App.topLayer
          */
-        fold: function(el, config, func) {
-            var options = o.extend({
-                out: true,
-                duration: .4,
-                ease: "ease-out",
-                direction: "left",
-                isFade: false
-            }, config);
-            func = func || o.util.empty;
-            var el = el,
-                out = options.out,
-                direction = options.direction,
-                transform = {
-                    "left": {
-                        "origin": "100% 50%",
-                        "startTransform": "translateX(-100%) rotateY(-90deg)"
-                    },
-                    "right": {
-                        "origin": "0% 50%",
-                        "startTransform": "translateX(100%) rotateY(90deg)"
-                    },
-                    "up": {
-                        "origin": "50% 100%",
-                        "startTransform": "translateY(-100%) rotateX(90deg)"
-                    },
-                    "down": {
-                        "origin": "50% 0%",
-                        "startTransform": "translateY(100%) rotateX(-90deg)"
-                    }
-                },
-                ps = ["-webkit-transform"],
-                fvs = [],
-                evs = [],
-                fromTransform = transform[direction]["startTransform"],
-                toTransform = "translate3d(0, 0, 0) rotate(0)";
-            el.style.webkitTransformOrigin = transform[direction]["origin"];
-            if(out) {
-                var temp = fromTransform;
-                fromTransform = toTransform;
-                toTransform = temp;
-            }
-            fvs.push(fromTransform);
-            evs.push(toTransform);
-            if(options.isFade) {
-                ps.push("opacity");
-                fvs.push(options.out ? 1 : 0);
-                evs.push(options.out ? 0 : 1);
-            }
-            return new o.Tween(el, ps, fvs, evs, options.duration, func, {
-                ease: options.ease
-            });
+        topLayer: function(layer) {
+            var topIndex = this.getTopZIndex(),
+                index = layer.el.style.zIndex;
+            if(topIndex == index)	return;
+            layer.el.style.zIndex = topIndex.zindex;
+            this.layers[topIndex.index].el.style.zIndex = index;
         },
 
         /**
-         * @method octopus.animation.carousel
+         * @public
+         * @method octopus.App.getLayer
+         * @param id {String}
+         * @desc 靠id获取图层
          */
-        carousel: function(el, config, func) {
-            var options = o.extend({
-                out: true,
-                duration: .4,
-                ease: "ease-out",
-                direction: "left",
-                isFade: false
-            }, config);
-            func = func || o.util.empty;
-            var el = el,
-                out = options.out,
-                direction = options.direction,
-                transform = {
-                    "left": {
-                        "originOut": "100% 50%",
-                        "originIn": "0% 50%",
-                        "startTransformOut": "translateX(-200%) scale(.4) rotateY(-65deg)",
-                        "startTransformIn": "translateX(200%) scale(.4) rotateY(65deg)"
-                    },
-                    "right": {
-                        "originOut": "0% 50%",
-                        "originIn": "100% 50%",
-                        "startTransformOut": "translateX(200%) scale(.4) rotateY(65deg)",
-                        "startTransformIn": "translateX(-200%) scale(.4) rotateY(-65deg)"
-                    },
-                    "up": {
-                        "originOut": "50% 100%",
-                        "originIn": "50% 0%",
-                        "startTransformOut": "translateY(-200%) scale(.4) rotateX(65deg)",
-                        "startTransformIn": "translateY(200%) scale(.4) rotateX(-65deg)"
-                    },
-                    "down": {
-                        "originOut": "50% 0%",
-                        "originIn": "50% 100%",
-                        "startTransformOut": "translateY(200%) scale(.4) rotateX(-65deg)",
-                        "startTransformIn": "translateY(-200%) scale(.4) rotateX(65deg)"
-                    }
-                },
-                ps = ["-webkit-transform"],
-                fvs = [],
-                evs = [],
-                fromTransform = transform[direction]["startTransformOut"],
-                toTransform = "translate3d(0, 0, 0) rotate(0)";
-            el.style.webkitTransformOrigin = out ? transform[direction]["originIn"] : transform[direction]["originOut"];
-            if(out) {
-                fromTransform = toTransform;
-                toTransform = transform[direction]["startTransformIn"];
-            }
-            fvs.push(fromTransform);
-            evs.push(toTransform);
-            if(options.isFade) {
-                ps.push("opacity");
-                fvs.push(options.out ? 1 : 0);
-                evs.push(options.out ? 0 : 1);
-            }
-            return new o.Tween(el, ps, fvs, evs, options.duration, func, {
-                ease: options.ease
+        getLayer: function(id) {
+            var layer = null;
+            o.util.each(this.layers, function(_layer) {
+                if(id == _layer.id) {
+                    layer = _layer;
+                    return true;
+                }
             });
-        }
-    };
+            return layer;
+        },
+
+        /**
+         * @public
+         * @method octopus.App.removeLayer
+         * @param layer
+         * @desc 删掉图层
+         */
+        removeLayer: function(layer) {
+            layer.getEl().parentNode.removeChild(layer.getEl());
+            o.util.removeItem(this.layers, layer);
+            layer.removeApp(this);
+            layer.app = null;
+            this.resetLayersZIndex();
+            this.notify("Global-OctopusApp-LayerRemove", {layer: layer});
+        },
+
+        /**
+         * @public
+         * @method octopus.App.addWidget
+         * @param widget {octopus.Widget}
+         * @param auto {Boolean}
+         * @desc 添加widget到app里
+         */
+        addWidget: function(widget, auto) {
+            if(!this.widgets)    this.widgets = [];
+            var index = this.widgets.indexOf(widget);
+            if(index > -1)  return false;
+            this.widgets.push(widget)
+            if(!auto) {
+                widget.container = widget.outsideViewport ? this.el : this.viewEl;
+                widget.render();
+            }
+            widget.setZIndex(this.Z_INDEX_BASE.Widget + this.widgets.length * 5);
+        },
+
+        /**
+         * @public
+         * @method octopus.App.getWidget
+         * @param id
+         */
+        getWidget: function(id) {
+            var widget = null,
+                i = 0,
+                len = this.widgets.length;
+            o.util.each(this.widgets, function(_widget) {
+                if(_widget.id == id) {
+                    widget = _widget;
+                    return true;
+                }
+            });
+            return widget;
+        },
+
+        /**
+         * @public
+         * @method octopus.App.removeWidget
+         * @param widget {octopus.Widget}
+         */
+        removeWidget: function(widget) {
+            if ((widget) && (widget == this.getWidget(widget.id))) {
+                widget.el.parentNode.removeChild(widget.el);
+                o.util.removeItem(this.widgets, widget);
+            }
+        },
+
+        Z_INDEX_BASE: {
+            BaseLayer: 0,
+            Layer: 350,
+            Widget: 750,
+            Mask: 1000,
+            Popup: 1500
+        },
+
+        CLASS_NAME: "octopus.App"
+    });
+})(octopus);/**
+ * @file
+ * webapp通用组件结构文件
+ * 定义命令或操作
+ * @author oupeng-fe
+ * @version 1.1
+ */
+;(function(o, undefined) {
+
+    "use strict";
+
+    o.Cmd = o.define({
+
+        /**
+         * @private
+         * @property name
+         * @type {String}
+         */
+        name: null,
+
+        /**
+         * @private
+         * @property active
+         * @type {Boolean}
+         */
+        active: false,
+
+        /**
+         * @private
+         * @property app
+         * @type {octopus.App}
+         */
+        app: null,
+
+        /**
+         * @private
+         * @constructor
+         */
+        initialize: function(name, options) {
+            this.name = this.name || this.CLASS_NAME;
+            o.extend(this, options)
+        },
+
+        /**
+         * @public
+         * @method octopus.Cmd.activate
+         * @desc 激活命令状态
+         */
+        activate: function() {
+            if(!this.active) {
+                this.active = true;
+            }
+        },
+
+        /**
+         * @public
+         * @method octopus.Cmd.deactivate
+         * @desc 挂起命令状态
+         */
+        deactivate: function() {
+            if(this.active) {
+                this.active = false;
+            }
+        },
+
+        /**
+         * @public
+         * @method octopus.Cmd.execute
+         * @param option
+         * @desc 执行命令
+         */
+        execute: function(option) {
+            if(!this.active)	return false;
+        },
+
+        /**
+         * @public
+         * @method octopus.Cmd.unexecute
+         * @desc 实现此方法的命令支持undo redo
+         */
+        unexecute: function() {
+            if(!this.active)    return false;
+        },
+
+        /**
+         * @public
+         * @method octopus.Cmd.setApp
+         * @page {octopus.App}
+         * @desc 绑定命令到app
+         */
+        setApp: function(app) {
+            if(this.app != app) {
+                this.app = app;
+            }
+        },
+        CLASS_NAME: "octopus.Cmd"
+    });
+})(octopus);/**
+ * @file
+ * webapp通用组件结构文件
+ * 定义命令管理类
+ * @author oupeng-fe
+ * @version 1.1
+ */
+;(function(o, undefined) {
+
+    "use strict";
+
+    o.CmdManager = o.define({
+
+        /**
+         * @private
+         * @property app
+         * @type {octopus.App}
+         */
+        app: null,
+
+        /**
+         * @private
+         * @property commands
+         * @type {Array}
+         */
+        commands: null,
+
+        /**
+         * @private
+         * @property executeCmds
+         * @type {Array}
+         */
+        executeCmds: null,
+
+        /**
+         * @private
+         * @property name
+         * @type {String}
+         */
+        name: null,
+
+        /**
+         * @private
+         * @constructor
+         */
+        initialize: function(options) {
+            o.extend(this, options);
+            !!this.app ? (this.setApp(this.app), true) : false;
+            this.name = this.name || o.util.createUniqueID(this.CLASS_NAME + "_");
+            this.commands = this.commands || [];
+            this.executeCmds = this.executeCmds || [];
+        },
+
+        /**
+         * @public
+         * @method octopus.CmdManager.setApp
+         * @param app {octopus.App}
+         */
+        setApp: function(app) {
+            this.app == app ? false : (this.app = app, true);
+        },
+
+        /**
+         * @public
+         * @method octopus.CmdManager.register
+         * @param command {o.Cmd}
+         * @desc 注册一个命令到命令管理器
+         */
+        register: function (command) {
+            var index = this.commands.indexOf(command);
+            if(index != -1)	return false;
+            this.commands.push(command);
+            command.setApp(this.app);
+            return true;
+        },
+
+        /**
+         * @public
+         * @method octopus.CmdManager.unregister
+         * @param name {String}
+         */
+        unregister: function(name) {
+            var index = this.getCommandIndexByName(name);
+            if(index == -1)	return false;
+            this.commands.splice(index, 1);
+            return true;
+        },
+
+        /**
+         * @private
+         * @method getCommandIndexByName
+         */
+        getCommandIndexByName: function(name) {
+            var len = this.commands.length,
+                i = len;
+            for(; i--; ) {
+                if(name == this.commands[i].name) {
+                    return i;
+                }
+            }
+            return -1;
+        },
+
+        /**
+         * @public
+         * @method octopus.CmdManager.executeCommand
+         * @param name {String} 命令名
+         * @param option {Object}
+         */
+        executeCommand: function(name, option) {
+            var index = this.getCommandIndexByName(name);
+            if(index == -1)	return;
+            this.commands[index].execute(option);
+        },
+
+        /**
+         * @public
+         * @method octopus.CmdManager.destroy
+         */
+        destroy: function () {
+            this.app = null;
+        },
+
+        CLASS_NAME: "octopus.CmdManager"
+    });
+
+})(octopus);/**
+ * @file
+ * webapp通用组件结构文件
+ * 定义图层基类
+ * @author oupeng-fe
+ * @version 1.1
+ */
+;(function(o, undefined) {
+
+    "use strict";
+
+    o.Layer = o.define({
+        /**
+         * @private
+         * @property id
+         * @type {String}
+         */
+        id: null,
+
+        /**
+         * @private
+         * @property config
+         * @type {Object}
+         */
+        config: null,
+
+        /**
+         * @private
+         * @property isCurrent
+         * @type {Boolean}
+         */
+        isCurrent: false,
+
+        /**
+         * @private
+         * @property event
+         * @type {octopus.Events}
+         */
+        event: null,
+
+        /**
+         * @private
+         * @property el
+         * @type {DOMElement}
+         */
+        el: null,
+
+        /**
+         * @private
+         * @property octopus.Layer.isBaseLayer
+         * @type {Boolean}
+         */
+        isBaseLayer: false,
+
+        /**
+         * @private
+         * @property widgets
+         * @type {Array}
+         */
+        widgets: null,
+
+        /**
+         * @private
+         * @property app
+         * @type {octopus.App}
+         */
+        app: null,
+
+        /**
+         * @private
+         * @constructor
+         */
+        initialize: function(options) {
+            var config = this.config = o.extend({}, options);
+            this.id = config.id || o.util.createUniqueID(this.CLASS_NAME + "_");
+            this.el = o.dom.createDom("div", {
+                id: this.id
+            });
+            this.isCurrent = config.isCurrent || this.isCurrent;
+            this.isBaseLayer = config.isBaseLayer || this.isBaseLayer;
+            if(this.isCurrent || this.isBaseLayer) {
+                o.dom.addClass(this.el, "octopus-layer-base");
+            }
+            console.log(o.Events);
+            this.event = new o.Events(this);
+        },
+
+        /**
+         * @public
+         * @method octopus.Layer.getEl
+         * @return {DOMElement}
+         */
+        getEl: function() {
+            return this.el;
+        },
+
+        /**
+         * @public
+         * @method octopus.Layer.on
+         * @desc 事件监听
+         * @param type {String}
+         * @param func {Function}
+         */
+        on: function(type, func) {
+            this.events.on(type, func);
+        },
+
+        /**
+         * @public
+         * @method octopus.Layer.un
+         * @desc 事件取消监听
+         * @param type {String}
+         * @param func {Function}
+         */
+        un: function(type, func) {
+            this.events.un(type, func);
+        },
+
+        /**
+         * @public
+         * @method octopus.Layer.setApp
+         * @desc 绑定app
+         * @param app {octopus.App}
+         */
+        setApp: function(app) {
+            return app == this.app ? false : (this.app = app, true);
+        },
+
+        /**
+         * @public
+         * @method octopus.Layer.afterAdd
+         * @desc 绑定入app后调用
+         */
+        afterAdd: function() {
+
+        },
+
+        /**
+         * @public
+         * @method octopus.Layer.setCurrent
+         * @param current {Boolean}
+         */
+        setCurrent: function(current) {
+            if((current && this.isCurrent) || (!current && !this.isCurrent)) return;
+            this.isCurrent = current;
+            current ? o.dom.addClass(this.el, "octopus-layer-show") : o.dom.removeClass(this.el, "octopus-layer-show");
+        },
+
+        /**
+         * @public
+         * @method octopus.Layer.setZIndex
+         * @param zIndex {Number}
+         */
+        setZIndex: function(zIndex) {
+            this.el.style.zIndex = zIndex;
+        },
+
+        activate: function() {
+
+        },
+
+        deactivate: function() {
+
+        },
+
+        removeApp: function() {
+
+        },
+
+        CLASS_NAME: "octopus.Layer"
+    });
 })(octopus);

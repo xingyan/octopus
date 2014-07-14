@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: class.js</title>
+    
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+    
+    <h1 class="page-title">Source: class.js</h1>
+    
+    
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source"><code>/**
+ * @file
+ * webapp通用组件基础库文件，主要用于通用组件的类结构声明
+ * @author oupeng-fe
+ * @version 1.1
+ */
+;(function(window, undefined) {
+
+    "use strict";
+
+    /**
+     * 命名空间前缀 🐙
+     * @namespace octopus
+     * @desc 命名空间说明 所有小写字母开头的方法都可以直接调用 如octopus.easing.linear.easeIn
+     * 相反，大写字母开头的命名说明该对象是一个类对象 需要用关键字new 如 new octopus.Widget()
+     * @type {object}
+     */
+    var octopus,
+        o = octopus = {version: "1.1"};
+
+    /**
+     * @method octopus.define
+     * @desc 类生成.将返回一个形如——
+     * function C() {
+     *      this.initialize()
+     * };
+     * C.prototype = { constructor: C, ... }的对象
+     * 支持两个参数，第一个为父类（可不存在），第二个为生成类的各属性方法对象 由于每个类的生成都基于子类对父类对象的深度拷贝，因此，
+     * 为避免子类属性更改对父类造成的不可控影响，除Number|String|Boolean 外的对象 初始化都建议放在构造函数当中去做 初始化值建议
+     * 为null
+     * @example
+     * var newClass = octopus.define({
+     *     width: 64,
+     *     length: "12px",
+     *     property: null,
+     *     initialize: function() {
+     *         this.property = Object.create({});
+     *     }
+     * });
+     * @return {Function}
+     */
+    o.define = function() {
+        var len = arguments.length,
+            s = arguments[0],
+            i = arguments[len - 1];
+
+        var nc = typeof i.initialize == "function" ? i.initialize :
+            function() {
+                s.apply(this, arguments);
+        };
+        if(len > 1) {
+            var newArgs = [nc, s].concat(Array.prototype.slice.call(arguments).slice(1, len - 1), i);
+            o.inherit.apply(null, newArgs);
+        } else {
+            nc.prototype = i;
+            nc.prototype.constructor = nc;
+        }
+        return nc;
+    };
+
+    /**
+     * @method octopus.inherit
+     * @desc 继承
+     * @param child {Function} 子类
+     * @param father {Function} 父类
+     */
+    o.inherit = function(child, father) {
+        var f = function() {},
+            cp,
+            fp = father.prototype;
+        f.prototype = fp;
+        cp = child.prototype = new f;
+        cp.constructor = child;
+        var i, l, k;
+        for(i = 2, l = arguments.length; i &lt; l; i++) {
+            k = arguments[i];
+            if(typeof k === "function") {
+                k = k.prototype;
+            }
+            o.extend(child.prototype, k);
+        }
+    };
+
+    /**
+     * @method octopus.extend
+     * @desc 将一个对象的属性复制给另一个对象
+     * @param destination {object}
+     * @param source {object}
+     * @return destination {object} 复制后的对象
+     */
+    o.extend = function(destination, source) {
+        destination = destination || {};
+        if(source) {
+            for(var property in source) {
+                var value = source[property];
+                if(value !== undefined) {
+                    destination[property] = value;
+                }
+            }
+            var sourceIsEvt = typeof window.Event == "function"
+                && source instanceof window.Event;
+
+            if (!sourceIsEvt && source.hasOwnProperty && source.hasOwnProperty("toString")) {
+                destination.toString = source.toString;
+            }
+        }
+        return destination;
+    };
+
+    /**
+     * @namespace octopus.util
+     * @desc 工具集合 相当于jquery的fn
+     * @type {object}
+     */
+    o.util = o.util || {};
+
+    /**
+     * @property octopus.util.lastSeqId
+     * @type {String}
+     */
+    o.util.lastSeqId = 0;
+
+    /**
+     * @method octopus.util.createUniqueID
+     * @param prefix {String} 前缀
+     * @return {String} 全局唯一的一个字符串
+     */
+    o.util.createUniqueID = function(prefix) {
+        prefix = (prefix === null || prefix === undefined) ? "octopus" : prefix.replace(/\./g, "_");
+        o.util.lastSeqId++;
+        return prefix + o.util.lastSeqId;
+    };
+
+    window.octopus = o;
+
+})(window);</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="o.Widget.PicReader.html">PicReader</a></li><li><a href="octopus.ImgLazyLoad.html">ImgLazyLoad</a></li><li><a href="octopus.StepTween.html">StepTween</a></li><li><a href="octopus.Tween.html">Tween</a></li><li><a href="octopus.Widget.html">Widget</a></li><li><a href="octopus.Widget.Back2Top.html">Back2Top</a></li><li><a href="octopus.Widget.HtmlBack2Top.html">HtmlBack2Top</a></li><li><a href="octopus.Widget.HtmlSlider.html">HtmlSlider</a></li><li><a href="octopus.Widget.Mask.html">Mask</a></li><li><a href="octopus.Widget.Menu.html">Menu</a></li><li><a href="octopus.Widget.Progress.html">Progress</a></li><li><a href="octopus.Widget.Refresh.html">Refresh</a></li><li><a href="octopus.Widget.Sidebar.html">Sidebar</a></li><li><a href="octopus.Widget.Slider.html">Slider</a></li><li><a href="octopus.WidgetManager.html">WidgetManager</a></li></ul><h3>Namespaces</h3><ul><li><a href="octopus.html">octopus</a></li><li><a href="octopus.ajax.html">ajax</a></li><li><a href="octopus.animation.html">animation</a></li><li><a href="octopus.app.html">app</a></li><li><a href="octopus.dom.html">dom</a></li><li><a href="octopus.easing.html">easing</a></li><li><a href="octopus.template.html">template</a></li><li><a href="octopus.util.html">util</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a> on Thu Dec 19 2013 17:06:37 GMT+0800 (CST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

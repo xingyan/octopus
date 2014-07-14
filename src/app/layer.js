@@ -81,6 +81,7 @@
             if(this.isCurrent || this.isBaseLayer) {
                 o.dom.addClass(this.el, "octopus-layer-base");
             }
+            console.log(o.Events);
             this.event = new o.Events(this);
         },
 
@@ -152,6 +153,18 @@
          */
         setZIndex: function(zIndex) {
             this.el.style.zIndex = zIndex;
+        },
+
+        activate: function() {
+
+        },
+
+        deactivate: function() {
+
+        },
+
+        removeApp: function() {
+
         },
 
         CLASS_NAME: "octopus.Layer"

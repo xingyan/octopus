@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+
+        <title>promise demo</title>
+        <meta name="description" content="promise demo"/>
+        <meta name="author" content="xingyan"/>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+        <link rel="stylesheet" type="text/css" href="../../octopus.css"/>
+
+        <link rel="shortcut icon" href="/favicon.ico"/>
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+
+        <script type="text/javascript" src="../../../src/class.js"></script>
+        <script type="text/javascript" src="../../../src/util.js"></script>
+        <script type="text/javascript" src="../../../src/dom.js"></script>
+        <script type="text/javascript" src="../../../src/events.js"></script>
+
+
+        <script type="text/javascript" src="promise.js"></script>
+        <style>
+
+        </style>
+    </head>
+    <body>
+        <script type="text/javascript">
+            var ars = [1, 3, 0, 9182, 671, 192, 8];
+
+
+            function selectSort(ars) {
+                var len = ars.length,
+                    i = 0,
+                    min;
+                for(; i < len; i++) {
+                    min = i;
+                    for(var j = i; j < len; j++) {
+                        if(ars[j] < ars[min]) {
+                            min = j;
+                        }
+                    }
+                    if(min != i) {
+                        var t = ars[min];
+                        ars[min] = ars[i];
+                        ars[i] = t;
+                    }
+                }
+            }
+
+            function insertSort(ars) {
+                var len = ars.length,
+                    i = 1,
+                    j,
+                    t;
+                for(; i < len; i++) {
+                    t = ars[i];
+                    for(j = i - 1; j >= 0; j--) {
+                        if(ars[j] < t)  break;
+                        ars[j + 1] = ars[j];
+                    }
+                    ars[j + 1] = t;
+                }
+            }
+
+            function quickSort(ars, low, high) {
+                var i,
+                    j,
+                    t;
+                if (low < high) {
+                    i = low;
+                    j = high;
+                    t = ars[low];
+                    while (i < j) {
+                        while (i < j && ars[j] > t) {
+                            j--;
+                        }
+                        if (i < j) {
+                            ars[i] = ars[j];
+                            i++;
+                        }
+                        while (i < j && ars[i] <= t) {
+                            i++;
+                        }
+                        if (i < j) {
+                            ars[j] = ars[i];
+                            j--;
+                        }
+                    }
+                    ars[i] = t;
+                    quickSort(ars, low, i - 1);
+                    quickSort(ars, i + 1, high);
+                }
+            }
+            quickSort(ars)
+            console.log(ars);
+        </script>
+    </body>
+</html>

@@ -2268,6 +2268,9 @@
                 data = config.data || {},
                 headers = config.headers || {},
                 urlobj = o.util.createUrlObject(url);
+            if(config.type == "jsonp") {
+                return o.ajax.ajaxJSONP(options);
+            }
             if(!config.crossDomain) {
                 config.crossDomain = urlobj.host != window.location.host;
             }
@@ -2278,7 +2281,7 @@
                     customRequestedWithHeader = true;
                 }
             }
-            if (customRequestedWithHeader === false || !config.crossDomain) {
+            if(customRequestedWithHeader === false || !config.crossDomain) {
                 headers['X-Requested-With'] = 'XMLHttpRequest';
             }
             data =  o.util.getParameterString(data || {});
@@ -2288,9 +2291,9 @@
             var mime = this.accepts[dataType],
                 baseHeaders = {},
                 xhr = this.xhr(), abortTimeout;
-            if (mime) {
+            if(mime) {
                 baseHeaders['Accept'] = mime;
-                if (mime.indexOf(',') > -1) {
+                if(mime.indexOf(',') > -1) {
                     mime = mime.split(',', 2)[0];
                 }
                 xhr.overrideMimeType && xhr.overrideMimeType(mime)
@@ -2315,12 +2318,12 @@
                 xhr.send(data ? data : null);
             } else {
                 window.setTimeout(function(){
-                    if (xhr.readyState !== 0) { // W3C: 0-UNSENT
+                    if(xhr.readyState !== 0) { // W3C: 0-UNSENT
                         xhr.send(data ? data : null);
                     }
                 }, 0);
             }
-            if (config.timeout > 0) {
+            if(config.timeout > 0) {
                 abortTimeout = setTimeout(function(){
                     xhr.onreadystatechange = o.util.empty;
                     xhr.abort()
@@ -2362,14 +2365,14 @@
             complete(request);
             var result, error = false,
                 dataType = config.dataType;
-            if ((request.status >= 200 && request.status < 300) || request.status == 304 ||
+            if((request.status >= 200 && request.status < 300) || request.status == 304 ||
                 (request.status == 0 && o.util.createUrlObject(config.url).protocol == "file:")) {
                 dataType = dataType || this.mimeToDataType(request.getResponseHeader('content-type'));
                 result = request.responseText;
                 try {
-                    if (dataType == 'script')    (1,eval)(result)
-                    else if (dataType == 'xml')  result = request.responseXML
-                    else if (dataType == 'json') result = this.BLANK_REGEX.test(result) ? null : JSON.parse(result)
+                    if(dataType == 'script')    (1,eval)(result)
+                    else if(dataType == 'xml')  result = request.responseXML
+                    else if(dataType == 'json') result = this.BLANK_REGEX.test(result) ? null : JSON.parse(result)
                 } catch (e) { error = e }
                 options.result = result;
                 if(success) {
@@ -3046,7 +3049,7 @@
                     if(isEnd) {
                         curValue = this.endValue[i];
                     } else {
-                        curValue = Math.ceil(this.ease(curTime, this.startValue[i], this.endValue[i] - this.startValue[i], this.duration * 1000));
+                        curValue = this.ease(curTime, this.startValue[i], this.endValue[i] - this.startValue[i], this.duration * 1000);
                     }
                 }
                 valueInfo.push({
@@ -3073,9 +3076,6 @@
                 var propertyName = valueInfo[i].propertyName,
                     curValue = valueInfo[i].curValue,
                     isColor = valueInfo[i].isColor;
-                if(propertyName == 'opacity'){
-                    curValue = curValue / 100;
-                }
                 if(propertyName == 'scrollLeft' || propertyName == 'scrollTop') {
                     this.el[propertyName] = this.getValue(curValue, i);
                 } else {
@@ -10059,7 +10059,7 @@
             window.setTimeout(function() {
                 that.isSlide = false;
                 that.notify("slider-ui-slidechange");
-            }, this.animationTime);
+            }, this.animationTime + 50);
         },
 
         /**
@@ -10100,18 +10100,6 @@
                     this.selectNoLoop(index);
                     return;
                 }
-                this.isTimer = true;
-                var onChanged = function(e) {
-                    o.event.un(that.viewDiv, "webkitTransitionEnd", onChanged, false);
-                    if(!that.isTimer) return;
-                    if(that.eventTimer) {
-                        window.clearTimeout(that.eventTimer);
-                        that.eventTimer = null;
-                    }
-                    that.viewDiv.style.webkitTransitionDuration = "0ms";
-                    that.viewDiv.style.webkitTransform = _temp;
-                }
-                o.event.on(this.viewDiv, "webkitTransitionEnd", onChanged, false);
                 if(index == 0 && _index == (len - 1)) {
                     _temp += "0, 0, 0)";
                     this.updateTranslateValue(0);
@@ -10131,14 +10119,28 @@
                         this.updateTranslateValue(0 - this.width * (len - 1));
                     }
                 }
+                this.isTimer = true;
+                var onChanged = function(e) {
+                    o.event.un(that.viewDiv, "webkitTransitionEnd", onChanged, false);
+                    if(!that.isTimer) return;
+                    if(that.eventTimer) {
+                        window.clearTimeout(that.eventTimer);
+                        that.eventTimer = null;
+                    }
+                    that.viewDiv.style.webkitTransitionDuration = "0ms";
+                    that.viewDiv.style.webkitTransform = _temp;
+                    _temp = null;
+                }
+                o.event.on(this.viewDiv, "webkitTransitionEnd", onChanged, false);
                 this.viewDiv.style.webkitTransform = temp;
                 this.eventTimer = window.setTimeout(function() {
                     o.event.un(that.viewDiv, "webkitTransitionEnd", onChanged, false);
                     that.viewDiv.style.webkitTransitionDuration = "0ms";
                     that.viewDiv.style.webkitTransform = _temp;
+                    _temp = null;
                     that.eventTimer = null;
                     that.isTimer = false;
-                }, this.animationTime - 5 < 0 ? 0 : this.animationTime - 5);
+                }, this.animationTime - 50 < 0 ? 0 : this.animationTime - 50);
             } else {
                 this.selectNoLoop(index);
             }
@@ -10337,11 +10339,14 @@
                 titledom.appendChild(titlecontent);
                 dom.appendChild(titledom);
             }
-            var that = this;
-            this.gesture(dom, {
-                tap_max_touchtime: 150
-            }).on("tap", function(e) {
-                o.event.stop(e);
+            var that = this,
+                __url = this.getDataBy(index, "url") || "",
+                __target = this.isNewTab ? "_blank" : "_self";
+            o.event.on(dom, "click", function() {
+                if(!that.isDisableA) {
+                    window.open(__url, __target);
+                    return;
+                }
                 that.notify("slider-item-ontap", that.data[index]);
             });
             this.fragment.appendChild(dom);

@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: widget/refresh/refresh.js</title>
+    
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+    
+    <h1 class="page-title">Source: widget/refresh/refresh.js</h1>
+    
+    
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source"><code>/**
+ * @file
+ * @author oupeng-fe
+ * @version 1.1
+ * webapp通用组件
+ * refresh   -   上拉下拉刷新
+ * @require lib/class.js
+ * @require lib/util.js
+ * @require lib/dom.js
+ * @require lib/event.js
+ * @require widget/widget.js
+ */
+;(function(o, undefined) {
+
+    "use strict";
+
+    /**
+     * @class octopus.Widget.Refresh
+     * @parent octopus.Widget
+     * @desc 上拉下拉刷新
+     * @param options {Object} 接受的参数
+     * @param options.direction {String} 表明是上拉|下拉刷新控件 "up"|"down" 默认是上拉刷新控件
+     * @param options.height {Number} 控件的高度
+     * @param options.maxTranslate {Number} 控件可以拉动的最大长度 默认为100 由于为了避免麻烦的多次处理 下拉刷新的最大高度为此值与控件高度的差值
+     * @param options.halfTranslate {Number} 松手加载的临界值
+     * @param options.pullText {String} 显示主区域的文字
+     * @param options.changePullText {String} 显示主区域在临界值的文字
+     * @param options.statusText {String} 显示次区域的文字
+     * @param options.changeStatusText {String} 显示次区域在临界值的文字
+     * @param options.loadText {String} 加载中的文字
+     */
+    o.Widget.Refresh = o.define(o.Widget, {
+
+        /**
+         * @private
+         * @property direction
+         * @type {String}
+         * @desc 刷新的朝向 默认向上刷新
+         */
+        direction: "up",
+
+        /**
+         * @private
+         * @property dragDirection
+         * @type {String}
+         * @desc 当前拖拽的方向
+         */
+        dragDirection: null,
+
+        /**
+         * @private
+         * @property timer
+         * @type {Function}
+         * @desc 当touch时跑的定时期程序
+         */
+        timer: null,
+
+        /**
+         * @private
+         * @property isDrag
+         * @type {Boolean}
+         * @desc 标志位 标志是否处于拖拽状态
+         */
+        isDrag: false,
+
+        /**
+         * @private
+         * @property pageDragC
+         * @type {Number}
+         * @desc 拖拽点的y坐标
+         */
+        pageDragStartC: 0,
+
+        /**
+         * @private
+         * @property pageDragDown
+         * @type {Number}
+         * @desc 拖拽结束点的y坐标
+         */
+        pageDragEndC: 0,
+
+        /**
+         * @private
+         * @property pageDragTempC
+         * @type {Number}
+         * @desc 中间拖拽点的y坐标
+         */
+        pageDragTempC: 0,
+
+        /**
+         * @private
+         * @property height
+         * @type {Number}
+         * @desc 控件高度
+         */
+        height: null,
+
+        /**
+         * @private
+         * @property maxTranslate
+         * @type {Number}
+         * @desc 控件的最大拖动距离
+         */
+        maxTranslate: 100,
+
+        /**
+         * @private
+         * @property halfTranslate
+         * @type {Number}
+         * @desc 控件的临界距离
+         */
+        halfTranslate: 30,
+
+        /**
+         * @private
+         * @property arrow
+         * @desc 箭头的节点
+         * @type {DOMElement}
+         */
+        arrow: null,
+
+        /**
+         * @private
+         * @property pullTextDom
+         * @desc 主显示区节点
+         * @type {DOMElement}
+         */
+        pullTextDom: null,
+
+        /**
+         * @private
+         * @property pullText
+         * @desc 主显示区文字
+         * @type {String}
+         */
+        pullText: null,
+
+        /**
+         * @private
+         * @property changePullText
+         * @desc 临界时主显示区文字
+         * @type {String}
+         */
+        changePullText: null,
+
+        /**
+         * @private
+         * @property statusTextDom
+         * @desc 状态区文字节点
+         * @type {DOMElement}
+         */
+        statusTextDom: null,
+
+        /**
+         * @private
+         * @property loadingDom
+         * @desc loading节点
+         * @type {DOMElement}
+         */
+        loadingDom: null,
+
+        /**
+         * @private
+         * @property statusText
+         * @desc 状态区文字
+         * @type {String}
+         */
+        statusText: null,
+
+        /**
+         * @private
+         * @property loadText
+         * @desc 加载时的文字
+         */
+        loadText: null,
+
+        /**
+         * @private
+         * @property changeStatusText
+         * @type {String}
+         * @desc 临界时状态区文字
+         */
+        changeStatusText: null,
+
+        /**
+         * @private
+         * @property translateV
+         * @type {Number}
+         * @desc 当前节点的translate值
+         */
+        translateV: 0,
+
+        /**
+         * @private
+         * @property isLocked
+         * @desc 锁定标志位
+         */
+        isLocked: false,
+
+        /**
+         * @private
+         * @constructor
+         */
+        initialize: function() {
+            o.Widget.prototype.initialize.apply(this, arguments);
+            o.dom.attr(this.el, {
+                "class": "octopusui-refresh octopusui-refresh" + o.util.camelize(this.direction)
+            });
+            this.buildSelf();
+        },
+
+        /**
+         * @private
+         * @method updateTranslateV
+         * @desc 更新当前的translate值
+         */
+        updateTranslateV: function(v) {
+            if(this.translateV == v)    return;
+            this.translateV = v;
+        },
+
+        /**
+         * @private
+         * @method buildSelf
+         * @desc 初始化自身节点
+         */
+        buildSelf: function() {
+            var dr = this.direction,
+                config = o.Widget.Refresh.config;
+            this.arrow = o.dom.createDom("div", {
+                "class": config[dr]["arrowC"]
+            });
+            var textDom = o.dom.createDom("div", {
+                    "class": "octopusui-refresh-textcontainer"
+                }),
+                tcontainer = o.dom.createDom("div", {
+                    "class": "octopusui-refresh-refreshcontainer"
+                });
+            this.pullTextDom = o.dom.createDom("div", {
+                "class": "octopusui-refresh-pulltext octopusui-text-limit"
+            });
+            this.statusTextDom = o.dom.createDom("div",  {
+                "class": "octopusui-refresh-statustext octopusui-text-limit"
+            })
+            this.loadingDom = o.dom.createDom("div", {
+                "class": "octopusui-refresh-loading"
+            });
+            this.updateText("pullText", "statusText");
+            textDom.appendChild(this.pullTextDom);
+            textDom.appendChild(this.statusTextDom);
+            tcontainer.appendChild(this.arrow);
+            tcontainer.appendChild(this.loadingDom);
+            tcontainer.appendChild(textDom);
+            this.el.appendChild(tcontainer);
+        },
+
+        /**
+         * @private
+         * @method toggleLoading
+         */
+        toggleLoading: function(exist) {
+            if(!exist && this.loadingDom.style.display != "none") {
+                this.loadingDom.style.display = "none";
+            } else if(exist && this.loadingDom.style.display != "block") {
+                this.loadingDom.style.display = "block";
+            }
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.Refresh.render
+         */
+        render: function() {
+            o.Widget.prototype.render.apply(this, arguments);
+            if(this.height == null) {
+                this.height = o.dom.getHeight(this.el);
+            }
+			this.addEvent();
+            o.dom.scrollLite(this.container.parentNode, false);
+        },
+
+        /**
+         * @private
+         * @method appendChild
+         * @param el
+         * @param container
+         * @desc 复写父类的appendChild 增加插入最前的处理
+         */
+        appendChild: function(el, container) {
+            if(this.direction == "up") {
+                container.appendChild(el);
+            } else {
+                o.dom.insertFirst(el, container);
+            }
+        },
+
+        /**
+         * @private
+         * @method addEvent
+         * @desc 事件监听
+         */
+        addEvent: function() {
+            o.event.on(document, "touchstart", o.util.bindAsEventListener(this.onTouchStart, this), false);
+            o.event.on(document, "touchend", o.util.bindAsEventListener(this.onTouchEnd, this), false);
+            o.event.on(document, "touchcancel", o.util.bindAsEventListener(this.onTouchEnd, this), false);
+            o.event.on(document, "touchmove", o.util.bindAsEventListener(this.onTouchMove, this), false);
+        },
+
+        /**
+         * @private
+         * @method onTouchStart
+         * @desc 监听touchstart事件
+         */
+        onTouchStart: function(e) {
+            o.event.stop(e, true);
+            var that = this;
+            var touches = e.touches;
+            if(!touches || touches.length > 1)  return;
+            this.isDrag = true;
+            var touch = touches[0],
+                dc = touch.pageY;
+            this.pageDragStartC = this.pageDragTempC = dc;
+            this.timer = function() {
+                if(!that.timer) return;
+                if(that.pageDragTempC > that.pageDragStartC) {
+                    that.dragDirection = "down";
+                } else if(that.pageDragTempC &lt; that.pageDragStartC) {
+					that.dragDirection = "up";
+                }
+                if((that.pageDragTempC == that.pageDragStartC) || !that.adjustScrollBar()) {
+                    that.pageDragStartC = that.pageDragTempC
+                    o.util.requestAnimation(that.timer);
+                    return;
+				}
+                that.pageDragEndC = that.pageDragTempC;
+                var dis = (that.pageDragTempC - that.pageDragStartC);
+                that.pageDragStartC = that.pageDragTempC;
+                var tvalue = that.translateV;
+                var v,
+                    _v = tvalue + dis;
+                if(that.direction == "up") {
+                    if(that.dragDirection == "up" && that.isLocked) {
+                        o.util.requestAnimation(that.timer);
+                        return;
+                    }
+                    if(_v &lt; (0 - that.maxTranslate)) {
+                        v = (0 - that.maxTranslate);
+                    } else if(_v > 0) {
+                        v = 0
+                    } else {
+                        v = _v;
+                    }
+                    if(v &lt; (0 - that.halfTranslate)) {
+                        that.toggleStyle(true);
+                    } else {
+                        that.toggleStyle(false);
+                    }
+                } else {
+                    if(that.dragDirection == "down" && that.isLocked) {
+                        o.util.requestAnimation(that.timer);
+                        return;
+                    }
+                    if(_v > that.maxTranslate) {
+                        v = that.maxTranslate;
+                    } else if(_v &lt; 0) {
+                        v = 0;
+                    } else {
+                        v = _v;
+                    }
+                    if(v > (that.halfTranslate + that.height)) {
+                        that.toggleStyle(true);
+                    } else {
+                        that.toggleStyle(false);
+                    }
+                }
+                that.updateTranslateV(v);
+                var nvalue = "translate3d(0, " + v + "px" + ", 0)";
+                that.container.style.webkitTransform = nvalue;
+                o.util.requestAnimation(that.timer);
+            };
+            o.util.requestAnimation(this.timer);
+        },
+
+        /**
+         * @private
+         * @method toggleStyle
+         * @param change {Boolean}
+         * @desc 修改显示区的内容
+         */
+        toggleStyle: function(change) {
+            if(change && !o.dom.hasClass(this.el, "octopusui-refresh-changed")) {
+                o.dom.addClass(this.el, "octopusui-refresh-changed");
+                this.updateText("changePullText", "changeStatusText");
+            } else if(!change && o.dom.hasClass(this.el, "octopusui-refresh-changed")) {
+                o.dom.removeClass(this.el, "octopusui-refresh-changed");
+                this.updateText("pullText", "statusText");
+                if(this.arrow.style.display == "none") {
+                    this.arrow.style.display = "block";
+                }
+            }
+        },
+
+        /**
+         * @private
+         * @method onTouchMove
+         * @param e
+         */
+        onTouchMove: function(e) {
+            var touches = e.touches;
+            if(!this.isDrag || !touches || touches.length > 1)    return;
+            var touch = touches[0];
+			if(this.pageDragTempC == touch.pageY)	return;
+			this.pageDragTempC = touch.pageY;
+        },
+
+        /**
+         * @private
+         * @method onTouchEnd
+         */
+        onTouchEnd: function(e) {
+            this.isDrag = false;
+            if(this.timer) {
+                this.timer = null;
+            }
+            if(this.direction == "up") {
+                if(this.translateV &lt; (0 - this.halfTranslate)) {
+                    this.loadMore();
+                } else if(!this.isLocked) {
+                    this.rePosition();
+                }
+            } else {
+                if(this.translateV > (this.halfTranslate + this.height)) {
+                    this.loadMore();
+                } else if(!this.isLocked) {
+                    this.rePosition();
+                }
+            }
+        },
+
+        /**
+         * @private
+         * @method loadMore
+         */
+        loadMore: function() {
+            this.isLocked = true;
+            var startV = "translate3d(0, " + this.translateV + "px, 0)",
+                endV,
+                v;
+            if(this.direction == "up") {
+                endV = "translate3d(0, 0px, 0)";
+                v = 0;
+            } else {
+                endV = "translate3d(0, " + this.height + "px, 0)";
+                v = this.height;
+                var dom = document.createElement("div");
+                document.body.appendChild(dom);
+            }
+            if(startV == endV)  return;
+            var that = this;
+            var listTween = new o.Tween(this.container, "-webkit-transform", startV,
+                endV, 0.3, function() {
+                    that.updateTranslateV(v);
+                    that.updateText("loadText");
+                    that.arrow.style.display = "none";
+                    that.toggleLoading(true);
+					that.notify("refresh-ui-loadmore");
+                    if(dom) {
+                        document.body.removeChild(dom);
+                    }
+                }, { ease: "ease-in-out" });
+        },
+
+        /**
+         * @private
+         * @method updateText
+         * @param pt {String}
+         * @param st {String}
+         */
+        updateText: function(pt, st) {
+            var dr = this.direction,
+                config = o.Widget.Refresh.config;
+            this.pullTextDom.innerHTML = o.util.encodeHtml(this[pt] || config[dr][pt] || config[pt]);
+            if(st) {
+                this.statusTextDom.innerHTML = o.util.encodeHtml(this[st] || config[st]);
+            } else {
+                this.statusTextDom.innerHTML = "";
+            }
+        },
+
+        /**
+         * @private
+         * @method rePosition
+         */
+        rePosition: function() {
+            this.isLocked = false;
+            var startV = "translate3d(0, " + this.translateV + "px, 0)",
+                endV = "translate3d(0, 0px, 0)",
+                v = 0;
+            this.updateTranslateV(v);
+            this.updateText("pullText", "statusText");
+            this.toggleStyle(false);
+            this.toggleLoading(false);
+            if(startV == endV)  return;
+            var fn = o.util.empty;
+            if(this.direction == "down") {
+                var dom = document.createElement("div");
+                document.body.appendChild(dom);
+                fn = function() {
+                    document.body.removeChild(dom);
+                }
+            }
+            var that = this;
+            var listTween = new o.Tween(this.container, "-webkit-transform", startV,
+                endV, 0.3, fn, { ease: "ease-in-out" });
+
+        },
+
+        /**
+         * @private
+         * @method adjustHasScrollBar
+         * @returns {boolean}
+         */
+        adjustScrollBar: function() {
+            var translate = this.translateV,
+                body = document.body,
+                scrollHeight = body.scrollHeight,
+                height = body.offsetHeight,
+                top = body.scrollTop,
+                _height = height + top;
+            return (Math.abs(translate) &lt;= this.maxTranslate &&
+                (this.direction == "up" && (_height + 5) >= scrollHeight) ||
+                (this.direction == "down" && top == 0));
+        },
+
+        CLASS_NAME: "octopus.Widget.Refresh"
+    });
+
+    octopus.Widget.Refresh.config = {
+        "up": {
+            arrowC: "octopusui-refresh-arrowup",
+            pullText: "上拉可以加载更多"
+        },
+        "down": {
+            arrowC: "octopusui-refresh-arrowdown",
+            pullText: "下拉可以加载更多"
+        },
+        statusText: "上次更新时间：",
+        changePullText: "松手可以加载更多",
+        changeStatusText: "",
+        loadText: "加载中..."
+    };
+
+})(octopus);
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="o.Widget.PicReader.html">PicReader</a></li><li><a href="octopus.ImgLazyLoad.html">ImgLazyLoad</a></li><li><a href="octopus.StepTween.html">StepTween</a></li><li><a href="octopus.Tween.html">Tween</a></li><li><a href="octopus.Widget.html">Widget</a></li><li><a href="octopus.Widget.Back2Top.html">Back2Top</a></li><li><a href="octopus.Widget.HtmlBack2Top.html">HtmlBack2Top</a></li><li><a href="octopus.Widget.HtmlSlider.html">HtmlSlider</a></li><li><a href="octopus.Widget.Mask.html">Mask</a></li><li><a href="octopus.Widget.Menu.html">Menu</a></li><li><a href="octopus.Widget.Progress.html">Progress</a></li><li><a href="octopus.Widget.Refresh.html">Refresh</a></li><li><a href="octopus.Widget.Sidebar.html">Sidebar</a></li><li><a href="octopus.Widget.Slider.html">Slider</a></li><li><a href="octopus.WidgetManager.html">WidgetManager</a></li></ul><h3>Namespaces</h3><ul><li><a href="octopus.html">octopus</a></li><li><a href="octopus.ajax.html">ajax</a></li><li><a href="octopus.animation.html">animation</a></li><li><a href="octopus.app.html">app</a></li><li><a href="octopus.dom.html">dom</a></li><li><a href="octopus.easing.html">easing</a></li><li><a href="octopus.template.html">template</a></li><li><a href="octopus.util.html">util</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a> on Thu Dec 19 2013 17:06:37 GMT+0800 (CST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

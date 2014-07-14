@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: widget/slider/slider.js</title>
+    
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+    
+    <h1 class="page-title">Source: widget/slider/slider.js</h1>
+    
+    
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source"><code>/**
+ * @file
+ * @author oupeng-fe
+ * @version 1.1
+ * webapp通用组件
+ * slider   -   轮播图
+ * @require lib/class.js
+ * @require lib/util.js
+ * @require lib/dom.js
+ * @require lib/event.js
+ * @require lib/tween.js
+ * @require lib/animate.js
+ * @require widget/widget.js
+ */
+;(function(o, undefined) {
+
+    "use strict";
+
+    /**
+     * @class octopus.Widget.Slider
+     * @parent octopus.Widget
+     * @desc 轮播图或轮播节点
+     * @param options {Object} 参数
+     * @param options.data {Array} 轮播图的图片数据 如果指定了children属性 则此参数失效
+     * @param options.children {Array} 需要进行轮播的节点
+     * @param options.width {Number} 轮播的宽度 建议初始化赋值 可以省掉一次获取宽度的repaint
+     * @param options.height {Number} 轮播的高度 建议初始化赋值
+     * @param options.dataField {Object} 图片模式下 数据的解析值 默认为{ title: "title", url: "url", image_url: "image_url" }
+     * @param options.isLon {Boolean} 是否纵向轮播 true为纵向 否则为横向 默认false
+     * @param options.isNewTab {Boolean} 当点击轮播图的行为为默认行为跳转时生效 true为新窗口打开 false在原窗口打开 默认true
+     * @param options.autoPlay {Boolean} 是否生成后进行动画 默认为true
+     * @param options.autoPlayTime {Number} 轮播图动画时的停留时间 单位ms 默认为4000ms
+     * @param options.animationTime {Number} 轮播图单次动画运行时间 单位ms 默认为400ms
+     * @param options.animationType {String} 轮播图的动化类型 默认为"ease-out"
+     * @param options.loop {Boolean} 是否是循环轮播 默认为true
+     * @param options.hasTitle {Boolean} 是否有轮播图下方的title区域
+     * @param options.hasGizmos {Boolean} 是否有轮播图下方的选择区域
+     * @param options.disScroll {Boolean} 是否阻止滚动条
+     */
+    o.Widget.Slider = o.define(o.Widget, {
+
+        /**
+         * @private
+         * @property data
+         * @type {Array}
+         * @desc 控件的数据 如果非图片类型的轮播 此参数失效
+         */
+        data: null,
+
+        /**
+         * @private
+         * @property width
+         * @type {Number}
+         * @desc 每页轮播的宽度
+         */
+        width: null,
+
+        /**
+         * @private
+         * @property height
+         * @type {Number}
+         * @desc 每页轮播的高度
+         */
+        height: null,
+
+        /**
+         * @private
+         * @property children
+         * @type {Array | DOMElement}
+         * @desc 配置的节点轮播 则图片轮播配置失效
+         */
+        children: null,
+
+        /**
+         * @private
+         * @property doms
+         * @type {Array | DOMElement}
+         * @desc 轮播图中轮播节点的集合
+         */
+        doms: null,
+
+        /**
+         * @private
+         * @property length
+         * @type {Number}
+         * @desc 轮播的长度
+         */
+        length: 0,
+
+        /**
+         * @private
+         * @property _type
+         * @type {String}
+         * @desc 标志位 标志是图片轮播还是节点轮播 "img" || "dom"
+         */
+        _type: "img",
+
+        /**
+         * @private
+         * @property dataFiled
+         * @type {Object}
+         * @desc 图片模式下数据的读取key
+         */
+        dataField: null,
+
+        /**
+         * @private
+         * @property viewDiv
+         * @type {DOMElement}
+         * @desc 轮播的载体
+         */
+        viewDiv: null,
+
+        /**
+         * @private
+         * @property isLon
+         * @type {Boolean}
+         * @desc 是否纵向轮播
+         */
+        isLon: false,
+
+        /**
+         * @private
+         * @property isNewTab
+         * @type {Boolean}
+         * @desc 配置项 是否点击后新窗口打开
+         */
+        isNewTab: true,
+
+        /**
+         * @private
+         * @property isDisableA
+         * @type {Boolean}
+         * @desc 配置项 是否自定义点击事件
+         */
+        isDisableA: false,
+
+        /**
+         * @private
+         * @property current
+         * @type {Object}
+         * @desc 当前选择的节点以及index信息
+         */
+        current: null,
+
+        /**
+         * @private
+         * @property loadImageNumber
+         * @type {Number}
+         * @desc 默认一次拉取的图片个数 为负数表示一次拉取完毕
+         */
+        loadImageNumber: 4,
+
+        /**
+         * @private
+         * @property timer
+         * @type {Number}
+         * @desc 轮播的timer
+         */
+        timer: null,
+
+        /**
+         * @private
+         * @property autoPlayTime
+         * @desc 轮播图留的时间
+         * @type {Number}
+         */
+        autoPlayTime: 4000,
+
+        /**
+         * @private
+         * @property animationTime
+         * @desc 轮播速度
+         * @type {Number}
+         */
+        animationTime: 400,
+
+        /**
+         * @private
+         * @property animationType
+         * @desc 轮播图的动画类型
+         */
+        animationType: "ease-out",
+
+        /**
+         * @private
+         * @property disableAll
+         * @type {Boolean}
+         */
+        disableAll: false,
+
+        /**
+         * @private
+         * @property disScroll
+         * @type {Boolean}
+         * @desc 是否停掉滚动事件
+         */
+        disScroll: false,
+
+        /**
+         * @private
+         * @property loop
+         * @type {Boolean}
+         * @desc 是否循环轮播
+         */
+        loop: true,
+
+        /**
+         * @private
+         * @property autoPlay
+         * @type {Boolean}
+         * @desc 是否自动播放 设置为false时，需要手动打开
+         */
+        autoPlay: true,
+
+        /**
+         * @private
+         * @property hasButton
+         * @type {Boolean}
+         * @desc 是否有左右两侧的button
+         */
+        hasButton: true,
+
+        /**
+         * @private
+         * @property hasTitle
+         * @type {Boolean}
+         * @desc 是否具有下侧的title区域
+         */
+        hasTitle: true,
+
+        /**
+         * @private
+         * @property hasGizmos
+         * @type {Boolean}
+         * @desc 是否具有下侧的选择区域
+         */
+        hasGizmos: true,
+
+        /**
+         * @private
+         * @property preDom
+         * @type {DOMElement}
+         * @desc 上一张
+         */
+        preDom: null,
+
+        /**
+         * @private
+         * @property nextDom
+         * @type {DOMElement}
+         * @desc 下一张
+         */
+        nextDom: null,
+
+        /**
+         * @private
+         * @property currentGizmos
+         * @type {DOMElement}
+         * @desc 当前的小玩意
+         */
+        currentGizmos: null,
+
+        /**
+         * @private
+         * @property gizmosDoms
+         * @type {Array}
+         * @desc 选择器节点的数组
+         */
+        gizmosDoms: null,
+
+        /**
+         * @private
+         * @property isSlide
+         * @type {Boolean}
+         * @desc 标志位 标志是否正在轮播
+         */
+        isSlide: false,
+
+        /**
+         * @private
+         * @property isDrag
+         * @type {Boolean}
+         * @desc 标志位 标志是否处于拖拽状态
+         */
+        isDrag: false,
+
+        /**
+         * @private
+         * @property isTimer
+         * @type {Boolean}
+         * @desc 标志位 一些手机无法使用removeEventListener去掉事件 导致transitionEnd事件绑上后无法卸载 因此使用标志位解决
+         */
+        isTimer: false,
+
+        /**
+         * @private
+         * @property pageDragC
+         * @type {Number}
+         * @desc 拖拽点 横向与纵向分别对应x与y
+         */
+        pageDragStartC: 0,
+
+        /**
+         * @private
+         * @property pageDragDown
+         * @type {Number}
+         * @desc 拖拽结束点
+         */
+        pageDragEndC: 0,
+
+        /**
+         * @private
+         * @property pageDragTempC
+         * @type {Number}
+         * @desc 中间拖拽点
+         */
+        pageDragTempC: 0,
+
+        /**
+         * @private
+         * @property pageDragDirection
+         * @type {Boolean}
+         * @desc 拖拽的方向 true为正向 false为正方向
+         */
+        pageDragDirection: false,
+
+        /**
+         * @private
+         * @property dragtimer
+         * @type {Number}
+         * @desc 拖拽时的timer
+         */
+        dragtimer: null,
+
+        /**
+         * @private
+         * @property translateValue
+         * @type {Number}
+         * @desc 轮播的位置
+         */
+        translateValue: 0,
+
+        /**
+         * @private
+         * @property changeDis
+         * @type {Number}
+         * @desc 拖拽改变的距离
+         */
+        changeDis: 0,
+
+        /**
+         * @private
+         * @property springBackDis
+         * @type {Number}
+         */
+        springBackDis: 10,
+
+        /**
+         * @private
+         * @property eventTimer
+         */
+        eventTimer: null,
+
+        /**
+         * @private
+         * @property unloadImage
+         */
+        unloadImage: null,
+
+        /**
+         * @private
+         * @property touchStartPixelX
+         * @type {Number}
+         */
+        touchStartPixelX: null,
+
+        /**
+         * @private
+         * @property touchStartPixelY
+         * @type {Number}
+         */
+        touchStartPixelY: null,
+
+        /**
+         * @private
+         * @constructor octopus.Widget.Slider.initialize
+         * @desc 与父类保持一致
+         */
+        initialize: function() {
+            o.Widget.prototype.initialize.apply(this, arguments);
+            this.dataField = this.dataField || {
+                title: "title",
+                url: "url",
+                image_url: "image_url"
+            };
+            this.doms = this.children || [];
+            this.unloadImage = [];
+            this.length = this.doms.length == 0 ? this.data.length : this.doms.length;
+            this.current = {
+                index: 0,
+                dom: null
+            };
+            this.buildDoms(this.el);
+            this.buildSlider();
+            this.el.style.cssText = "overflow: hidden; width: 100%; height: 100%; position: relative;";
+            //如果是自动渲染生成 必须传入宽度与高度 否则抛错
+            if(this.autoActivate) {
+                if(this.width == null || this.height == null) throw new Error("Require the Slider's width and height!");
+                this.activate();
+            }
+        },
+
+        /**
+         * @private
+         * @method buildDoms
+         * @param el {DOMElement}
+         */
+        buildDoms: function(el) {
+            this.viewDiv = this.viewDiv || o.dom.createDom("div", {
+                style: "position: relative; text-align: center; -webkit-transform: translate3d(0, 0, 0);" +
+                    " -webkit-backface-visibility: hidden; -webkit-user-select: none; -webkit-user-drag: none;" +
+                    " -webkit-transition: -webkit-transform 0ms " + this.animationType + ";",
+                "class": "octopusui-slider-view"
+            });
+            if(this.hasButton && !this.disableAll && this.length > 1) {
+                var btnCssText = "display: block; text-decoration: none;";
+                this.preDom = o.dom.createDom("div", {
+                    href: "",
+                    style: btnCssText,
+                    "class": "octopusui-slider-button octopusui-slider-prebutton"
+                });
+                this.nextDom = o.dom.createDom("div", {
+                    href: "",
+                    style: btnCssText,
+                    "class": "octopusui-slider-button octopusui-slider-nextbutton"
+                });
+                var that = this;
+                this.gesture(this.preDom).on("tap", function(e) {
+                    o.event.stop(e);
+                    that._selectPre();
+                    that.autoPlay && that.start();
+                });
+                this.gesture(this.nextDom).on("tap", function(e) {
+                    o.event.stop(e);
+                    that._selectNext();
+                    that.autoPlay && that.start();
+                });
+                el.appendChild(this.preDom);
+                el.appendChild(this.nextDom);
+            }
+            if(this.hasGizmos) {
+                this.gizmosDoms = new Array(this.length);
+                var len = this.length,
+                    i = 0,
+                    fragment = document.createDocumentFragment(),
+                    rodom = o.dom.createDom("div", {
+                        "class": "octopusui-slider-gizmos"
+                    });
+                for(; i &lt; len; i++) {
+                    var _className = "octopusui-slider-gizmositem";
+                    if(i == 0) {
+                        _className = "octopusui-slider-gizmositem octopusui-slider-currentgizmositem"
+                    }
+                    var dom = o.dom.createDom("div", {
+                        "class": _className
+                    });
+                    this.gizmosDoms[i] = dom;
+                    fragment.appendChild(dom);
+                }
+                this.currentGizmos = this.gizmosDoms[0];
+                rodom.appendChild(fragment);
+                el.appendChild(rodom);
+            }
+        },
+
+        /**
+         * @private
+         * @method setCurrent
+         * @desc 设置当强选中的轮播
+         * @param options {Object}
+         */
+        setCurrent: function(options) {
+            this.current = o.extend(this.current, options);
+            if(this.currentGizmos) {
+                var index = this.current.index;
+                if(this.currentGizmos != this.gizmosDoms[index]) {
+                    o.dom.removeClass(this.currentGizmos, "octopusui-slider-currentgizmositem");
+                    this.currentGizmos = this.gizmosDoms[index];
+                    o.dom.addClass(this.currentGizmos, "octopusui-slider-currentgizmositem");
+                }
+            }
+        },
+
+        /**
+         * @private
+         * @method octopus.Widget.Slider.buildSlider
+         * @desc 生成初始节点结构
+         */
+        buildSlider: function() {
+            var fragment;
+            if(this.children == null) {
+                fragment = this.buildDefaultSlider();
+            } else {
+                fragment = this.buildDomSlider();
+            }
+            if(this.loop && this.length > 1) {
+                var fristdom = this.doms[0].cloneNode(true),
+                    lastdom = this.doms[this.length - 1].cloneNode(true);
+                if(this._type == "img") {
+                    this.setImageLoad(0, fristdom);
+                    this.setImageLoad(this.length - 1, lastdom);
+                }
+                fragment.appendChild(fristdom);
+                fragment.appendChild(lastdom);
+                this.doms.push(fristdom);
+                this.doms.push(lastdom);
+                this.length += 2;
+            }
+            this.setCurrent({
+                dom: this.doms[0]
+            });
+            this.viewDiv.appendChild(fragment);
+            this.el.appendChild(this.viewDiv);
+        },
+
+        /**
+         * @private
+         * @method buildSliderItem
+         * @desc 生成轮播图的单例
+         * @param index {Number}
+         */
+        buildSliderItem: function(index) {
+            var dom = o.dom.createDom("div", {
+                    "class": "octopusui-slider-children",
+                    "style": "position: relative; -webkit-transform: translate3d(0, 0, 0); overflow: hidden;"
+                }),
+                idom = o.dom.createDom("img", {
+                    "class": "octopusui-slider-imgChildren",
+                    style: "max-width: 100%; max-height: 100%; position: absolute; left: 0; right: 0; top: 0; bottom: 0; margin: auto;"
+                }),
+                __url = this.getDataBy(index, "url") || "",
+                __target = this.isNewTab ? "_blank" : "_self",
+                that = this;
+            o.event.on(idom, "click", function() {
+                if(!that.isDisableA) {
+                    window.open(__url, __target);
+                    return;
+                }
+                that.notify("slider-item-ontap", that.data[index]);
+            });
+            if((index &lt; Math.ceil(this.loadImageNumber / 2)) ||
+                index >= Math.floor(this.length - this.loadImageNumber / 2)) {
+                this.setImageLoad(index, idom);
+            } else {
+                this.unloadImage.push({
+                    index: index,
+                    dom: idom
+                });
+            }
+            dom.appendChild(idom);
+            if(this.hasTitle) {
+                var titledom = o.dom.createDom("div", {
+                        "class": "octopusui-slider-imgTitle"
+                    }),
+                    titlecontent = o.dom.createDom("div", {
+                        "class": "octopusui-slider-imgTitleContent octopusui-text-limit"
+                    });
+                titlecontent.innerHTML = o.util.encodeHtml(this.getDataBy(index, "title"));
+                titledom.appendChild(titlecontent);
+                dom.appendChild(titledom);
+            }
+            this.doms.push(dom);
+            return dom;
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.Slider.on
+         * @desc 同Widget 值得注意的是 如果自定义监听了"slider-item-ontap"事件 默认点击轮播图打开新链接的行为将失效
+         * @param type {String} 事件类型
+         * @param func {Function} 事件监听函数
+         */
+        on: function(type, func) {
+            o.Widget.prototype.on.apply(this, arguments);
+            if(type == "slider-item-ontap" && !this.isDisableA) {
+                this.isDisableA = true;
+            }
+        },
+
+        /**
+         * @private
+         * @method buildDefaultSlider
+         * @desc 生成图片轮播
+         */
+        buildDefaultSlider: function() {
+            var len = this.data.length;
+            if(!!!len) throw new Error("Require data of image!");
+            var i = 0,
+                fragment = document.createDocumentFragment();
+            for(; i &lt; len; i++) {
+                var dom = this.buildSliderItem(i);
+                fragment.appendChild(dom);
+            }
+            return fragment;
+        },
+
+        /**
+         * @private
+         * @method setImageLoad
+         * @param index {Number} 图片的index
+         * @param dom {DOMELement} 图片的载体节点
+         */
+        setImageLoad: function(index, dom) {
+            var url = this.getDataBy(index, "image_url");
+            var _dom = o.one(".octopusui-slider-imgChildren", dom) || dom;
+            o.util.loadImage(url, o.util.empty, function() {
+                _dom.src = url;
+                o.animation.fade(_dom, {
+                    out: false
+                });
+            }, function() {
+                console.error("Image " + url + " load failed!");
+            });
+        },
+
+        /**
+         * @private
+         * @method buildDomSlider
+         * @desc 生成节点轮播
+         */
+        buildDomSlider: function() {
+            var fragment = document.createDocumentFragment(),
+                len = this.doms.length,
+                i = 0;
+            this._type = "dom";
+            for(; i &lt; len; i++) {
+                fragment.appendChild(this.doms[i]);
+            }
+            return fragment;
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.Slider.render
+         * @desc 复写父类的render方法
+         */
+        render: function() {
+            o.Widget.prototype.render.apply(this, arguments);
+            if(this.autoPlay && this.length > 1) {
+                this.start();
+            }
+            this.notify("slider-ui-afterrender");
+        },
+
+        /**
+         * @private
+         * @method activate
+         * @desc 轮播图生成后加入页面需要激活
+         */
+        activate: function() {
+            o.Widget.prototype.activate.apply(this, arguments);
+            this.calcSelfSize();
+            if(!this.disableAll) {
+                this.initSelfEvent();
+            }
+        },
+
+        /**
+         * @private
+         * @method onOrtChanged
+         */
+        onOrtChanged: function() {
+            this.calcSelfSize();
+            this.select(this.current.index);
+        },
+
+        /**
+         * @private
+         * @method updateTranslateValue
+         * @desc 更新轮播的位置
+         * @param v {Number}
+         */
+        updateTranslateValue: function(v) {
+            if((!v && v != 0) || this.translateValue == v)  return;
+            this.translateValue = v;
+        },
+
+        /**
+         * @private
+         * @method calcSelfSize
+         * @desc 初始化自身宽高
+         */
+        calcSelfSize: function() {
+            this.isLon ? this.initDomsProperty("width", "height", false) : this.initDomsProperty("height", "width", true);
+        },
+
+        /**
+         * @private
+         * @method initDomsWidth
+         * @desc 将所有dom宽度或高度设置了
+         */
+        initDomsProperty: function(pro, spro, isFloat) {
+            var that = this,
+                len = this.length;
+            this.viewDiv.style[pro] = "100%";
+            var _spro = o.dom["get" + spro.charAt(0).toUpperCase() + spro.substring(1)](this.el);
+            this[spro]  = _spro;
+            this.viewDiv.style[spro] = _spro * len + "px";
+            o.util.each(this.doms, function(item, i) {
+                item.style[pro] = "100%";
+                item.style[spro] = _spro + "px";
+				if(isFloat) {
+                    item.style.float = "left";
+                }
+                if(i == len - 1 && that.loop && that.length > 1) {
+                    var __style = that.isLon ? "top" : "left";
+                    item.style[__style] = 0 - _spro * len + "px";
+                }
+            });
+        },
+
+        /**
+         * @private
+         * @method initSelfEvent
+         * @desc 给轮播图绑定事件
+         */
+        initSelfEvent: function() {
+            if(this.length > 1) {
+                o.event.on(this.el, "touchstart", o.util.bindAsEventListener(this.onTouchStart, this));
+                o.event.on(this.el, "touchmove", o.util.bindAsEventListener(this.onTouchMove, this));
+                o.event.on(this.el, "touchend touchcancel", o.util.bindAsEventListener(this.onTouchEnd, this));
+            }
+            o.event.on(window, "ortchange", o.util.bind(this.onOrtChanged, this), false);
+        },
+
+        /**
+         * @private
+         * @method onTouchStart
+         * @desc 开始拖拽
+         * @param e {window.event}
+         */
+        onTouchStart: function(e) {
+            if(this.eventTimer || this.isSlide) return;
+            this.disScroll && o.event.stop(e);
+            var touches = e.touches;
+            if(!touches || touches.length > 1)  return;
+            this.viewDiv.style.webkitTransitionDuration = "0ms";
+            this.isDrag = true;
+            if(this.autoPlay) {
+                this.stop();
+            }
+            var touch = touches[0];
+            var dc;
+            if(this.isLon) {
+                dc = touch.pageY;
+            } else {
+                dc = touch.pageX;
+            }
+            this.touchStartPixelX = touch.pageX;
+            this.touchStartPixelY = touch.pageY;
+            this.pageDragStartC = this.pageDragTempC = dc;
+            var that = this;
+            this.dragtimer = window.setInterval(function() {
+                if(that.pageDragTempC == that.pageDragEndC) return;
+                that.pageDragEndC = that.pageDragTempC;
+                var dis = that.pageDragTempC - that.pageDragStartC;
+                that.pageDragStartC = that.pageDragTempC;
+                var tvalue = that.translateValue,
+                    nvalue = tvalue + dis,
+                    ntransform;
+                if(that.isLon) {
+                    ntransform = "translate3d(0, " + nvalue + "px, 0)";
+                } else {
+                    ntransform = "translate3d(" + nvalue + "px, 0, 0)";
+                }
+                that.updateTranslateValue(nvalue);
+                that.changeDis += dis;
+                that.viewDiv.style.webkitTransform = ntransform;
+            }, 16);
+        },
+
+        /**
+         * @private
+         * @method onTouchMove
+         * @desc 拖拽进行
+         * @param e {window.event}
+         */
+        onTouchMove: function(e) {
+            var touches = e.touches;
+            if(!this.isDrag || !touches || touches.length > 1)    return;
+            var touch = touches[0],
+                dc;
+            if(this.isLon) {
+                dc = touch.pageY;
+            } else {
+                dc = touch.pageX;
+            }
+            if(this.pageDragTempC == dc)	return;
+            var pixel = {
+                pageX: this.touchStartPixelX,
+                pageY: this.touchStartPixelY
+            }
+            var angle = o.util.getDirection(pixel, touch);
+            this.pageDragTempC = dc;
+            if(this.disScroll)  return o.event.stop(e);
+            if((this.isLon && (angle == "up" || angle == "down")) ||
+                (!this.isLon && (angle == "left" || angle == "right"))) {
+                o.event.stop(e);
+            }
+        },
+
+        /**
+         * @private
+         * @method onTouchEnd
+         * @desc 拖拽结束
+         * @param e {window.event}
+         */
+        onTouchEnd: function(e) {
+            this.isDrag = false;
+            if(this.dragtimer) {
+                window.clearInterval(this.dragtimer);
+                this.dragtimer = null;
+            }
+            var target = e.target;
+            if(target == this.preDom || target == this.nextDom) return;
+            if(Math.abs(this.changeDis) &lt;= this.springBackDis) {
+                this.select(this.current.index);
+            } else if(this.loop) {
+                if(this.changeDis &lt; 0) {
+                    this._selectNext();
+                } else {
+                    this._selectPre();
+                }
+            } else if(!this.loop) {
+                if(this.changeDis &lt; 0 && this.current.index != this.length - 1) {
+                    this._selectNext();
+                } else if(this.changeDis > 0 && this.current.index != 0) {
+                    this._selectPre();
+                } else {
+                    this.select(this.current.index);
+                }
+            }
+            this.changeDis = 0;
+            if(this.autoPlay) {
+                this.start();
+            }
+        },
+
+        /**
+         * @private
+         * @method getDataBy
+         * @desc 把存的数据中的某项取出来
+         * @param index {Number}
+         * @param pro {String}
+         */
+        getDataBy: function(index, pro) {
+            return this.data[index][this.dataField[pro]];
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.Slider.start
+         * @desc 开始轮播
+         */
+        start: function() {
+            this.stop();
+            this.timer = window.setTimeout(o.util.bind(this._calcCurrent, this), this.autoPlayTime);
+        },
+
+        /**
+         * @private
+         * @method _calcCurrent
+         * @desc 进行轮播
+         */
+        _calcCurrent: function() {
+            var index = this.current.index;
+            var length = this.loop ? this.length - 2 : this.length;
+            index = (++index == length) ? 0 : index;
+            this.select(index, "next");
+            this.start();
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.Slider.stop
+         * @desc 停止轮播
+         */
+        stop: function() {
+            if(this.timer) {
+                window.clearTimeout(this.timer);
+                this.timer = null;
+            }
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.Slider.select
+         * @desc 选择第n个子节点
+         * @param index {Number}
+         */
+        select: function(index) {
+            this.isSlide = true;
+            this.viewDiv.style.webkitTransitionDuration = this.animationTime + "ms";
+
+            if(this.loop) {
+                this.selectLoop(index, arguments[1]);
+            } else {
+                this.selectNoLoop(index);
+            }
+            this.setCurrent({
+                index: index,
+                dom: this.doms[index]
+            });
+            if(this._type == "img" && this.unloadImage.length > 0) {
+                var max = index + Math.ceil(this.loadImageNumber / 2),
+                    min = Math.floor(this.loadImageNumber / 2),
+                    _len = this.unloadImage.length,
+                    i = _len;
+                for(; i--; ) {
+                    var _index = this.unloadImage[i].index;
+                    if((_index &lt; max) && !this.pageDragDirection ||
+                        (index - _index) &lt;= min && this.pageDragDirection) {
+                        this.setImageLoad(_index, this.unloadImage[i].dom);
+                        this.unloadImage.splice(i, 1);
+                    }
+                }
+            }
+            var that = this;
+            window.setTimeout(function() {
+                that.isSlide = false;
+                that.notify("slider-ui-slidechange");
+            }, this.animationTime);
+        },
+
+        /**
+         * @private
+         * @method selectNoLoop
+         * @desc 轮播到最后再轮播回来
+         * @param index {Number}
+         */
+        selectNoLoop: function(index) {
+            var translatestr = "translate3d(";
+            if(this.isLon) {
+                var t = 0 - (index * this.height);
+                translatestr += "0, " + t + "px, 0)";
+            } else {
+                var t = 0 - (index * this.width);
+                translatestr += t + "px, 0, 0)";
+            }
+            this.updateTranslateValue(t);
+            this.viewDiv.style.webkitTransform = translatestr;
+        },
+
+        /**
+         * @private
+         * @method selectLoop
+         * @desc 循环选择
+         * @param index {Number}
+         */
+        selectLoop: function(index) {
+            var _index = this.current.index,
+                len = this.length - 2,
+                temp,
+                _temp = temp = "translate3d(";
+            if((index == 0 && _index == (len - 1)) || (_index == 0 && index == (len - 1))) {
+                var that = this,
+                    d = arguments[1];
+                if(len == 2 && d && ((index == 0 && _index == (len - 1) && d == "pre")
+                    || (index == (len - 1) && _index == 0 && d == "next"))) {
+                    this.selectNoLoop(index);
+                    return;
+                }
+                this.isTimer = true;
+                var onChanged = function(e) {
+                    o.event.un(that.viewDiv, "webkitTransitionEnd", onChanged, false);
+                    if(!that.isTimer) return;
+                    if(that.eventTimer) {
+                        window.clearTimeout(that.eventTimer);
+                        that.eventTimer = null;
+                    }
+                    that.viewDiv.style.webkitTransitionDuration = "0ms";
+                    that.viewDiv.style.webkitTransform = _temp;
+                }
+                o.event.on(this.viewDiv, "webkitTransitionEnd", onChanged, false);
+                if(index == 0 && _index == (len - 1)) {
+                    _temp += "0, 0, 0)";
+                    this.updateTranslateValue(0);
+                    if(this.isLon) {
+                        temp += "0, " + (0 - this.height * len) + "px, 0)";
+                    } else {
+                        temp += (0 - this.width * len) + "px, 0, 0)";
+                    }
+                } else if(index == (len - 1) && _index == 0) {
+                    if(this.isLon) {
+                        temp += "0, " + this.height + "px, 0)";
+                        _temp += "0, " + (0 - this.height * (len - 1)) + "px, 0)";
+                        this.updateTranslateValue(0 - this.height * (len - 1));
+                    } else {
+                        temp += this.width + "px, 0, 0)";
+                        _temp += (0 - this.width * (len - 1)) + "px, 0, 0)";
+                        this.updateTranslateValue(0 - this.width * (len - 1));
+                    }
+                }
+                this.viewDiv.style.webkitTransform = temp;
+                this.eventTimer = window.setTimeout(function() {
+                    o.event.un(that.viewDiv, "webkitTransitionEnd", onChanged, false);
+                    that.viewDiv.style.webkitTransitionDuration = "0ms";
+                    that.viewDiv.style.webkitTransform = _temp;
+                    that.eventTimer = null;
+                    that.isTimer = false;
+                }, this.animationTime - 5 &lt; 0 ? 0 : this.animationTime - 5);
+            } else {
+                this.selectNoLoop(index);
+            }
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.Slider._selectPre
+         * @desc 选择上一张轮播图
+         */
+        _selectPre: function() {
+            if(this.isSlide)    return;
+            var len = this.loop ? this.length - 2 : this.length;
+            var index = (this.current.index - 1) &lt; 0 ? (len - 1) : this.current.index - 1;
+            this.pageDragDirection = true;
+            this.select(index, "pre");
+        },
+
+        /**
+         * @public
+         * @method octopus.Widget.Slider._selectNext
+         * @desc 选择下一张轮播图
+         */
+        _selectNext: function() {
+            if(this.isSlide)   return;
+            var len = this.loop ? this.length - 2 : this.length;
+            var index = (this.current.index + 1) > (len - 1) ? 0 : this.current.index + 1;
+            this.pageDragDirection = false;
+            this.select(index, "next");
+        },
+
+        CLASS_NAME: "octopus.Widget.Slider"
+    });
+
+    /**
+     * @method octopus.Widget.slider
+     * @param el {DOMElement}
+     * @returns {o.Widget.HtmlSlider}
+     * @desc 生成与html模版相绑定的轮播图 所有的参数都以html模版形式传入
+     */
+    o.Widget.slider = function(el) {
+        return new o.Widget.HtmlSlider({
+            el: el
+        });
+    };
+
+    /**
+     * @class octopus.Widget.HtmlSlider
+     * @parent octopus.Widget.Slider
+     * @desc 参数与octopus.Widget.Slider相同 不同的是 这个类仅限于对已有符合规范的html模版的改造与封装
+     * 符合条件的html模版属性包括
+     * data-octopusui-slider-loop 如果无此属性则轮播图不前后循环
+     * data-octopusui-slider-nobutton 如果设置此属性 则不包含上一个下一个按钮
+     * data-octopusui-slider-disable 如果设置此属性 则除了不包含按钮外 也没有任何事件监听 可用于单张图
+     * data-octopusui-slider-nogizmos 如果设置此属性 则不包含右下角的角标
+     * data-octopusui-slider-notauto 如果设置此属性 则不自动触发轮播
+     * data-octopusui-slider-adaptive 如果设置此属性 则轮播图以默认大小自动撑开
+     * data-octopusui-slider-notitle 如果设置此属性 则不包含轮播图的title
+     */
+    o.Widget.HtmlSlider = o.define(o.Widget.Slider, {
+
+        /**
+         * @private
+         * @property fragment
+         * @type {DocumentFragment}
+         * @desc 文档碎片 用来生成改造后的实际dom
+         */
+        fragment: null,
+
+        /**
+         * @private
+         * @property adaptive
+         * @type {String}
+         * @desc 用来确认当前轮播图是否自动撑开
+         */
+        adaptive: null,
+
+        /**
+         * @private
+         * @constructor
+         */
+        initialize: function() {
+            //虽然继承自octopus.Widget.Slider 但是构造函数这里希望使用octopus.Widget的构造函数
+            o.Widget.prototype.initialize.apply(this, arguments);
+            this.dataField = {
+                title: "title",
+                url: "url"
+            };
+            this.container = this.el.parentNode;
+            this.fragment = document.createDocumentFragment();
+            this.unloadImage = [];
+            this.loop = o.dom.data(this.el, "octopusui-slider-loop");
+            this.hasButton = !o.dom.data(this.el, "octopusui-slider-nobutton");
+            this.hasGizmos = !o.dom.data(this.el, "octopusui-slider-nogizmos");
+            this.disableAll = o.dom.data(this.el, "octopusui-slider-disable");
+            this.autoPlay = !o.dom.data(this.el, "octopusui-slider-notauto");
+            this.adaptive = o.dom.data(this.el, "octopusui-slider-adaptive");
+            this.hasTitle = !o.dom.data(this.el, "octopusui-slider-notitle");
+            this.disScroll = o.dom.data(this.el, "octopusui-slider-disscroll");
+            this.buildSelf();
+            if(!this.isShow) {
+                this.show();
+            }
+            if(!this.active) {
+                this.activate();
+            }
+            if(this.autoPlay && this.length > 1) {
+                this.start();
+            }
+            this.notify("slider-ui-afterrender");
+        },
+
+        /**
+         * @private
+         * @method buildSelf
+         * @desc 生成自身节点
+         */
+        buildSelf: function() {
+            var children = this.el.children,
+                len = children.length;
+            if(len &lt; 2) return;
+            this.length = len;
+            this.data = [];
+            this.doms = [];
+            this.fragment = document.createDocumentFragment();
+            var node = this.el.cloneNode(false);
+            this.buildDoms(node);
+            this.buildSlider(children);
+            node.appendChild(this.viewDiv);
+            this.el.parentNode.replaceChild(node, this.el);
+            this.el = node;
+            this.el.style.cssText = "overflow: hidden; position: relative;";
+        },
+
+        /**
+         * @private
+         * @method buildSlider
+         * @desc 生成轮播图
+         */
+        buildSlider: function(items) {
+            o.util.each(items, o.util.bind(this.buildItem, this));
+            if(this.loop && this.length > 1) {
+                var fristdom = this.doms[0].cloneNode(true),
+                    lastdom = this.doms[this.length - 1].cloneNode(true);
+                this.doms.push(fristdom);
+                this.doms.push(lastdom);
+                this.fragment.appendChild(fristdom);
+                this.fragment.appendChild(lastdom);
+                this.length += 2;
+            }
+            this.setCurrent({
+                dom: this.doms[0],
+                index: 0
+            });
+            this.viewDiv.appendChild(this.fragment);
+        },
+
+        /**
+         * @private
+         * @method render
+         * @desc 防止被调用
+         */
+        render: function() {
+            throw new Error("this class can't render! :)");
+        },
+
+        /**
+         * @private
+         * @method buildItem
+         * @desc 生成每张单张的轮播图
+         */
+        buildItem: function(item, index) {
+            if(!o.util.isNode(item)) return;
+            this.data.push({
+                url: o.dom.data(item, "octopusui-slider-url"),
+                title: o.dom.data(item, "octopusui-slider-title")
+            });
+            var dom = o.dom.createDom("div", {
+                    "class": "octopusui-slider-children",
+                    "style": "-webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); position: relative;"
+                }),
+                _item = item.cloneNode(true),
+                _itemcssText = "width: 100%;";
+            !this.adaptive && (_itemcssText += " position: absolute; left: 0; right: 0; top: 0; bottom: 0; margin: auto;", true);
+            _item.style.cssText = _itemcssText;
+            dom.appendChild(_item);
+            var title = this.getDataBy(index, "title");
+            if(this.hasTitle && title) {
+                var titledom = o.dom.createDom("div", {
+                        "class": "octopusui-slider-imgTitle"
+                    }),
+                    titlecontent = o.dom.createDom("div", {
+                        "class": "octopusui-slider-imgTitleContent octopusui-text-limit"
+                    });
+                titlecontent.innerHTML = o.util.encodeHtml(title);
+                titledom.appendChild(titlecontent);
+                dom.appendChild(titledom);
+            }
+            var that = this;
+            this.gesture(dom, {
+                tap_max_touchtime: 150
+            }).on("tap", function(e) {
+                o.event.stop(e);
+                that.notify("slider-item-ontap", that.data[index]);
+            });
+            this.fragment.appendChild(dom);
+            this.doms.push(dom);
+        },
+
+        CLASS_NAME: "octopus.Widget.HtmlSlider"
+    });
+
+})(octopus);</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="o.Widget.PicReader.html">PicReader</a></li><li><a href="octopus.ImgLazyLoad.html">ImgLazyLoad</a></li><li><a href="octopus.StepTween.html">StepTween</a></li><li><a href="octopus.Tween.html">Tween</a></li><li><a href="octopus.Widget.html">Widget</a></li><li><a href="octopus.Widget.Back2Top.html">Back2Top</a></li><li><a href="octopus.Widget.HtmlBack2Top.html">HtmlBack2Top</a></li><li><a href="octopus.Widget.HtmlSlider.html">HtmlSlider</a></li><li><a href="octopus.Widget.Mask.html">Mask</a></li><li><a href="octopus.Widget.Menu.html">Menu</a></li><li><a href="octopus.Widget.Progress.html">Progress</a></li><li><a href="octopus.Widget.Refresh.html">Refresh</a></li><li><a href="octopus.Widget.Sidebar.html">Sidebar</a></li><li><a href="octopus.Widget.Slider.html">Slider</a></li><li><a href="octopus.WidgetManager.html">WidgetManager</a></li></ul><h3>Namespaces</h3><ul><li><a href="octopus.html">octopus</a></li><li><a href="octopus.ajax.html">ajax</a></li><li><a href="octopus.animation.html">animation</a></li><li><a href="octopus.app.html">app</a></li><li><a href="octopus.dom.html">dom</a></li><li><a href="octopus.easing.html">easing</a></li><li><a href="octopus.template.html">template</a></li><li><a href="octopus.util.html">util</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a> on Thu Dec 19 2013 17:06:37 GMT+0800 (CST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: dom.js</title>
+    
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+    
+    <h1 class="page-title">Source: dom.js</h1>
+    
+    
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source"><code>/**
+ * @file
+ * webapp通用组件基础库文件
+ * dom -   dom操作部分
+ * @require lib/class.js
+ * @require lib/util.js
+ * @author oupeng-fe
+ * @version 1.1
+ */
+;(function(o, undefined) {
+
+    "use strict";
+
+    var
+        /**
+         * @desc 工具函数的命名空间
+         */
+        u = o.util,
+
+        /**
+         * @desc 声明document
+         */
+        doc = document;
+
+    function getScreenBy(t) {
+        var v = window["inner" + t],
+            _v = (u.isNumeric(v) && v > 0) ? v :
+                (doc.compatMode == "CSS1Compat") ? doc.documentElement["client" + t] : o.dom["get" + t](doc.body);
+        return _v > 0 ? _v : 0;
+    }
+
+    /**
+     * @namespace octopus.dom
+     * @desc 一些基础的dom操作
+     */
+    o.dom = {
+        /**
+         * @method octopus.dom.g
+         * @param el
+         * @desc 靠id拿个节点 由于只是简单支持 没有必要写得那么高级
+         */
+        g: function(el) {
+            var el = (u.isString(el) ? doc.getElementById(el) : (u.isObject(el) && el));
+            return el || null;
+        },
+
+        /**
+         * @method octopus.dom.$
+         * @param filter
+         * @param el
+         * @desc 不想重复的去写这么多 拿到一个节点集合
+         */
+        $: function(filter, el) {
+            var el = el || doc,
+                _el = o.g(el);
+            return (o.util.isNode(_el) || _el == doc) ? _el.querySelectorAll(filter) : null;
+        },
+
+        /**
+         * @method octopus.dom.one
+         * @param filter
+         * @param el
+         * @desc 拿到指定节点下的文档流里的第一个节点
+         */
+        one: function(filter, el) {
+            var el = el || doc,
+                _el = o.g(el);
+            return (o.util.isNode(_el) || _el == doc) ? _el.querySelector(filter) : null;
+        },
+
+        /**
+         * @method octopus.dom.hasClass
+         * @desc 判断节点有class
+         * @param el {DOMElement}
+         * @param name {String}
+         */
+        hasClass: function(el, name) {
+            el = o.g(el);
+            var names;
+            return !!el.classList ? el.classList.contains(name) :
+                (names = el.className, !!names && new RegExp("(^|\\s)" + name + "(\\s|$)").test(names));
+        },
+
+        /**
+         * @method octopus.dom.addClass
+         * @desc 给指定节点增加class
+         * @param el {DOMElement}
+         * @param name {String}
+         */
+        addClass: function(el, name) {
+            el = o.g(el);
+            name = name || null;
+            if(!name)   return false;
+            var classList = el.classList;
+            if(!!classList) {
+                if(!classList.contains(name)) {
+                    el.classList.add(name);
+                }
+            } else {
+                if(!o.dom.hasClass(el, name)) {
+                    el.className += (el.className ? " " : "") + name;
+                }
+            }
+            return el;
+        },
+
+        /**
+         * @method octopus.dom.removeClass
+         * @desc 删除指定节点的指定class
+         * @param el {DOMElement}
+         * @param name {String}
+         */
+        removeClass: function(el, name) {
+            el = o.g(el);
+            var names,
+                classList = el.classList;
+            if(!!classList) {
+                if(classList.contains(name)) {
+                    el.classList.remove(name);
+                }
+            } else {
+                if(o.dom.hasClass(el, name)) {
+                    names = el.className;
+                    if(names) {
+                        el.className = u.trim(names).replace(
+                            new RegExp("(^|\\s+)" + name + "(\\s+|$)"), " "
+                        );
+                    }
+                }
+            }
+            return el;
+        },
+
+        /**
+         * @method octopus.dom.toggleClass
+         * @desc toggle指定节点的指定样式
+         * @param el {DOMElement | String} 指定节点
+         * @param name {String} 指定样式
+         */
+        toggleClass: function(el, name) {
+            el = o.g(el);
+            var t = o.dom.hasClass(el, name);
+            if(t) {
+                o.dom.removeClass(el, name);
+            } else {
+                o.dom.addClass(el, name);
+            }
+            return !t;
+        },
+
+        /**
+         * @method octopus.dom.getWidth
+         * @desc 获得指定节点的宽度
+         * @param el {DOMElement}
+         */
+        getWidth: function(el) {
+            var el = o.g(el);
+            var width = !!el.offsetWidth ? el.offsetWidth : el.clientWidth;
+            return width > 0 ? width : 0;
+        },
+
+        /**
+         * @method octopus.dom.getScreenWidth
+         * @returns {number}
+         * @desc 获得屏幕宽度
+         */
+        getScreenWidth: function() {
+            return getScreenBy("Width");
+        },
+
+        /**
+         * @method octopus.dom.getScreenHeight
+         * @returns {number}
+         * @desc 获得屏幕高度
+         */
+        getScreenHeight: function() {
+            return getScreenBy("Height");
+        },
+
+        /**
+         * @method octopus.dom.getHeight
+         * @desc 获得指定节点高度
+         * @param el {DOMElement}
+         */
+        getHeight: function(el) {
+            var el = o.g(el);
+            var height = !!el.offsetHeight ? el.offsetHeight : el.clientHeight;
+            return height > 0 ? height : 0;
+        },
+
+        /**
+         * @method octopus.dom.insertAfter
+         * @desc 插到指定节点后面
+         * @param newdom {DOMElement}
+         * @param tardom {DOMElement}
+         */
+        insertAfter: function(newdom, tardom) {
+            newdom = o.g(newdom);
+            tardom = o.g(tardom);
+            tardom.parentNode.insertBefore(newdom, tardom.nextSibling);
+            return newdom;
+        },
+
+        /**
+         * @method octopus.dom.insertFirst
+         * @param el
+         * @param container
+         */
+        insertFirst: function(el, container) {
+            var el = o.g(el),
+                container = o.g(container),
+                firstChild = container.firstChild;
+            if(!firstChild) {
+                container.appendChild(el);
+            } else {
+                container.insertBefore(el, firstChild);
+            }
+        },
+
+        /**
+         * @method octopus.dom.setStyles
+         * @desc 批量赋值
+         * @param el {DOMElement}
+         * @param obj {Object}
+         * @param isinit {Boolean}
+         */
+        setStyles: function(el, obj, isinit) {
+            isinit = isinit || false;
+            el = o.g(el);
+            if(isinit) {
+                var cssText = "";
+            }
+            for(var k in obj) {
+                if(!isinit) {
+                    var _k = k;
+                    if(k.match(/^-(webkit|o|ms|moz)/g)) {
+                        _k  = u.styleCss(k);
+                    }
+                    el.style[_k] = obj[k];
+                    continue;
+                }
+                cssText += k + ": " + obj[k] + ";";
+            }
+            if(!!cssText) {
+                el.style.cssText = cssText;
+            }
+        },
+
+        /**
+         * @method octopus.dom.getStyle
+         * @desc 获取指定节点的指定属性值
+         * @param el {DOMElement}
+         * @param style {String}
+         */
+        getStyle: function(el, style) {
+            el = o.g(el);
+            var value = null;
+            if (el && el.style) {
+                value = el.style[u.camelize(style)];
+                if (!value) {
+                    if (doc.defaultView &&
+                        doc.defaultView.getComputedStyle) {
+                        var css = doc.defaultView.getComputedStyle(el, null);
+                        value = css ? css.getPropertyValue(style) : null;
+                    } else if (el.currentStyle) {
+                        value = el.currentStyle[u.camelize(style)];
+                    }
+                }
+                var positions = ['left', 'top', 'right', 'bottom'];
+                if (window.opera &&
+                    (positions.indexOf(style) != -1) &&
+                    (o.dom.getStyle(el, 'position') == 'static')) {
+                    value = 'auto';
+                }
+            }
+            return value == 'auto' ? null : value;
+        },
+
+        /**
+         * @method octopus.dom.getParentNode
+         * @desc 查询符合条件的离指定节点最近的父节点
+         * @param el {DOMELement | String} 被查找的起始节点
+         * @param filter {String} 筛选器
+         * @param maxDepth {Number} 查看的最深层数
+         */
+        getParentNode: function(el, filter, maxDepth) {
+            var el = o.g(el);
+            maxDepth = maxDepth || 50;
+            var depth = 0,
+                _el = null;
+            el = el.parentNode;
+            while(u.isNode(el) && (depth &lt; maxDepth)) {
+                var parent = el.parentNode,
+                    list = parent.querySelectorAll(filter);
+                if(list && list.length > 0) {
+                    u.each(list, function(item) {
+                        if(u.isNode(item) && item == el) {
+                            _el = item;
+                            return true;
+                        }
+                    });
+                }
+                el = el.parentNode;
+                if(_el || el.tagName == "HTML")	break;
+                depth++;
+            }
+            return _el;
+        },
+
+        /**
+         * @method octopus.dom.getPosition
+         * @desc 获得元素相对于浏览器左上角的坐标
+         * @param el {DOMElement}
+         */
+        getPosition: function(el) {
+            el = o.g(el);
+            var doc = !!el.ownerDocument ? el.ownerDocument : el,
+                getStyle = o.dom.getStyle,
+                pos = {"left": 0, "top": 0},
+                viewport = doc.documentElement,
+                parent = el;
+            if(el == viewport){
+                return pos;
+            }
+            do {
+                pos.left += parent.offsetLeft;
+                pos.top  += parent.offsetTop;
+                if (getStyle(parent, 'position') == 'fixed') {
+                    pos.left += doc.body.scrollLeft;
+                    pos.top  += doc.body.scrollTop;
+                    break;
+                }
+                parent = parent.offsetParent;
+            } while (parent && parent != el);
+            if(getStyle(el, 'position') == 'absolute'){
+                pos.top  -= doc.body.offsetTop;
+            }
+            parent = el.offsetParent;
+            while (parent && parent != doc.body) {
+                pos.left -= parent.scrollLeft;
+                if (parent.tagName != 'TR') {
+                    pos.top -= parent.scrollTop;
+                }
+                parent = parent.offsetParent;
+            }
+            return pos;
+        },
+
+        /**
+         * @method octopus.dom.createDom
+         * @desc 创建dom节点
+         * @param type {String} dom类型
+         * @param atts {Object} dom属性名值对
+         * @param stys {Object} dom样式名值对
+         */
+        createDom: function(type, atts, stys) {
+            var dom = doc.createElement(type);
+            atts && u.each(atts, function(v, att) {
+                if(att == "innerHTML" || att == "innerText") {
+                    dom[att] = o.util.encodeHtml(v);
+                } else {
+                    dom.setAttribute(att, v);
+                }
+            });
+            stys && o.dom.setStyles(dom, stys, true);
+            return dom;
+        },
+
+        /**
+         * @method octopus.dom.cloneNode
+         * @desc clone节点 可以将事件一起clone 该事件必须是通过此框架加上的
+         * @param el {DOMElement} 待clone的节点
+         * @param ev {Boolean} 是否clone事件监听
+         * @param c {Boolean} 是否拷贝子节点
+         */
+        cloneNode: function(el, ev, c) {
+            ev = ev || false;
+            c = c || false;
+            var cloneEl = o.g(el).cloneNode(!c);
+            if(!ev || !el._eventCacheID) return cloneEl;
+            var obs = o.event.observers[el._eventCacheID];
+            u.each(obs, function(item, i) {
+                var name = item.name,
+                    observer = u.clone(item.observer),
+                    useCapture = u.clone(item.useCapture);
+                o.event.on(cloneEl, name, observer, useCapture);
+            });
+            return cloneEl;
+        },
+
+        /**
+         * @method octopus.dom.scrollLite
+         * @desc 针对ios设备滚动条滚动时事件传播方向导致的滚动异常解决
+         * @param el {DOMElement} 滚动的节点
+         * @param isHorizon {Boolean} 是否横向
+         * @param preventFrom {DOMElement} 引起bug的根源容器 可不传
+         *
+         */
+        scrollLite: function(el, isHorizon, preventFrom) {
+            var pos = { left: 0, top: 0 };
+            if(preventFrom) {
+                preventFrom = o.g(preventFrom);
+                o.event.on(preventFrom, "touchmove", function(e) { o.event.stop(e, true); }, false);
+            }
+            el = o.g(el);
+            o.dom.setStyles(el, {
+                "-webkit-overflow-scrolling": "touch"
+            });
+            o.event.on(el, "touchstart", function(e) {
+                var touches = e.touches;
+                if(!touches)    return;
+                pos = {
+                    left: touches[0].pageX,
+                    top: touches[0].pageY
+                }
+            });
+            o.event.on(el, "touchmove", function(e) {
+                var touches = e.touches;
+                if(!touches)    return;
+                var target = e.currentTarget,
+                    scrollTop = target.scrollTop,
+                    scrollLeft = target.scrollLeft,
+                    moveLeft = touches[0].pageX,
+                    moveTop = touches[0].pageY,
+                    startTop = pos.top,
+                    startLeft = pos.left;
+                if(isHorizon) {
+                    if((scrollLeft &lt;= 0 && moveLeft > startLeft) ||
+                        (scrollLeft >= target.scrollWidth - target.clientWidth - 5 && moveLeft &lt; startLeft)) {
+                        e.preventDefault();
+                        return;
+                    }
+                    e.stopPropagation();
+                } else {
+                    if((scrollTop &lt;= 0 && moveTop > startTop) ||
+                        (scrollTop >= target.scrollHeight - target.clientHeight - 5 && moveTop &lt; startTop)) {
+                        e.preventDefault();
+                        return;
+                    }
+                    e.stopPropagation();
+                }
+
+            });
+        },
+
+        /**
+         * @public
+         * @method octopus.dom.data
+         * @desc 读取或设置指定节点的数据
+         * @param el {String | DOMELement}
+         * @param attrs {String | Array}
+         */
+        data: function(el, attrs) {
+            var vs = {};
+            el = o.g(el);
+            if(u.isString(attrs)) {
+                var ars = attrs.split(" "),
+                    len = ars.length;
+                if(len == 1) {
+                    return el.dataset && el.dataset[ars[0]] || el.getAttribute("data-" + ars[0]) || null;
+                } else {
+                    u.each(ars, function(item) {
+                        var _item = u.camelize(item);
+                        vs[item] = el.dataset && el.dataset[_item] || el.getAttribute("data-" + item) || null;
+                    });
+                }
+            } else {
+                vs = attrs;
+                for(var k in vs) {
+                    el.setAttribute("data-" + k, vs[k]);
+                }
+            }
+            return vs;
+        },
+
+        /**
+         * @public
+         * @method octopus.dom.attr
+         * @desc 读取或设置指定节点的属性
+         */
+        attr: function(el, attrs) {
+            var vs = {};
+            el = o.g(el);
+            if(u.isString(attrs)) {
+                var ars = attrs.split(" "),
+                    len = ars.length;
+                if(len == 1) {
+                    return el.getAttribute(ars[0]) || null;
+                } else {
+                    u.each(ars, function(item) {
+                        vs[item] = el.getAttribute(item) || null;
+                    });
+                }
+            } else {
+                vs = attrs;
+                for(var k in vs) {
+                    el.setAttribute(k, vs[k]);
+                }
+            }
+            return vs;
+        }
+    };
+
+    /**
+     * @desc 将常用的选择器方法的命名空间提前
+     */
+    o.g = o.dom.g;
+
+    o.$ = o.dom.$;
+
+    o.one = o.dom.one;
+
+    !window.$ && (window.$ = o.$);
+
+})(octopus);
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="o.Widget.PicReader.html">PicReader</a></li><li><a href="octopus.ImgLazyLoad.html">ImgLazyLoad</a></li><li><a href="octopus.StepTween.html">StepTween</a></li><li><a href="octopus.Tween.html">Tween</a></li><li><a href="octopus.Widget.html">Widget</a></li><li><a href="octopus.Widget.Back2Top.html">Back2Top</a></li><li><a href="octopus.Widget.HtmlBack2Top.html">HtmlBack2Top</a></li><li><a href="octopus.Widget.HtmlSlider.html">HtmlSlider</a></li><li><a href="octopus.Widget.Mask.html">Mask</a></li><li><a href="octopus.Widget.Menu.html">Menu</a></li><li><a href="octopus.Widget.Progress.html">Progress</a></li><li><a href="octopus.Widget.Refresh.html">Refresh</a></li><li><a href="octopus.Widget.Sidebar.html">Sidebar</a></li><li><a href="octopus.Widget.Slider.html">Slider</a></li><li><a href="octopus.WidgetManager.html">WidgetManager</a></li></ul><h3>Namespaces</h3><ul><li><a href="octopus.html">octopus</a></li><li><a href="octopus.ajax.html">ajax</a></li><li><a href="octopus.animation.html">animation</a></li><li><a href="octopus.app.html">app</a></li><li><a href="octopus.dom.html">dom</a></li><li><a href="octopus.easing.html">easing</a></li><li><a href="octopus.template.html">template</a></li><li><a href="octopus.util.html">util</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a> on Thu Dec 19 2013 17:06:37 GMT+0800 (CST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
