@@ -2051,6 +2051,7 @@
     });
 })(octopus);/**
  * @file
+<<<<<<< HEAD
  * @author oupeng-fe
  * @version 1.1
  * webapp通用组件基础库
@@ -3768,6 +3769,8 @@
 })(octopus);
 /**
  * @file
+=======
+>>>>>>> FETCH_HEAD
  * webapp通用组件结构文件
  * 定义模块管理
  * @require lib/class.js

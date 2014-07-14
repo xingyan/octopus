@@ -81,7 +81,10 @@
             if(this.isCurrent || this.isBaseLayer) {
                 o.dom.addClass(this.el, "octopus-layer-base");
             }
+<<<<<<< HEAD
             console.log(o.Events);
+=======
+>>>>>>> FETCH_HEAD
             this.event = new o.Events(this);
         },
 
@@ -155,6 +158,7 @@
             this.el.style.zIndex = zIndex;
         },
 
+<<<<<<< HEAD
         activate: function() {
 
         },
@@ -167,6 +171,8 @@
 
         },
 
+=======
+>>>>>>> FETCH_HEAD
         CLASS_NAME: "octopus.Layer"
     });
 })(octopus);
