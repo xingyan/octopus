@@ -2268,12 +2268,9 @@
                 data = config.data || {},
                 headers = config.headers || {},
                 urlobj = o.util.createUrlObject(url);
-<<<<<<< HEAD
             if(config.type == "jsonp") {
                 return o.ajax.ajaxJSONP(options);
             }
-=======
->>>>>>> FETCH_HEAD
             if(!config.crossDomain) {
                 config.crossDomain = urlobj.host != window.location.host;
             }
@@ -2284,11 +2281,7 @@
                     customRequestedWithHeader = true;
                 }
             }
-<<<<<<< HEAD
             if(customRequestedWithHeader === false || !config.crossDomain) {
-=======
-            if (customRequestedWithHeader === false || !config.crossDomain) {
->>>>>>> FETCH_HEAD
                 headers['X-Requested-With'] = 'XMLHttpRequest';
             }
             data =  o.util.getParameterString(data || {});
@@ -2298,15 +2291,9 @@
             var mime = this.accepts[dataType],
                 baseHeaders = {},
                 xhr = this.xhr(), abortTimeout;
-<<<<<<< HEAD
             if(mime) {
                 baseHeaders['Accept'] = mime;
                 if(mime.indexOf(',') > -1) {
-=======
-            if (mime) {
-                baseHeaders['Accept'] = mime;
-                if (mime.indexOf(',') > -1) {
->>>>>>> FETCH_HEAD
                     mime = mime.split(',', 2)[0];
                 }
                 xhr.overrideMimeType && xhr.overrideMimeType(mime)
@@ -2331,20 +2318,12 @@
                 xhr.send(data ? data : null);
             } else {
                 window.setTimeout(function(){
-<<<<<<< HEAD
                     if(xhr.readyState !== 0) { // W3C: 0-UNSENT
-=======
-                    if (xhr.readyState !== 0) { // W3C: 0-UNSENT
->>>>>>> FETCH_HEAD
                         xhr.send(data ? data : null);
                     }
                 }, 0);
             }
-<<<<<<< HEAD
             if(config.timeout > 0) {
-=======
-            if (config.timeout > 0) {
->>>>>>> FETCH_HEAD
                 abortTimeout = setTimeout(function(){
                     xhr.onreadystatechange = o.util.empty;
                     xhr.abort()
@@ -2386,24 +2365,14 @@
             complete(request);
             var result, error = false,
                 dataType = config.dataType;
-<<<<<<< HEAD
             if((request.status >= 200 && request.status < 300) || request.status == 304 ||
-=======
-            if ((request.status >= 200 && request.status < 300) || request.status == 304 ||
->>>>>>> FETCH_HEAD
                 (request.status == 0 && o.util.createUrlObject(config.url).protocol == "file:")) {
                 dataType = dataType || this.mimeToDataType(request.getResponseHeader('content-type'));
                 result = request.responseText;
                 try {
-<<<<<<< HEAD
                     if(dataType == 'script')    (1,eval)(result)
                     else if(dataType == 'xml')  result = request.responseXML
                     else if(dataType == 'json') result = this.BLANK_REGEX.test(result) ? null : JSON.parse(result)
-=======
-                    if (dataType == 'script')    (1,eval)(result)
-                    else if (dataType == 'xml')  result = request.responseXML
-                    else if (dataType == 'json') result = this.BLANK_REGEX.test(result) ? null : JSON.parse(result)
->>>>>>> FETCH_HEAD
                 } catch (e) { error = e }
                 options.result = result;
                 if(success) {
@@ -3080,11 +3049,7 @@
                     if(isEnd) {
                         curValue = this.endValue[i];
                     } else {
-<<<<<<< HEAD
                         curValue = this.ease(curTime, this.startValue[i], this.endValue[i] - this.startValue[i], this.duration * 1000);
-=======
-                        curValue = Math.ceil(this.ease(curTime, this.startValue[i], this.endValue[i] - this.startValue[i], this.duration * 1000));
->>>>>>> FETCH_HEAD
                     }
                 }
                 valueInfo.push({
@@ -3111,12 +3076,6 @@
                 var propertyName = valueInfo[i].propertyName,
                     curValue = valueInfo[i].curValue,
                     isColor = valueInfo[i].isColor;
-<<<<<<< HEAD
-=======
-                if(propertyName == 'opacity'){
-                    curValue = curValue / 100;
-                }
->>>>>>> FETCH_HEAD
                 if(propertyName == 'scrollLeft' || propertyName == 'scrollTop') {
                     this.el[propertyName] = this.getValue(curValue, i);
                 } else {
@@ -4615,6 +4574,255 @@
             }
         }
     });
+
+})(octopus);/**
+ * @file
+ * webapp通用组件基础库文件
+ * promise部分
+ * @require lib/class.js
+ * @author wencheng
+ * @version 1.1
+ */
+;(function(o, undefined) {
+
+    "use strict"
+
+    if (typeof window.Promise === 'function' && typeof window.Promise.resolve === 'function') {
+        return o.Promise = window.Promise;
+    }
+
+    var STATES = {
+        PENDING: 0,
+        RESOLVED: 1,
+        REJECTED: 2
+    }
+
+    /**
+     * @class octopus.Promise
+     * @desc 跟es6的新Promise规范完全一致
+     */
+    var Promise = o.Promise = o.define({
+
+        state: STATES.PENDING,
+        resolves: null,
+        rejects: null,
+        data: null,
+        reason: null,
+
+        /**
+         * @private
+         * @constructor octopus.Promise
+         * @param {Function} func - 初始化函数，有resolve, reject两个函数
+         */
+        initialize: function(func) {
+            var promise = this;
+
+            this.state = STATES.PENDING;
+            var resolves = this.resolves = [];
+            var rejects = this.rejects = [];
+
+            // At first change promise state after resolve|reject
+            this._done(function(data) {
+                this.data = data;
+                promise.state = STATES.RESOLVED;
+            });
+            this._fail(function(reason) {
+                this.reason = reason;
+                promise.state = STATES.REJECTED;
+            });
+
+            func.call(this, Promise.makeResolve(this), Promise.makeReject(this));
+            return this;
+        },
+
+        /**
+         * then 添加回调函数
+         * @param  {Function} doneCallback - 成功回调函数
+         * @param  {Function} failCallback - 失败回调函数
+         * @return {Promise} 返回一个新的Promise实例
+         */
+        then: function(doneCallback, failCallback) {
+            var promise = this;
+
+            return new Promise(function(resolve, reject) {
+                if (doneCallback != null) {
+                    var modifiedDoneCallback = function(data) {
+                    // 返回值null算不算
+                    var returnVal = doneCallback.call(this, data);
+                    if (Promise.isPromise(returnVal)) {
+                        returnVal.then(resolve, reject);
+                    } else {
+                        resolve(returnVal);
+                    }
+                }
+                promise._done(modifiedDoneCallback);
+                } else {
+                    promise._done(resolve);
+                }
+                promise._fail(failCallback == null ? reject : failCallback);
+            });
+        },
+        /**
+         * catch 捕捉错误，可以捕捉前面Promise队列未被捕捉的错误
+         * @param  {Function} failCallback - 失败回调函数
+         * @return {Promise} 新的Promise
+         */
+        catch: function(failCallback) {
+            return this.then(null, failCallback);
+        },
+
+        /**
+         * 内部添加成功回调，如果Promise已是成功状态，则直接执行成功回调
+         * @private
+         */
+        _done: function(doneCallback) {
+            if (this.state === STATES.RESOLVED) {
+                return doneCallback.call(this, this.data);
+            }
+            this.resolves.push(doneCallback);
+            return this;
+        },
+
+        /**
+         * 内部添加失败回调，如果Promise已是失败状态，则直接执行失败回调
+         * @private
+         */
+        _fail: function(failCallback) {
+            if (this.state === STATES.REJECTED) {
+                return failCallback.call(this, this.reason);
+            }
+            this.rejects.push(failCallback);
+            return this;
+        }
+    });
+
+    /**
+     * Promise 可能的状态
+     * @type {Object}
+     */
+    Promise.STATES = STATES;
+
+    /**
+     * 判断是否是类Promise对象
+     * @param  {*}  obj
+     * @return {Boolean}
+     */
+    Promise.isPromise = function(obj) {
+        return obj != null && typeof obj['then'] === 'function';
+    }
+
+    /**
+     * 生成Promise实例内的resolve方法
+     * @param  {Promise} promise - Promise实例
+     * @return {Function} resolve函数
+     */
+    Promise.makeResolve = function(promise) {
+        return function(data) {
+            if (promise.state > STATES.PENDING) return;
+
+            var resolves = promise.resolves,
+                doneCallback;
+
+            while (doneCallback = resolves.shift()) {
+                doneCallback.call(promise, data);
+            }
+        }
+    }
+
+    /**
+     * 生成Promise实例内的reject方法
+     * @param  {Promise} promise - Promise实例
+     * @return {Function} reject函数
+     */
+    Promise.makeReject = function(promise) {
+        return function(reason) {
+            if (promise.state > STATES.PENDING) return;
+
+            var rejects = promise.rejects,
+                failCallback;
+
+            while (failCallback = rejects.shift()) {
+                failCallback.call(promise, reason);
+            }
+        }
+    }
+
+    /**
+     * 返回Promise对象，以value值解决。如果传入的value是类Promise的对象，则已value这个Promise
+     * 的结果作为Promise的决定值
+     *
+     * @param  {*} value
+     * @return {Promise} 新的Promise对象
+     */
+    Promise.resolve = function(value) {
+        return new Promise(function(resolve, reject) {
+            if (Promise.isPromise(value)) {
+                value.then(resolve, reject);
+            } else {
+                resolve(value);
+            }
+        })
+    }
+
+    /**
+     * 返回一个失败原因reason的失败Promise
+     * @param  {String} reason - 失败原因
+     * @return {Promise}
+     */
+    Promise.reject = function(reason) {
+        return new Promise(function(resolve, reject) {
+            reject(reason);
+        });
+    }
+
+    /**
+     * 生成新Promise, 所有promises成功才成功，只要有一个promises失败就失败
+     * @param  {Array} promises
+     * @return {Promise} 新的Promise
+     */
+    Promise.all = function(promises) {
+        return new Promise(function(resolve, reject) {
+            function pending(callback) {
+                var counter = 0,
+                    values = [];
+
+                return function() {
+                    var curIndex = counter;
+                    counter++;
+
+                    return function(data) {
+                        values[curIndex] = data;
+
+                        if (--counter == 0) {
+                            callback.call(window, values);
+                        }
+                    }
+
+                }
+            }
+            var done = pending(function(values) {
+                resolve(values)
+            })
+            for (var i = 0; i < promises.length; i++) {
+                var promise = promises[i];
+                promise.then(done(), reject);
+            }
+        });
+    }
+
+    /**
+     * 返回一个新Promise, 如果有一个promise最先完成，则新Promise用最先完成的数据完成，如果
+     * 有一个promise最新失败，则已最先失败的promise的原因失败
+     * @param  {Array} promises
+     * @return {Promise} 新Promise
+     */
+    Promise.race = function(promises) {
+        return new Promise(function(resolve, reject) {
+            for (var i = 0; i < promises.length; i++) {
+                promises[i].then(resolve, reject);
+            }
+        });
+    }
 
 })(octopus);/**
  * 直接引用hammer
@@ -10100,11 +10308,7 @@
             window.setTimeout(function() {
                 that.isSlide = false;
                 that.notify("slider-ui-slidechange");
-<<<<<<< HEAD
             }, this.animationTime + 50);
-=======
-            }, this.animationTime);
->>>>>>> FETCH_HEAD
         },
 
         /**
@@ -10145,21 +10349,6 @@
                     this.selectNoLoop(index);
                     return;
                 }
-<<<<<<< HEAD
-=======
-                this.isTimer = true;
-                var onChanged = function(e) {
-                    o.event.un(that.viewDiv, "webkitTransitionEnd", onChanged, false);
-                    if(!that.isTimer) return;
-                    if(that.eventTimer) {
-                        window.clearTimeout(that.eventTimer);
-                        that.eventTimer = null;
-                    }
-                    that.viewDiv.style.webkitTransitionDuration = "0ms";
-                    that.viewDiv.style.webkitTransform = _temp;
-                }
-                o.event.on(this.viewDiv, "webkitTransitionEnd", onChanged, false);
->>>>>>> FETCH_HEAD
                 if(index == 0 && _index == (len - 1)) {
                     _temp += "0, 0, 0)";
                     this.updateTranslateValue(0);
@@ -10179,7 +10368,6 @@
                         this.updateTranslateValue(0 - this.width * (len - 1));
                     }
                 }
-<<<<<<< HEAD
                 this.isTimer = true;
                 var onChanged = function(e) {
                     o.event.un(that.viewDiv, "webkitTransitionEnd", onChanged, false);
@@ -10193,23 +10381,15 @@
                     _temp = null;
                 }
                 o.event.on(this.viewDiv, "webkitTransitionEnd", onChanged, false);
-=======
->>>>>>> FETCH_HEAD
                 this.viewDiv.style.webkitTransform = temp;
                 this.eventTimer = window.setTimeout(function() {
                     o.event.un(that.viewDiv, "webkitTransitionEnd", onChanged, false);
                     that.viewDiv.style.webkitTransitionDuration = "0ms";
                     that.viewDiv.style.webkitTransform = _temp;
-<<<<<<< HEAD
                     _temp = null;
                     that.eventTimer = null;
                     that.isTimer = false;
                 }, this.animationTime - 50 < 0 ? 0 : this.animationTime - 50);
-=======
-                    that.eventTimer = null;
-                    that.isTimer = false;
-                }, this.animationTime - 5 < 0 ? 0 : this.animationTime - 5);
->>>>>>> FETCH_HEAD
             } else {
                 this.selectNoLoop(index);
             }
@@ -10408,7 +10588,6 @@
                 titledom.appendChild(titlecontent);
                 dom.appendChild(titledom);
             }
-<<<<<<< HEAD
             var that = this,
                 __url = this.getDataBy(index, "url") || "",
                 __target = this.isNewTab ? "_blank" : "_self";
@@ -10417,13 +10596,6 @@
                     window.open(__url, __target);
                     return;
                 }
-=======
-            var that = this;
-            this.gesture(dom, {
-                tap_max_touchtime: 150
-            }).on("tap", function(e) {
-                o.event.stop(e);
->>>>>>> FETCH_HEAD
                 that.notify("slider-item-ontap", that.data[index]);
             });
             this.fragment.appendChild(dom);
@@ -11348,7 +11520,6 @@
             if(this.isCurrent || this.isBaseLayer) {
                 o.dom.addClass(this.el, "octopus-layer-base");
             }
-            console.log(o.Events);
             this.event = new o.Events(this);
         },
 
