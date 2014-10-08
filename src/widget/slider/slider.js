@@ -1107,6 +1107,7 @@
             this.hasButton = !o.dom.data(this.el, "octopusui-slider-nobutton");
             this.hasGizmos = !o.dom.data(this.el, "octopusui-slider-nogizmos");
             this.disableAll = o.dom.data(this.el, "octopusui-slider-disable");
+            this.isDisableA = o.dom.data(this.el, "octopusui-slider-disabletap");
             this.autoPlay = !o.dom.data(this.el, "octopusui-slider-notauto");
             this.adaptive = o.dom.data(this.el, "octopusui-slider-adaptive");
             this.hasTitle = !o.dom.data(this.el, "octopusui-slider-notitle");

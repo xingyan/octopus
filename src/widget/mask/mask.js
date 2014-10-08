@@ -27,6 +27,7 @@
      * "scale" -- 中部呼出
      * "rotate" -- 左上角转入 左下角转出
      * "slideLeft", "slideRight", "slideUp", "slideDown" -- 与<octopus.animation>保持一致
+     * @param options.innerHTML {String} 浮层弹出的内容
      */
     o.Widget.Mask = o.define(o.Widget, {
 
@@ -64,11 +65,22 @@
 
         /**
          * @private
+         * @property innerHTML
+         * @type {String}
+         * @desc 浮层的内容
+         */
+        innerHTML: null,
+
+        /**
+         * @private
          * @constructor
          */
         initialize: function() {
             o.Widget.prototype.initialize.apply(this, arguments);
             o.dom.addClass(this.el, "octopusui-mask");
+            if(this.innerHTML) {
+                this.el.innerHTML = this.innerHTML;
+            }
         },
 
         /**

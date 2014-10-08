@@ -2112,7 +2112,7 @@
             body.push(template
                 .replace(/[\r\n]+/g, "\n") // 去掉多余的换行，并且去掉IE中困扰人的\r
                 .replace(/^\n+|\s+$/mg, "") // 去掉空行，首部空行，尾部空白
-                .replace(/((^\s*[<>!#^&\u0000-\u0008\u007F-\uffff].*$|^.*[<>]\s*$|^(?!\s*(else|do|try|finally)\s*$)[^'":;,\[\]{}()\n\/]+$|^(\s*(([\w-]+\s*=\s*"[^"]*")|([\w-]+\s*=\s*'[^']*')))+\s*$|^\s*([.#][\w\-.]+(:\w+)?(\s*|,))*(?!(else|do|while|try|return)\b)[.#]?[\w\-\.*]+(:\w+)?\s*\{.*$)\s?)+/mg, function(expression) { // 输出原文
+                .replace(/((^\s*[<>!#^&\u0000-\u0008\u007F-\uffff].*$|^.*[<>]\s*$|^(?!\s*(else|do|try|finally)\s*$)[^'":;,\[\]{}()\n\/]+$|^(\s*(([\w-]+\s*=\s*"[^"]*")|([\w-]+\s*=\s*'[^']*')))+\s*$|^\s*([.#][\w-.]+(:\w+)?(\s*|,))*(?!(else|do|while|try|return)\b)[.#]?[\w-.*]+(:\w+)?\s*\{.*$)\s?)+/mg, function(expression) { // 输出原文
                     expression = ['"', expression
                         .replace(/&none;/g, "") // 空字符
                         .replace(/["'\\]/g, "\\$&") // 处理转义符
@@ -7134,6 +7134,7 @@
      * "scale" -- 中部呼出
      * "rotate" -- 左上角转入 左下角转出
      * "slideLeft", "slideRight", "slideUp", "slideDown" -- 与<octopus.animation>保持一致
+     * @param options.innerHTML {String} 浮层弹出的内容
      */
     o.Widget.Mask = o.define(o.Widget, {
 
@@ -7171,11 +7172,22 @@
 
         /**
          * @private
+         * @property innerHTML
+         * @type {String}
+         * @desc 浮层的内容
+         */
+        innerHTML: null,
+
+        /**
+         * @private
          * @constructor
          */
         initialize: function() {
             o.Widget.prototype.initialize.apply(this, arguments);
             o.dom.addClass(this.el, "octopusui-mask");
+            if(this.innerHTML) {
+                this.el.innerHTML = this.innerHTML;
+            }
         },
 
         /**
@@ -10485,6 +10497,7 @@
             this.hasButton = !o.dom.data(this.el, "octopusui-slider-nobutton");
             this.hasGizmos = !o.dom.data(this.el, "octopusui-slider-nogizmos");
             this.disableAll = o.dom.data(this.el, "octopusui-slider-disable");
+            this.isDisableA = o.dom.data(this.el, "octopusui-slider-disabletap");
             this.autoPlay = !o.dom.data(this.el, "octopusui-slider-notauto");
             this.adaptive = o.dom.data(this.el, "octopusui-slider-adaptive");
             this.hasTitle = !o.dom.data(this.el, "octopusui-slider-notitle");
@@ -10648,7 +10661,43 @@
             return !app ? (app = new o.App(options), app) : (!!options ? (console.warn("The app has already exist! Failure to set up the config"), app) : app);
         }
 
+        /**
+         * @private
+         * @method octopus.app.addConfig
+         * @param id
+         * @param obj
+         */
+        function addConfig(id, obj) {
+            initialize(undefined).addConfig(id, obj);
+        }
+
+        /**
+         * @private
+         * @method octopus.app.registerApi
+         * @param id
+         * @param obj
+         */
+        function registerApi(id, obj){
+            initialize(undefined).registerApi(id, obj);
+        }
+
         return {
+            /**
+             * @public
+             * @method octopus.app.addConfig
+             * @param id
+             * @param obj
+             */
+            addConfig: addConfig,
+
+            /**
+             * @public
+             * @method octopus.app.registerApi
+             * @param id
+             * @param obj
+             */
+            registerApi: registerApi,
+
             /**
              * @public
              * @method octopus.app.registerModule
@@ -10719,10 +10768,10 @@
 
         /**
          * @private
-         * @property moduleCreator
+         * @property mCreator
          * @desc 生成器
          */
-        moduleCreator: null,
+        mCreator: null,
 
         /**
          * @private
@@ -10788,16 +10837,33 @@
 
         /**
          * @private
+         * @property cacheEventDispatch
+         * @desc 事件缓冲器
+         */
+        cacheEventDispatch: null,
+
+        /**
+         * @private
+         * @property configs
+         * @desc 配置项
+         */
+        configs: null,
+
+        /**
+         * @private
          * @constructor
          */
         initialize: function(options) {
             var config = this.config = o.extend({}, options);
-            this.moduleCreator = {};
+            this.mCreator = {};
             this.eventCaches = [];
+            this.configs = {};
+            this.cacheEventDispatch = {};
             this.id = config.id || o.util.createUniqueID(this.CLASS_NAME + "_");
 
             //监听window事件 启动模块
             o.event.on(window, "ready", o.util.bind(this.onWindowLoad, this), false);
+            o.event.on(window, "unload", o.util.bind(this.onWindowUnload, this), false);
             o.event.on(window, "resize", o.util.bind(this.onWindowResize, this), false);
             if("orientationchange" in window) {
                 o.event.on(window, "orientationchange", o.util.bind(this.onOrientationChanged, this), false);
@@ -10849,27 +10915,53 @@
 
         /**
          * @public
-         * @method octopus.App.registerModule
-         * @param id {String}
-         * @param m {Object | octopus.Module}
-         * @param immediate {Boolean}
-         */
-        registerModule: function(id, m, immediate) {
-            this.register2ModuleCreator(id, m);
-            return (this.isLoad || !!immediate) ? (this.startModule(id), true) : false;
-        },
-
-        /**
-         * @private
-         * @method register2ModuleCreator
+         * @method octopus.App.registerMember
+         * @param type {String} 注册的种类 可选模块或者api
          * @param id {String} 注册的id
          * @param creator {Object | Function} 构造器
          */
-        register2ModuleCreator: function(id, creator) {
-            return this.moduleCreator[id] = {
+        registerMember: function(type, id, creator) {
+            this.mCreator[type] = this.mCreator[type] || {};
+            return this.mCreator[type][id] = {
                 creator: creator,
                 instance: null
             };
+        },
+
+        /**
+         * @public
+         * @method octopus.App.startMember
+         * @param type {String}
+         * @param id {String}
+         */
+        startMember: function(type, id) {
+            var creator = this.mCreator[type][id];
+            if(!creator || creator.instance)   return;
+            creator.instance = creator.creator(this, this.getConfig(id));
+            creator.instance.init && creator.instance.init();
+        },
+
+        /**
+         * @public
+         * @method octopus.App.registerApi
+         * @param id
+         * @param m
+         */
+        registerApi: function(id, m) {
+            this.registerMember("api", id, m);
+            this.startApi(id);
+        },
+
+        /**
+         * @public
+         * @method octopus.App.registerModule
+         * @param id {String}
+         * @param m {Object | sr.Module}
+         * @param immediate {Boolean}
+         */
+        registerModule: function(id, m, immediate) {
+            this.registerMember("module", id, m);
+            return (this.isLoad || !!immediate) ? (this.startModule(id), true) : false;
         },
 
         /**
@@ -10878,15 +10970,25 @@
          * @param id {String}
          */
         startModule: function(id) {
-            var creator = this.moduleCreator[id];
-            if(creator.instance)   return;
-            creator.instance = creator.creator(this);
-            if(!creator.instance) {
-                console.error("Module " + id + " didn't work for its invalid returns! It should be an object!");
-            } else if(!creator.instance.initialize) {
-                console.error("Module " + id + " didn't work for its invalid returns! It should has the method 'initialize'!");
-            }
-            creator.instance.initialize && creator.instance.initialize();
+            this.startMember("module", id);
+        },
+
+        /**
+         * @private
+         * @method octopus.App.startApi
+         * @param id
+         */
+        startApi: function(id) {
+            this.startMember("api", id);
+        },
+
+        /**
+         * @private
+         * @method getApi
+         * @param id
+         */
+        getApi: function(id) {
+            return this.mCreator["api"][id].instance;
         },
 
         /**
@@ -10895,7 +10997,21 @@
          * @param id {String}
          */
         getModule: function(id) {
-            return this.moduleCreator[id].instance;
+            return this.mCreator["module"][id].instance;
+        },
+
+        /**
+         * @private
+         * @method stopModule
+         * @param id {String}
+         */
+        stopModule: function(id) {
+            var moduleItem = this.mCreator["module"][id];
+            if(!moduleItem.instance)   return;
+            if (moduleItem.instance.destroy) {
+                moduleItem.instance.destroy();
+            }
+            moduleItem.instance = null;
         },
 
         /**
@@ -10931,6 +11047,81 @@
                 return;
             }
             this.events.triggerEvent(type, evt);
+            for(var k in this.cacheEventDispatch) {
+                if(k.indexOf(type) != -1) {
+                    this.triggerEventDispatch(k, type, evt);
+                    break;
+                }
+            }
+        },
+
+        /**
+         * @private
+         * @method octopus.App.triggerEventDispatch
+         * @desc 通知缓冲器 活来了
+         * @param id 缓冲器的key
+         * @param type 完成的工作type
+         * @param evt 完成的工作带来的变量
+         */
+        triggerEventDispatch: function(id, type, evt) {
+            var dispatch = this.cacheEventDispatch[id];
+            if(!dispatch && dispatch.hitFlag == dispatch.hits  || dispatch["cacheData"][type])  return;
+            dispatch["cacheData"][type] = evt;
+            if(++dispatch.hitFlag == dispatch.hits) {
+                dispatch.func.apply(this, [dispatch.cacheData]);
+                dispatch = null;
+                delete this.cacheEventDispatch[id];
+            }
+        },
+
+        /**
+         * @public
+         * @method octopus.App.addConfig
+         * @param id
+         * @param config
+         */
+        addConfig: function(id, config){
+            config = config || {};
+            var c, p;
+            if(id) {
+                c = this.configs[id] = this.configs[id] || {};
+                for(p in config) {
+                    c[p] = config[p];
+                }
+            } else {
+                for(p in config) {
+                    this.configs[p] = config[p];
+                }
+            }
+        },
+
+        /**
+         * @private
+         * @method octopus.App.getConfig
+         * @param id
+         */
+        getConfig: function(id) {
+            return this.configs[id] || {};
+        },
+
+        /**
+         * @public
+         * @method octopus.App.invokeEventDispatch
+         * @desc 启用一个事件缓冲器 用来处理多次事件完成才做某事情的需求
+         */
+        invokeEventDispatch: function(events, func) {
+            var dispatch = this.cacheEventDispatch[events],
+                len = String(events).split(",").length;
+            if(dispatch && dispatch.hitFlag == len) {
+                throw new Error("this kind of EventDispatch has already invoked!");
+                return;
+            }
+            this.cacheEventDispatch[events] = this.cacheEventDispatch[events] || {
+                hits: len,
+                hitFlag: 0,
+                cacheData: {},
+                func: func
+            };
         },
 
         /**
@@ -10940,7 +11131,7 @@
          */
         onWindowLoad: function() {
             var that = this;
-            o.util.each(this.moduleCreator, function(item, k) {
+            o.util.each(this.mCreator["module"], function(item, k) {
                 that.startModule(k);
             });
             this.isLoad = true;
@@ -10951,6 +11142,18 @@
                 }
             }
             this.notify("Global-OctopusApp-ModuleCompleted", {});
+        },
+
+        /**
+         * @private
+         * @method onWindowUnload
+         * @desc 监听页面的unload事件 针对低版本浏览器 主要做一些内存回收工作 至于高级浏览器 好吧 你可以认为我在自欺欺人
+         */
+        onWindowUnload: function() {
+            var that = this;
+            o.util.each(this.mCreator["module"], function(item, k) {
+                that.stopModule(item);
+            });
         },
 
         /**

@@ -2050,525 +2050,1268 @@
         CLASS_NAME: "Octopus.Events"
     });
 })(octopus);/**
- * @file
- * webapp通用组件基础库文件
- * 模板引擎部分
- * @require lib/class.js
- * @require lib/util.js
- * @author oupeng-fe
- * @version 1.1
+ * 直接引用hammer
  */
+
 ;(function(o, undefined) {
+    'use strict';
 
-    "use strict";
+    var Hammer = function(element, options) {
+        return new Hammer.Instance(element, options || {});
+    };
 
-    /**
-     * @namespace octopus.template
-     */
-    o.template = o.template || {};
-
-    o.extend(o.template, {
-
-        /**
-         * @private
-         * @property caches
-         * @type {Object}
-         */
-        caches: {},
-
-        /**
-         * @private
-         * @method templateText
-         * @param element
-         */
-        templateText: function(element) {
-            if(!o.util.isNode(element)) return "";
-            if(/^(input|textarea)$/i.test(element.tagName)) return element.value;
-            return o.util.decodeHtml(element.innerHTML);
-        },
-
-        /**
-         * @private
-         * @method register
-         * @param id {String}
-         * @param target {DOMElement}
-         */
-        register: function(id, target) {
-            if(!id) return;
-            if(this.caches[id]) {
-                return this.caches[id];
-            }
-            return this.caches[id] = this.parse(o.util.isString(target) ? target : this.templateText(o.g(target)));
-        },
-
-        /**
-         * @private
-         * @method parse
-         * @param template {String}
-         */
-        parse: function(template) {
-            var body = [];
-            body.push("with(this){");
-            body.push(template
-                .replace(/[\r\n]+/g, "\n") // 去掉多余的换行，并且去掉IE中困扰人的\r
-                .replace(/^\n+|\s+$/mg, "") // 去掉空行，首部空行，尾部空白
-                .replace(/((^\s*[<>!#^&\u0000-\u0008\u007F-\uffff].*$|^.*[<>]\s*$|^(?!\s*(else|do|try|finally)\s*$)[^'":;,\[\]{}()\n\/]+$|^(\s*(([\w-]+\s*=\s*"[^"]*")|([\w-]+\s*=\s*'[^']*')))+\s*$|^\s*([.#][\w\-.]+(:\w+)?(\s*|,))*(?!(else|do|while|try|return)\b)[.#]?[\w\-\.*]+(:\w+)?\s*\{.*$)\s?)+/mg, function(expression) { // 输出原文
-                    expression = ['"', expression
-                        .replace(/&none;/g, "") // 空字符
-                        .replace(/["'\\]/g, "\\$&") // 处理转义符
-                        .replace(/\n/g, "\\n") // 处理回车转义符
-                        .replace(/(!?#)\{(.*?)\}/g, function (all, flag, template) { // 变量替换
-                            template = template.replace(/\\n/g, "\n").replace(/\\([\\'"])/g, "$1"); // 还原转义
-                            var identifier = /^[a-z$][\w+$]+$/i.test(template) &&
-                                !(/^(true|false|NaN|null|this)$/.test(template)); // 单纯变量，加一个未定义保护
-                            return ['",',
-                                identifier ? ['typeof ', template, '=="undefined"?"":'].join("") : "",
-                                (flag == "#" ? '_encode_' : ""),
-                                '(', template, '),"'].join("");
-                        }), '"'].join("").replace(/^"",|,""$/g, "");
-                    if (expression)
-                        return ['_output_.push(', expression, ');'].join("");
-                    else return "";
-                }));
-            body.push("}");
-            var result = new Function("_output_", "_encode_", "helper", body.join(""));
-            return result;
-        },
-
-        /**
-         * @public
-         * @method octopus.template.format
-         */
-        format: function(id, data, helper) {
-            if (!id) return "";
-            var reader, element;
-            if (o.util.isNode(id)) { // 如果是Dom对象
-                element = id;
-                id = element.getAttribute("id");
-            }
-            helper = helper || this;
-            reader = this.caches[id];
-            if(!reader) {
-                if(!/[^\w-]/.test(id)) {
-                    if(!element) {
-                        element = o.g(id);
-                    }
-                    reader = this.register(id, element);
-                } else {
-                    reader = this.parse(id);
-                }
-            }
-            var output = [];
-            reader.call(data || "", output, o.util.encodeHtml, helper);
-            return output.join("");
+    Hammer.defaults = {
+        // add styles and attributes to the element to prevent the browser from doing
+        // its native behavior. this doesnt prevent the scrolling, but cancels
+        // the contextmenu, tap highlighting etc
+        // set to false to disable this
+        stop_browser_behavior: {
+            // this also triggers onselectstart=false for IE
+            userSelect: 'none',
+            // this makes the element blocking in IE10 >, you could experiment with the value
+            // see for more options this issue; https://github.com/EightMedia/hammer.js/issues/241
+            touchAction: 'none',
+            touchCallout: 'none',
+            contentZooming: 'none',
+            userDrag: 'none',
+            tapHighlightColor: 'rgba(0,0,0,0)'
         }
-    });
-})(octopus);/**
- * @file
- * @author oupeng-fe
- * @version 1.1
- * webapp通用组件基础库
- * ajax方法
- * @require lib/class.js
- * @require lib/util.js
- * @require lib/dom.js
- */
-;(function (o, undefined) {
 
-    o.ajax = o.ajax || {};
+        // more settings are defined per gesture at gestures.js
+    };
+
+// detect touchevents
+    Hammer.HAS_POINTEREVENTS = navigator.pointerEnabled || navigator.msPointerEnabled;
+    Hammer.HAS_TOUCHEVENTS = ('ontouchstart' in window);
+
+// dont use mouseevents on mobile devices
+    Hammer.MOBILE_REGEX = /mobile|tablet|ip(ad|hone|od)|android/i;
+    Hammer.NO_MOUSEEVENTS = Hammer.HAS_TOUCHEVENTS && navigator.userAgent.match(Hammer.MOBILE_REGEX);
+
+// eventtypes per touchevent (start, move, end)
+// are filled by Hammer.event.determineEventTypes on setup
+    Hammer.EVENT_TYPES = {};
+
+// direction defines
+    Hammer.DIRECTION_DOWN = 'down';
+    Hammer.DIRECTION_LEFT = 'left';
+    Hammer.DIRECTION_UP = 'up';
+    Hammer.DIRECTION_RIGHT = 'right';
+
+// pointer type
+    Hammer.POINTER_MOUSE = 'mouse';
+    Hammer.POINTER_TOUCH = 'touch';
+    Hammer.POINTER_PEN = 'pen';
+
+// touch event defines
+    Hammer.EVENT_START = 'start';
+    Hammer.EVENT_MOVE = 'move';
+    Hammer.EVENT_END = 'end';
+
+// hammer document where the base events are added at
+    Hammer.DOCUMENT = document;
+
+// plugins namespace
+    Hammer.plugins = {};
+
+// if the window events are set...
+    Hammer.READY = false;
 
     /**
-     * @namespace octopus.ajax
-     * @desc ajax请求方法
+     * setup events to detect gestures on the document
      */
-    o.extend(o.ajax, {
+    function setup() {
+        if(Hammer.READY) {
+            return;
+        }
+
+        // find what eventtypes we add listeners to
+        Hammer.event.determineEventTypes();
+
+        // Register all gestures inside Hammer.gestures
+        for(var name in Hammer.gestures) {
+            if(Hammer.gestures.hasOwnProperty(name)) {
+                Hammer.detection.register(Hammer.gestures[name]);
+            }
+        }
+
+        // Add touch events on the document
+        Hammer.event.onTouch(Hammer.DOCUMENT, Hammer.EVENT_MOVE, Hammer.detection.detect);
+        Hammer.event.onTouch(Hammer.DOCUMENT, Hammer.EVENT_END, Hammer.detection.detect);
+
+        // Hammer is ready...!
+        Hammer.READY = true;
+    }
+
+    Hammer.Instance = function(element, options) {
+        var self = this;
+
+        // setup HammerJS window events and register all gestures
+        // this also sets up the default options
+        setup();
+
+        this.element = element;
+
+        // start/stop detection option
+        this.enabled = true;
+
+        // merge options
+        this.options = Hammer.utils.extend(
+            Hammer.utils.extend({}, Hammer.defaults),
+            options || {});
+
+        // add some css to the element to prevent the browser from doing its native behavoir
+        if(this.options.stop_browser_behavior) {
+            Hammer.utils.stopDefaultBrowserBehavior(this.element, this.options.stop_browser_behavior);
+        }
+
+        // start detection on touchstart
+        Hammer.event.onTouch(element, Hammer.EVENT_START, function(ev) {
+            if(self.enabled) {
+                Hammer.detection.startDetect(self, ev);
+            }
+        });
+
+        // return instance
+        return this;
+    };
+
+
+    Hammer.Instance.prototype = {
+        /**
+         * bind events to the instance
+         * @param   {String}      gesture
+         * @param   {Function}    handler
+         * @returns {Hammer.Instance}
+         */
+        on: function onEvent(gesture, handler){
+            var gestures = gesture.split(' ');
+            for(var t=0; t<gestures.length; t++) {
+                this.element.addEventListener(gestures[t], handler, false);
+            }
+            return this;
+        },
+
 
         /**
-         * @private
-         * @property DEFAULT_CONFIG
+         * unbind events to the instance
+         * @param   {String}      gesture
+         * @param   {Function}    handler
+         * @returns {Hammer.Instance}
+         */
+        off: function offEvent(gesture, handler){
+            var gestures = gesture.split(' ');
+            for(var t=0; t<gestures.length; t++) {
+                this.element.removeEventListener(gestures[t], handler, false);
+            }
+            return this;
+        },
+
+
+        /**
+         * trigger gesture event
+         * @param   {String}      gesture
+         * @param   {Object}      eventData
+         * @returns {Hammer.Instance}
+         */
+        trigger: function triggerEvent(gesture, eventData){
+            // create DOM event
+            var event = Hammer.DOCUMENT.createEvent('Event');
+            event.initEvent(gesture, true, true);
+            event.gesture = eventData;
+
+            // trigger on the target if it is in the instance element,
+            // this is for event delegation tricks
+            var element = this.element;
+            if(Hammer.utils.hasParent(eventData.target, element)) {
+                element = eventData.target;
+            }
+
+            element.dispatchEvent(event);
+            return this;
+        },
+
+
+        /**
+         * enable of disable hammer.js detection
+         * @param   {Boolean}   state
+         * @returns {Hammer.Instance}
+         */
+        enable: function enable(state) {
+            this.enabled = state;
+            return this;
+        }
+    };
+
+    /**
+     * this holds the last move event,
+     * used to fix empty touchend issue
+     * see the onTouch event for an explanation
+     * @type {Object}
+     */
+    var last_move_event = null;
+
+
+    /**
+     * when the mouse is hold down, this is true
+     * @type {Boolean}
+     */
+    var enable_detect = false;
+
+
+    /**
+     * when touch events have been fired, this is true
+     * @type {Boolean}
+     */
+    var touch_triggered = false;
+
+
+    Hammer.event = {
+        /**
+         * simple addEventListener
+         * @param   {HTMLElement}   element
+         * @param   {String}        type
+         * @param   {Function}      handler
+         */
+        bindDom: function(element, type, handler) {
+            var types = type.split(' ');
+            for(var t=0; t<types.length; t++) {
+                element.addEventListener(types[t], handler, false);
+            }
+        },
+
+
+        /**
+         * touch events with mouse fallback
+         * @param   {HTMLElement}   element
+         * @param   {String}        eventType        like Hammer.EVENT_MOVE
+         * @param   {Function}      handler
+         */
+        onTouch: function onTouch(element, eventType, handler) {
+            var self = this;
+
+            this.bindDom(element, Hammer.EVENT_TYPES[eventType], function bindDomOnTouch(ev) {
+                var sourceEventType = ev.type.toLowerCase();
+
+                // onmouseup, but when touchend has been fired we do nothing.
+                // this is for touchdevices which also fire a mouseup on touchend
+                if(sourceEventType.match(/mouse/) && touch_triggered) {
+                    return;
+                }
+
+                // mousebutton must be down or a touch event
+                else if( sourceEventType.match(/touch/) ||   // touch events are always on screen
+                    sourceEventType.match(/pointerdown/) || // pointerevents touch
+                    (sourceEventType.match(/mouse/) && ev.which === 1)   // mouse is pressed
+                    ){
+                    enable_detect = true;
+                }
+
+                // we are in a touch event, set the touch triggered bool to true,
+                // this for the conflicts that may occur on ios and android
+                if(sourceEventType.match(/touch|pointer/)) {
+                    touch_triggered = true;
+                }
+
+                // count the total touches on the screen
+                var count_touches = 0;
+
+                // when touch has been triggered in this detection session
+                // and we are now handling a mouse event, we stop that to prevent conflicts
+                if(enable_detect) {
+                    // update pointerevent
+                    if(Hammer.HAS_POINTEREVENTS && eventType != Hammer.EVENT_END) {
+                        count_touches = Hammer.PointerEvent.updatePointer(eventType, ev);
+                    }
+                    // touch
+                    else if(sourceEventType.match(/touch/)) {
+                        count_touches = ev.touches.length;
+                    }
+                    // mouse
+                    else if(!touch_triggered) {
+                        count_touches = sourceEventType.match(/up/) ? 0 : 1;
+                    }
+
+                    // if we are in a end event, but when we remove one touch and
+                    // we still have enough, set eventType to move
+                    if(count_touches > 0 && eventType == Hammer.EVENT_END) {
+                        eventType = Hammer.EVENT_MOVE;
+                    }
+                    // no touches, force the end event
+                    else if(!count_touches) {
+                        eventType = Hammer.EVENT_END;
+                    }
+
+                    // because touchend has no touches, and we often want to use these in our gestures,
+                    // we send the last move event as our eventData in touchend
+                    if(!count_touches && last_move_event !== null) {
+                        ev = last_move_event;
+                    }
+                    // store the last move event
+                    else {
+                        last_move_event = ev;
+                    }
+
+                    // trigger the handler
+                    handler.call(Hammer.detection, self.collectEventData(element, eventType, ev));
+
+                    // remove pointerevent from list
+                    if(Hammer.HAS_POINTEREVENTS && eventType == Hammer.EVENT_END) {
+                        count_touches = Hammer.PointerEvent.updatePointer(eventType, ev);
+                    }
+                }
+
+                //debug(sourceEventType +" "+ eventType);
+
+                // on the end we reset everything
+                if(!count_touches) {
+                    last_move_event = null;
+                    enable_detect = false;
+                    touch_triggered = false;
+                    Hammer.PointerEvent.reset();
+                }
+            });
+        },
+
+
+        /**
+         * we have different events for each device/browser
+         * determine what we need and set them in the Hammer.EVENT_TYPES constant
+         */
+        determineEventTypes: function determineEventTypes() {
+            // determine the eventtype we want to set
+            var types;
+
+            // pointerEvents magic
+            if(Hammer.HAS_POINTEREVENTS) {
+                types = Hammer.PointerEvent.getEvents();
+            }
+            // on Android, iOS, blackberry, windows mobile we dont want any mouseevents
+            else if(Hammer.NO_MOUSEEVENTS) {
+                types = [
+                    'touchstart',
+                    'touchmove',
+                    'touchend touchcancel'];
+            }
+            // for non pointer events browsers and mixed browsers,
+            // like chrome on windows8 touch laptop
+            else {
+                types = [
+                    'touchstart mousedown',
+                    'touchmove mousemove',
+                    'touchend touchcancel mouseup'];
+            }
+
+            Hammer.EVENT_TYPES[Hammer.EVENT_START]  = types[0];
+            Hammer.EVENT_TYPES[Hammer.EVENT_MOVE]   = types[1];
+            Hammer.EVENT_TYPES[Hammer.EVENT_END]    = types[2];
+        },
+
+
+        /**
+         * create touchlist depending on the event
+         * @param   {Object}    ev
+         * @param   {String}    eventType   used by the fakemultitouch plugin
+         */
+        getTouchList: function getTouchList(ev/*, eventType*/) {
+            // get the fake pointerEvent touchlist
+            if(Hammer.HAS_POINTEREVENTS) {
+                return Hammer.PointerEvent.getTouchList();
+            }
+            // get the touchlist
+            else if(ev.touches) {
+                return ev.touches;
+            }
+            // make fake touchlist from mouse position
+            else {
+                return [{
+                    identifier: 1,
+                    pageX: ev.pageX,
+                    pageY: ev.pageY,
+                    target: ev.target
+                }];
+            }
+        },
+
+
+        /**
+         * collect event data for Hammer js
+         * @param   {HTMLElement}   element
+         * @param   {String}        eventType        like Hammer.EVENT_MOVE
+         * @param   {Object}        eventData
+         */
+        collectEventData: function collectEventData(element, eventType, ev) {
+            var touches = this.getTouchList(ev, eventType);
+
+            // find out pointerType
+            var pointerType = Hammer.POINTER_TOUCH;
+            if(ev.type.match(/mouse/) || Hammer.PointerEvent.matchType(Hammer.POINTER_MOUSE, ev)) {
+                pointerType = Hammer.POINTER_MOUSE;
+            }
+
+            return {
+                center      : o.util.getCenter(touches),
+                timeStamp   : new Date().getTime(),
+                target      : ev.target,
+                touches     : touches,
+                eventType   : eventType,
+                pointerType : pointerType,
+                srcEvent    : ev,
+
+
+                preventDefault: function() {
+                    if(this.srcEvent.preventManipulation) {
+                        this.srcEvent.preventManipulation();
+                    }
+
+                    if(this.srcEvent.preventDefault) {
+                        this.srcEvent.preventDefault();
+                    }
+                },
+
+                stopPropagation: function() {
+                    this.srcEvent.stopPropagation();
+                },
+
+                stopDetect: function() {
+                    return Hammer.detection.stopDetect();
+                }
+            };
+        }
+    };
+
+    Hammer.PointerEvent = {
+        /**
+         * holds all pointers
          * @type {Object}
-         * @desc 配置项
-         * type - {String} GET, POST, PUT, DELETE, HEAD, OPTIONS. 默认是GET.
-         * url - {String} 请求的地址
-         * async - {Boolean} 是否同步请求  默认是true.
-         * user - {String} 用户名
-         * password - {String} 密码
-         * data - {String | Object} POST与PUT提交的数据
-         * complete - {Function}
-         * success - {Function}
-         * error - {Function}
-         * scope - {Object}
-         * beforeSend   -   {Function} 请求发出前调用
-         * timeout  -   {Number} 延时
          */
-        DEFAULT_CONFIG: {
-            type: "GET",
-            url: window.location.href,
-            async: true,
-            user: undefined,
-            password: undefined,
-            data: null,
-            complete: o.util.empty,
-            success: null,
-            error: null,
-            scope: null,
-            beforeSend: null,
-            timeout: 0,
-            crossDomain: false
-        },
+        pointers: {},
 
-        jsonpID: 0,
+        /**
+         * get a list of pointers
+         * @returns {Array}     touchlist
+         */
+        getTouchList: function() {
+            var self = this;
+            var touchlist = [];
 
-        jsonType: 'application/json',
-        htmlType: 'text/html',
-
-        SCRIPT_REGEX: /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-        SCRIPT_TYPE_REGEX: /^(?:text|application)\/javascript/i,
-        XML_TYPE_REGEX: /^(?:text|application)\/xml/i,
-        URL_SPLIT_REGEX: /([^:]*:)\/\/([^:]*:?[^@]*@)?([^:\/\?]*):?([^\/\?]*)/,
-        BLANK_REGEX: /^\s*$/,
-        accepts: {
-            script: 'text/javascript, application/javascript',
-            json:   this.jsonType,
-            xml:    'application/xml, text/xml',
-            html:   this.htmlType,
-            text:   'text/plain'
+            // we can use forEach since pointerEvents only is in IE10
+            Object.keys(self.pointers).sort().forEach(function(id) {
+                touchlist.push(self.pointers[id]);
+            });
+            return touchlist;
         },
 
         /**
-         * @private
-         * @property xhr
-         * @type {Function}
+         * update the position of a pointer
+         * @param   {String}   type             Hammer.EVENT_END
+         * @param   {Object}   pointerEvent
          */
-        xhr: function() { return new window.XMLHttpRequest(); },
-
-        /**
-         * @private
-         * @method mimeToDataType
-         */
-        mimeToDataType: function(mime) {
-            return mime && ( mime == this.htmlType ? 'html' :
-                mime == this.jsonType ? 'json' :
-                    this.SCRIPT_TYPE_REGEX.test(mime) ? 'script' :
-                        this.XML_TYPE_REGEX.test(mime) && 'xml' ) || 'text'
-        },
-
-        /**
-         * @private
-         * @method request
-         * @desc 发出请求 各种
-         * @param options {Object} 配置项
-         * @return {XMLHttpRequest}
-         */
-        request: function(options) {
-            var defaultConfig = this.DEFAULT_CONFIG,
-                config = o.util.applyDefaults(options, defaultConfig),
-                dataType = config.dataType,
-                url = config.url,
-                data = config.data || {},
-                headers = config.headers || {},
-                urlobj = o.util.createUrlObject(url);
-            if(config.type == "jsonp") {
-                return o.ajax.ajaxJSONP(options);
+        updatePointer: function(type, pointerEvent) {
+            if(type == Hammer.EVENT_END) {
+                this.pointers = {};
             }
-            if(!config.crossDomain) {
-                config.crossDomain = urlobj.host != window.location.host;
+            else {
+                pointerEvent.identifier = pointerEvent.pointerId;
+                this.pointers[pointerEvent.pointerId] = pointerEvent;
             }
-            var customRequestedWithHeader = false,
-                headerKey;
-            for(headerKey in headers) {
-                if (headerKey.toLowerCase() === 'x-requested-with') {
-                    customRequestedWithHeader = true;
+
+            return Object.keys(this.pointers).length;
+        },
+
+        /**
+         * check if ev matches pointertype
+         * @param   {String}        pointerType     Hammer.POINTER_MOUSE
+         * @param   {PointerEvent}  ev
+         */
+        matchType: function(pointerType, ev) {
+            if(!ev.pointerType) {
+                return false;
+            }
+
+            var types = {};
+            types[Hammer.POINTER_MOUSE] = (ev.pointerType == ev.MSPOINTER_TYPE_MOUSE || ev.pointerType == Hammer.POINTER_MOUSE);
+            types[Hammer.POINTER_TOUCH] = (ev.pointerType == ev.MSPOINTER_TYPE_TOUCH || ev.pointerType == Hammer.POINTER_TOUCH);
+            types[Hammer.POINTER_PEN] = (ev.pointerType == ev.MSPOINTER_TYPE_PEN || ev.pointerType == Hammer.POINTER_PEN);
+            return types[pointerType];
+        },
+
+
+        /**
+         * get events
+         */
+        getEvents: function() {
+            return [
+                'pointerdown MSPointerDown',
+                'pointermove MSPointerMove',
+                'pointerup pointercancel MSPointerUp MSPointerCancel'
+            ];
+        },
+
+        /**
+         * reset the list
+         */
+        reset: function() {
+            this.pointers = {};
+        }
+    };
+
+
+    Hammer.utils = {
+        /**
+         * extend method,
+         * also used for cloning when dest is an empty object
+         * @param   {Object}    dest
+         * @param   {Object}    src
+         * @parm	{Boolean}	merge		do a merge
+         * @returns {Object}    dest
+         */
+        extend: function extend(dest, src, merge) {
+            for (var key in src) {
+                if(dest[key] !== undefined && merge) {
+                    continue;
                 }
+                dest[key] = src[key];
             }
-            if(customRequestedWithHeader === false || !config.crossDomain) {
-                headers['X-Requested-With'] = 'XMLHttpRequest';
-            }
-            data =  o.util.getParameterString(data || {});
-            if(config.type != "POST") {
-                config.url = o.util.urlAppend(url, data);
-            }
-            var mime = this.accepts[dataType],
-                baseHeaders = {},
-                xhr = this.xhr(), abortTimeout;
-            if(mime) {
-                baseHeaders['Accept'] = mime;
-                if(mime.indexOf(',') > -1) {
-                    mime = mime.split(',', 2)[0];
+            return dest;
+        },
+
+
+        /**
+         * find if a node is in the given parent
+         * used for event delegation tricks
+         * @param   {HTMLElement}   node
+         * @param   {HTMLElement}   parent
+         * @returns {boolean}       has_parent
+         */
+        hasParent: function(node, parent) {
+            while(node){
+                if(node == parent) {
+                    return true;
                 }
-                xhr.overrideMimeType && xhr.overrideMimeType(mime)
+                node = node.parentNode;
             }
-            headers = o.extend(baseHeaders, headers || {});
-            xhr.open(
-                config.type, config.url, config.async, config.user, config.password
-            );
-            for(var header in headers) {
-                xhr.setRequestHeader(header, headers[header]);
-            }
-            var that = this;
-            xhr.onreadystatechange = function() {
-                if(xhr.readyState == 4) {
-                    clearTimeout(abortTimeout);
-                    that.runCallbacks(
-                        {request: xhr, config: config, requestUrl: config.url}
-                    );
-                }
-            };
-            if(config.async === false) {
-                xhr.send(data ? data : null);
-            } else {
-                window.setTimeout(function(){
-                    if(xhr.readyState !== 0) { // W3C: 0-UNSENT
-                        xhr.send(data ? data : null);
-                    }
-                }, 0);
-            }
-            if(config.timeout > 0) {
-                abortTimeout = setTimeout(function(){
-                    xhr.onreadystatechange = o.util.empty;
-                    xhr.abort()
-                    var error;
-                    if(config.error) {
-                        error = (config.scope) ?
-                            o.util.bind(config.error, config.scope) :
-                            config.error;
-                    }
-                    error(xhr, "timeout");
-                }, config.timeout)
-            }
-            return xhr;
+            return false;
         },
 
-        /**
-         * @private
-         * @method runCallbacks
-         * @param options {Object}
-         */
-        runCallbacks: function(options) {
-            var request = options.request;
-            var config = options.config;
-            var complete = (config.scope) ?
-                o.util.bind(config.complete, config.scope) :
-                config.complete;
-            var success;
-            if(config.success) {
-                success = (config.scope) ?
-                    o.util.bind(config.success, config.scope) :
-                    config.success;
-            }
-            var failure;
-            if(config.error) {
-                failure = (config.scope) ?
-                    o.util.bind(config.error, config.scope) :
-                    config.error;
-            }
-            complete(request);
-            var result, error = false,
-                dataType = config.dataType;
-            if((request.status >= 200 && request.status < 300) || request.status == 304 ||
-                (request.status == 0 && o.util.createUrlObject(config.url).protocol == "file:")) {
-                dataType = dataType || this.mimeToDataType(request.getResponseHeader('content-type'));
-                result = request.responseText;
-                try {
-                    if(dataType == 'script')    (1,eval)(result)
-                    else if(dataType == 'xml')  result = request.responseXML
-                    else if(dataType == 'json') result = this.BLANK_REGEX.test(result) ? null : JSON.parse(result)
-                } catch (e) { error = e }
-                options.result = result;
-                if(success) {
-                    success(request, result);
-                }
-            } else {
-                if(failure) {
-                    failure(request, "error");
-                }
-            }
-        },
 
         /**
-         * @public
-         * @method octopus.ajax.get
-         * @desc 发条get请求
-         * @param config {Object}
-         * @param config.url {String} 请求地址
-         * @param config.async {Boolean} 同异步
-         * @param config.complete {Function} 请求结束的callback
-         * @param config.success {Function} 请求成功的callback
-         * @param config.error {Function} 请求失败的callback
-         * @param config.timeout {Number} 超时时间
-         * @return {XMLHttpRequest} Request object.
+         * boolean if the direction is vertical
+         * @param    {String}    direction
+         * @returns  {Boolean}   is_vertical
          */
-        "get": function(config) {
-            config = o.extend(config, {type: "GET"});
-            return o.ajax.request(config);
+        isVertical: function isVertical(direction) {
+            return (direction == Hammer.DIRECTION_UP || direction == Hammer.DIRECTION_DOWN);
         },
 
+
         /**
-         * @public
-         * @method octopus.ajax.post
-         * @desc 发条post请求
-         * @param config {Object} 同get
-         * @param config.data {Object} 数据
-         * @return {XMLHttpRequest} Request object.
+         * stop browser default behavior with css props
+         * @param   {HtmlElement}   element
+         * @param   {Object}        css_props
          */
-        post: function(config) {
-            config = o.extend(config, {type: "POST"});
-            // set content type to application/xml if it isn't already set
-            config.headers = config.headers ? config.headers : {};
-            if(!("CONTENT-TYPE" in o.util.upperCaseObject(config.headers))) {
-                config.headers["Content-Type"] = "application/xml";
+        stopDefaultBrowserBehavior: function stopDefaultBrowserBehavior(element, css_props) {
+            var prop,
+                vendors = ['webkit','khtml','moz','ms','o',''];
+
+            if(!css_props || !element.style) {
+                return;
             }
-            return o.ajax.request(config);
-        },
 
-        /**
-         * @public
-         * @method octopus.ajax.put
-         * @desc 发条put请求
-         * @param config {Object} 同post
-         * @return {XMLHttpRequest} Request object.
-         */
-        put: function(config) {
-            config = o.extend(config, {type: "PUT"});
-            // set content type to application/xml if it isn't already set
-            config.headers = config.headers ? config.headers : {};
-            if(!("CONTENT-TYPE" in o.util.upperCaseObject(config.headers))) {
-                config.headers["Content-Type"] = "application/xml";
-            }
-            return o.ajax.request(config);
-        },
+            // with css properties for modern browsers
+            for(var i = 0; i < vendors.length; i++) {
+                for(var p in css_props) {
+                    if(css_props.hasOwnProperty(p)) {
+                        prop = p;
 
-        /**
-         * @public
-         * @method octopus.ajax.delete
-         * @desc 发条delete请求
-         * @param config {Object} 同get
-         * @return {XMLHttpRequest} Request object.
-         */
-        "delete": function(config) {
-            config = o.extend(config, {type: "DELETE"});
-            return o.ajax.request(config);
-        },
-
-        /**
-         * @public
-         * @method octopus.ajax.head
-         * @desc 发条head请求
-         * @param config {Object} 同get
-         * @return {XMLHttpRequest} Request object.
-         */
-        head: function(config) {
-            config = o.extend(config, {type: "HEAD"});
-            return o.ajax.request(config);
-        },
-
-        /**
-         * @public
-         * @method octopus.ajax.options
-         * @desc 发条options请求.
-         * @param config {Object} 同get
-         * @return {XMLHttpRequest} Request object.
-         */
-        options: function(config) {
-            config = o.extend(config, {type: "OPTIONS"});
-            return o.ajax.request(config);
-        },
-
-        /**
-         * @private
-         * @method _createScriptTag
-         */
-        _createScriptTag: function(scr, url, charset) {
-            scr.setAttribute('type', 'text/javascript');
-            charset && scr.setAttribute('charset', charset);
-            scr.setAttribute('src', url);
-            document.getElementsByTagName('head')[0].appendChild(scr);
-        },
-
-        /**
-         * @private
-         * @Method _removeScriptTag
-         */
-        _removeScriptTag: function(scr) {
-            if (scr.clearAttributes) {
-                scr.clearAttributes();
-            } else {
-                for (var attr in scr) {
-                    if (scr.hasOwnProperty(attr)) {
-                        delete scr[attr];
-                    }
-                }
-            }
-            if(scr && scr.parentNode){
-                scr.parentNode.removeChild(scr);
-            }
-            scr = null;
-            delete scr;
-        },
-
-        /**
-         * @public
-         * @method octopus.ajax.ajaxJSONP
-         * @param options {Object}
-         * @param options.url {String} 请求地址
-         * @param options.complete {Function} 成功回调
-         * @param options.error {Function} 失败回调
-         * @param options.timeout {Number} 超时时长
-         */
-        ajaxJSONP: function(options) {
-            var script = document.createElement('script'),
-                defaultConfig = this.DEFAULT_CONFIG,
-                prefix = "jsonp",
-                callbackName,
-                options = o.util.applyDefaults(options, defaultConfig),
-                charset = options['charset'],
-                data = options["data"] || {},
-                timeOut = options['timeout'] || 0,
-                timer,
-                that = this,
-                url = options["url"],
-                callback = options["success"] || options["complete"],
-                error = options["error"] || o.util.empty;
-            if(o.util.isString(callback)) {
-                callbackName = callback;
-            } else {
-                callbackName = prefix + Math.floor(Math.random() * 2147483648).toString(36);
-                window[callbackName] = getCallBack(0);
-            }
-            if(timeOut > 0){
-                timer = setTimeout(getCallBack(1), timeOut);
-            }
-            script.onerror = function() {
-                that._removeScriptTag(script);
-                if(callbackName in window) {
-                    window[callbackName] = function(){};
-                }
-                error();
-            };
-            url = o.util.urlAppend(o.util.urlAppend(url,
-                o.util.getParameterString(data || {})), "callback=" + callbackName);
-            this._createScriptTag(script, url, charset);
-            function getCallBack(onTimeOut) {
-                return function() {
-                    try {
-                        if( onTimeOut ) {
-                            error();
-                        } else {
-                            clearTimeout(timer);
-                            callback.apply(window, arguments);
+                        // vender prefix at the property
+                        if(vendors[i]) {
+                            prop = vendors[i] + prop.substring(0, 1).toUpperCase() + prop.substring(1);
                         }
-                        window[callbackName] = o.util.empty;
-                    } catch (exception) {}
-                    finally {
-                        that._removeScriptTag(script);
+
+                        // set the style
+                        element.style[prop] = css_props[p];
                     }
                 }
             }
-            return options["xhr"];
+
+            // also the disable onselectstart
+            if(css_props.userSelect == 'none') {
+                element.onselectstart = function() {
+                    return false;
+                };
+            }
         }
-    });
-})(octopus);
-/**
+    };
+
+    Hammer.detection = {
+        // contains all registred Hammer.gestures in the correct order
+        gestures: [],
+
+        // data of the current Hammer.gesture detection session
+        current: null,
+
+        // the previous Hammer.gesture session data
+        // is a full clone of the previous gesture.current object
+        previous: null,
+
+        // when this becomes true, no gestures are fired
+        stopped: false,
+
+
+        /**
+         * start Hammer.gesture detection
+         * @param   {Hammer.Instance}   inst
+         * @param   {Object}            eventData
+         */
+        startDetect: function startDetect(inst, eventData) {
+            // already busy with a Hammer.gesture detection on an element
+            if(this.current) {
+                return;
+            }
+
+            this.stopped = false;
+
+            this.current = {
+                inst        : inst, // reference to HammerInstance we're working for
+                startEvent  : Hammer.utils.extend({}, eventData), // start eventData for distances, timing etc
+                lastEvent   : false, // last eventData
+                name        : '' // current gesture we're in/detected, can be 'tap', 'hold' etc
+            };
+
+            this.detect(eventData);
+        },
+
+
+        /**
+         * Hammer.gesture detection
+         * @param   {Object}    eventData
+         * @param   {Object}    eventData
+         */
+        detect: function detect(eventData) {
+            if(!this.current || this.stopped) {
+                return;
+            }
+
+            // extend event data with calculations about scale, distance etc
+            eventData = this.extendEventData(eventData);
+
+            // instance options
+            var inst_options = this.current.inst.options;
+
+            // call Hammer.gesture handlers
+            for(var g=0,len=this.gestures.length; g<len; g++) {
+                var gesture = this.gestures[g];
+
+                // only when the instance options have enabled this gesture
+                if(!this.stopped && inst_options[gesture.name] !== false) {
+                    // if a handler returns false, we stop with the detection
+                    if(gesture.handler.call(gesture, eventData, this.current.inst) === false) {
+                        this.stopDetect();
+                        break;
+                    }
+                }
+            }
+
+            // store as previous event event
+            if(this.current) {
+                this.current.lastEvent = eventData;
+            }
+
+            // endevent, but not the last touch, so dont stop
+            if(eventData.eventType == Hammer.EVENT_END && !eventData.touches.length-1) {
+                this.stopDetect();
+            }
+
+            return eventData;
+        },
+
+
+        /**
+         * clear the Hammer.gesture vars
+         * this is called on endDetect, but can also be used when a final Hammer.gesture has been detected
+         * to stop other Hammer.gestures from being fired
+         */
+        stopDetect: function stopDetect() {
+            // clone current data to the store as the previous gesture
+            // used for the double tap gesture, since this is an other gesture detect session
+            this.previous = Hammer.utils.extend({}, this.current);
+
+            // reset the current
+            this.current = null;
+
+            // stopped!
+            this.stopped = true;
+        },
+
+
+        /**
+         * extend eventData for Hammer.gestures
+         * @param   {Object}   ev
+         * @returns {Object}   ev
+         */
+        extendEventData: function extendEventData(ev) {
+            var startEv = this.current.startEvent;
+
+            // if the touches change, set the new touches over the startEvent touches
+            // this because touchevents don't have all the touches on touchstart, or the
+            // user must place his fingers at the EXACT same time on the screen, which is not realistic
+            // but, sometimes it happens that both fingers are touching at the EXACT same time
+            if(startEv && (ev.touches.length != startEv.touches.length || ev.touches === startEv.touches)) {
+                // extend 1 level deep to get the touchlist with the touch objects
+                startEv.touches = [];
+                for(var i=0,len=ev.touches.length; i<len; i++) {
+                    startEv.touches.push(Hammer.utils.extend({}, ev.touches[i]));
+                }
+            }
+
+            var delta_time = ev.timeStamp - startEv.timeStamp,
+                delta_x = ev.center.pageX - startEv.center.pageX,
+                delta_y = ev.center.pageY - startEv.center.pageY,
+                velocity = o.util.getVelocity(delta_time, delta_x, delta_y);
+
+            Hammer.utils.extend(ev, {
+                deltaTime   : delta_time,
+
+                deltaX      : delta_x,
+                deltaY      : delta_y,
+
+                velocityX   : velocity.x,
+                velocityY   : velocity.y,
+
+                distance    : o.util.getDistance(startEv.center, ev.center),
+                angle       : o.util.getAngle(startEv.center, ev.center),
+                direction   : o.util.getDirection(startEv.center, ev.center),
+
+                scale       : o.util.getScale(startEv.touches, ev.touches),
+                rotation    : o.util.getRotation(startEv.touches, ev.touches),
+
+                startEvent  : startEv
+            });
+
+            return ev;
+        },
+
+
+        /**
+         * register new gesture
+         * @param   {Object}    gesture object, see gestures.js for documentation
+         * @returns {Array}     gestures
+         */
+        register: function register(gesture) {
+            // add an enable gesture options if there is no given
+            var options = gesture.defaults || {};
+            if(options[gesture.name] === undefined) {
+                options[gesture.name] = true;
+            }
+
+            // extend Hammer default options with the Hammer.gesture options
+            Hammer.utils.extend(Hammer.defaults, options, true);
+
+            // set its index
+            gesture.index = gesture.index || 1000;
+
+            // add Hammer.gesture to the list
+            this.gestures.push(gesture);
+
+            // sort the list by index
+            this.gestures.sort(function(a, b) {
+                if (a.index < b.index) {
+                    return -1;
+                }
+                if (a.index > b.index) {
+                    return 1;
+                }
+                return 0;
+            });
+
+            return this.gestures;
+        }
+    };
+
+
+    Hammer.gestures = Hammer.gestures || {};
+
+    /**
+     * Custom gestures
+     * ==============================
+     *
+     * Gesture object
+     * --------------------
+     * The object structure of a gesture:
+     *
+     * { name: 'mygesture',
+ *   index: 1337,
+ *   defaults: {
+ *     mygesture_option: true
+ *   }
+ *   handler: function(type, ev, inst) {
+ *     // trigger gesture event
+ *     inst.trigger(this.name, ev);
+ *   }
+ * }
+
+     * @param   {String}    name
+     * this should be the name of the gesture, lowercase
+     * it is also being used to disable/enable the gesture per instance config.
+     *
+     * @param   {Number}    [index=1000]
+     * the index of the gesture, where it is going to be in the stack of gestures detection
+     * like when you build an gesture that depends on the drag gesture, it is a good
+     * idea to place it after the index of the drag gesture.
+     *
+     * @param   {Object}    [defaults={}]
+     * the default settings of the gesture. these are added to the instance settings,
+     * and can be overruled per instance. you can also add the name of the gesture,
+     * but this is also added by default (and set to true).
+     *
+     * @param   {Function}  handler
+     * this handles the gesture detection of your custom gesture and receives the
+     * following arguments:
+     *
+     *      @param  {Object}    eventData
+     *      event data containing the following properties:
+     *          timeStamp   {Number}        time the event occurred
+     *          target      {HTMLElement}   target element
+     *          touches     {Array}         touches (fingers, pointers, mouse) on the screen
+     *          pointerType {String}        kind of pointer that was used. matches Hammer.POINTER_MOUSE|TOUCH
+     *          center      {Object}        center position of the touches. contains pageX and pageY
+     *          deltaTime   {Number}        the total time of the touches in the screen
+     *          deltaX      {Number}        the delta on x axis we haved moved
+     *          deltaY      {Number}        the delta on y axis we haved moved
+     *          velocityX   {Number}        the velocity on the x
+     *          velocityY   {Number}        the velocity on y
+     *          angle       {Number}        the angle we are moving
+     *          direction   {String}        the direction we are moving. matches Hammer.DIRECTION_UP|DOWN|LEFT|RIGHT
+     *          distance    {Number}        the distance we haved moved
+     *          scale       {Number}        scaling of the touches, needs 2 touches
+     *          rotation    {Number}        rotation of the touches, needs 2 touches *
+     *          eventType   {String}        matches Hammer.EVENT_START|MOVE|END
+     *          srcEvent    {Object}        the source event, like TouchStart or MouseDown *
+     *          startEvent  {Object}        contains the same properties as above,
+     *                                      but from the first touch. this is used to calculate
+     *                                      distances, deltaTime, scaling etc
+     *
+     *      @param  {Hammer.Instance}    inst
+     *      the instance we are doing the detection for. you can get the options from
+     *      the inst.options object and trigger the gesture event by calling inst.trigger
+     *
+     *
+     * Handle gestures
+     * --------------------
+     * inside the handler you can get/set Hammer.detection.current. This is the current
+     * detection session. It has the following properties
+     *      @param  {String}    name
+     *      contains the name of the gesture we have detected. it has not a real function,
+     *      only to check in other gestures if something is detected.
+     *      like in the drag gesture we set it to 'drag' and in the swipe gesture we can
+     *      check if the current gesture is 'drag' by accessing Hammer.detection.current.name
+     *
+     *      @readonly
+     *      @param  {Hammer.Instance}    inst
+     *      the instance we do the detection for
+     *
+     *      @readonly
+     *      @param  {Object}    startEvent
+     *      contains the properties of the first gesture detection in this session.
+     *      Used for calculations about timing, distance, etc.
+     *
+     *      @readonly
+     *      @param  {Object}    lastEvent
+     *      contains all the properties of the last gesture detect in this session.
+     *
+     * after the gesture detection session has been completed (user has released the screen)
+     * the Hammer.detection.current object is copied into Hammer.detection.previous,
+     * this is usefull for gestures like doubletap, where you need to know if the
+     * previous gesture was a tap
+     *
+     * options that have been set by the instance can be received by calling inst.options
+     *
+     * You can trigger a gesture event by calling inst.trigger("mygesture", event).
+     * The first param is the name of your gesture, the second the event argument
+     *
+     *
+     * Register gestures
+     * --------------------
+     * When an gesture is added to the Hammer.gestures object, it is auto registered
+     * at the setup of the first Hammer instance. You can also call Hammer.detection.register
+     * manually and pass your gesture object as a param
+     *
+     */
+
+    /**
+     * LonTap
+     * Touch stays at the same place for x time
+     * @events  lontap
+     */
+    Hammer.gestures.LonTap = {
+        name: 'lontap',
+        index: 10,
+        defaults: {
+            hold_timeout	: 500,
+            hold_threshold	: 1
+        },
+        timer: null,
+        handler: function holdGesture(ev, inst) {
+            switch(ev.eventType) {
+                case Hammer.EVENT_START:
+                    // clear any running timers
+                    clearTimeout(this.timer);
+
+                    // set the gesture so we can check in the timeout if it still is
+                    Hammer.detection.current.name = this.name;
+
+                    // set timer and if after the timeout it still is lontap,
+                    // we trigger the lontap event
+                    this.timer = setTimeout(function() {
+                        if(Hammer.detection.current.name == 'lontap') {
+                            inst.trigger('lontap', ev);
+                        }
+                    }, inst.options.hold_timeout);
+                    break;
+
+                // when you move or end we clear the timer
+                case Hammer.EVENT_MOVE:
+                    if(ev.distance > inst.options.hold_threshold) {
+                        clearTimeout(this.timer);
+                    }
+                    break;
+
+                case Hammer.EVENT_END:
+                    clearTimeout(this.timer);
+                    break;
+            }
+        }
+    };
+
+
+    /**
+     * Tap/DoubleTap
+     * Quick touch at a place or double at the same place
+     * @events  tap, doubletap
+     */
+    Hammer.gestures.Tap = {
+        name: 'tap',
+        index: 100,
+        defaults: {
+            tap_max_touchtime	: 250,
+            tap_max_distance	: 10,
+            tap_always			: true,
+            doubletap_distance	: 20,
+            doubletap_interval	: 300
+        },
+        handler: function tapGesture(ev, inst) {
+            if(ev.eventType == Hammer.EVENT_END) {
+                // previous gesture, for the double tap since these are two different gesture detections
+                var prev = Hammer.detection.previous,
+                    did_doubletap = false;
+                // when the touchtime is higher then the max touch time
+                // or when the moving distance is too much
+                if(ev.deltaTime > inst.options.tap_max_touchtime ||
+                    ev.distance > inst.options.tap_max_distance) {
+                    return;
+                }
+                // check if double tap
+                if(prev && prev.name == 'tap' &&
+                    (ev.timeStamp - prev.lastEvent.timeStamp) < inst.options.doubletap_interval &&
+                    ev.distance < inst.options.doubletap_distance) {
+                    inst.trigger('doubletap', ev);
+                    did_doubletap = true;
+                }
+
+                // do a single tap
+                if(!did_doubletap || inst.options.tap_always) {
+                    Hammer.detection.current.name = 'tap';
+                    inst.trigger(Hammer.detection.current.name, ev);
+                }
+            }
+        }
+    };
+
+
+    /**
+     * Swipe
+     * triggers swipe events when the end velocity is above the threshold
+     * @events  swipe, swipeleft, swiperight, swipeup, swipedown
+     */
+    Hammer.gestures.Swipe = {
+        name: 'swipe',
+        index: 40,
+        defaults: {
+            // set 0 for unlimited, but this can conflict with transform
+            swipe_max_touches  : 1,
+            swipe_velocity     : 0.7
+        },
+        handler: function swipeGesture(ev, inst) {
+            if(ev.eventType == Hammer.EVENT_END) {
+                // max touches
+                if(inst.options.swipe_max_touches > 0 &&
+                    ev.touches.length > inst.options.swipe_max_touches) {
+                    return;
+                }
+
+                // when the distance we moved is too small we skip this gesture
+                // or we can be already in dragging
+                if(ev.velocityX > inst.options.swipe_velocity ||
+                    ev.velocityY > inst.options.swipe_velocity) {
+                    // trigger swipe events
+                    inst.trigger(this.name, ev);
+                    inst.trigger(this.name + ev.direction, ev);
+                }
+            }
+        }
+    };
+
+
+    /**
+     * Drag
+     * Move with x fingers (default 1) around on the page. Blocking the scrolling when
+     * moving left and right is a good practice. When all the drag events are blocking
+     * you disable scrolling on that area.
+     * @events  drag, drapleft, dragright, dragup, dragdown
+     */
+    Hammer.gestures.Drag = {
+        name: 'drag',
+        index: 50,
+        defaults: {
+            drag_min_distance : 10,
+            // set 0 for unlimited, but this can conflict with transform
+            drag_max_touches  : 1,
+            // prevent default browser behavior when dragging occurs
+            // be careful with it, it makes the element a blocking element
+            // when you are using the drag gesture, it is a good practice to set this true
+            drag_block_horizontal   : false,
+            drag_block_vertical     : false,
+            // drag_lock_to_axis keeps the drag gesture on the axis that it started on,
+            // It disallows vertical directions if the initial direction was horizontal, and vice versa.
+            drag_lock_to_axis       : false,
+            // drag lock only kicks in when distance > drag_lock_min_distance
+            // This way, locking occurs only when the distance has become large enough to reliably determine the direction
+            drag_lock_min_distance : 25
+        },
+        triggered: false,
+        handler: function dragGesture(ev, inst) {
+            // current gesture isnt drag, but dragged is true
+            // this means an other gesture is busy. now call dragend
+            if(Hammer.detection.current.name != this.name && this.triggered) {
+                inst.trigger(this.name +'end', ev);
+                this.triggered = false;
+                return;
+            }
+
+            // max touches
+            if(inst.options.drag_max_touches > 0 &&
+                ev.touches.length > inst.options.drag_max_touches) {
+                return;
+            }
+
+            switch(ev.eventType) {
+                case Hammer.EVENT_START:
+                    this.triggered = false;
+                    break;
+
+                case Hammer.EVENT_MOVE:
+                    // when the distance we moved is too small we skip this gesture
+                    // or we can be already in dragging
+                    if(ev.distance < inst.options.drag_min_distance &&
+                        Hammer.detection.current.name != this.name) {
+                        return;
+                    }
+
+                    // we are dragging!
+                    Hammer.detection.current.name = this.name;
+
+                    // lock drag to axis?
+                    if(Hammer.detection.current.lastEvent.drag_locked_to_axis || (inst.options.drag_lock_to_axis && inst.options.drag_lock_min_distance<=ev.distance)) {
+                        ev.drag_locked_to_axis = true;
+                    }
+                    var last_direction = Hammer.detection.current.lastEvent.direction;
+                    if(ev.drag_locked_to_axis && last_direction !== ev.direction) {
+                        // keep direction on the axis that the drag gesture started on
+                        if(Hammer.utils.isVertical(last_direction)) {
+                            ev.direction = (ev.deltaY < 0) ? Hammer.DIRECTION_UP : Hammer.DIRECTION_DOWN;
+                        }
+                        else {
+                            ev.direction = (ev.deltaX < 0) ? Hammer.DIRECTION_LEFT : Hammer.DIRECTION_RIGHT;
+                        }
+                    }
+
+                    // first time, trigger dragstart event
+                    if(!this.triggered) {
+                        inst.trigger(this.name +'start', ev);
+                        this.triggered = true;
+                    }
+
+                    // trigger normal event
+                    inst.trigger(this.name, ev);
+
+                    // direction event, like dragdown
+                    inst.trigger(this.name + ev.direction, ev);
+
+                    // block the browser events
+                    if( (inst.options.drag_block_vertical && Hammer.utils.isVertical(ev.direction)) ||
+                        (inst.options.drag_block_horizontal && !Hammer.utils.isVertical(ev.direction))) {
+                        ev.preventDefault();
+                    }
+                    break;
+
+                case Hammer.EVENT_END:
+                    // trigger dragend
+                    if(this.triggered) {
+                        inst.trigger(this.name +'end', ev);
+                    }
+
+                    this.triggered = false;
+                    break;
+            }
+        }
+    };
+
+
+    /**
+     * Transform
+     * User want to scale or rotate with 2 fingers
+     * @events  transform, pinch, pinchin, pinchout, rotate
+     */
+    Hammer.gestures.Transform = {
+        name: 'transform',
+        index: 45,
+        defaults: {
+            // factor, no scale is 1, zoomin is to 0 and zoomout until higher then 1
+            transform_min_scale     : 0.01,
+            // rotation in degrees
+            transform_min_rotation  : 1,
+            // prevent default browser behavior when two touches are on the screen
+            // but it makes the element a blocking element
+            // when you are using the transform gesture, it is a good practice to set this true
+            transform_always_block  : false
+        },
+        triggered: false,
+        handler: function transformGesture(ev, inst) {
+            // current gesture isnt drag, but dragged is true
+            // this means an other gesture is busy. now call dragend
+            if(Hammer.detection.current.name != this.name && this.triggered) {
+                inst.trigger(this.name +'end', ev);
+                this.triggered = false;
+                return;
+            }
+
+            // atleast multitouch
+            if(ev.touches.length < 2) {
+                return;
+            }
+
+            // prevent default when two fingers are on the screen
+            if(inst.options.transform_always_block) {
+                ev.preventDefault();
+            }
+
+            switch(ev.eventType) {
+                case Hammer.EVENT_START:
+                    this.triggered = false;
+                    break;
+
+                case Hammer.EVENT_MOVE:
+                    var scale_threshold = Math.abs(1-ev.scale);
+                    var rotation_threshold = Math.abs(ev.rotation);
+
+                    // when the distance we moved is too small we skip this gesture
+                    // or we can be already in dragging
+                    if(scale_threshold < inst.options.transform_min_scale &&
+                        rotation_threshold < inst.options.transform_min_rotation) {
+                        return;
+                    }
+
+                    // we are transforming!
+                    Hammer.detection.current.name = this.name;
+
+                    // first time, trigger dragstart event
+                    if(!this.triggered) {
+                        inst.trigger(this.name +'start', ev);
+                        this.triggered = true;
+                    }
+
+                    inst.trigger(this.name, ev); // basic transform event
+
+                    // trigger rotate event
+                    if(rotation_threshold > inst.options.transform_min_rotation) {
+                        inst.trigger('rotate', ev);
+                    }
+
+                    // trigger pinch event
+                    if(scale_threshold > inst.options.transform_min_scale) {
+                        inst.trigger('pinch', ev);
+                        inst.trigger('pinch'+ ((ev.scale < 1) ? 'in' : 'out'), ev);
+                    }
+                    break;
+
+                case Hammer.EVENT_END:
+                    // trigger dragend
+                    if(this.triggered) {
+                        inst.trigger(this.name +'end', ev);
+                    }
+
+                    this.triggered = false;
+                    break;
+            }
+        }
+    };
+
+
+    /**
+     * Touch
+     * Called as first, tells the user has touched the screen
+     * @events  touch
+     */
+    Hammer.gestures.Touch = {
+        name: 'touch',
+        index: -Infinity,
+        defaults: {
+            // call preventDefault at touchstart, and makes the element blocking by
+            // disabling the scrolling of the page, but it improves gestures like
+            // transforming and dragging.
+            // be careful with using this, it can be very annoying for users to be stuck
+            // on the page
+            prevent_default: false,
+
+            // disable mouse events, so only touch (or pen!) input triggers events
+            prevent_mouseevents: false
+        },
+        handler: function touchGesture(ev, inst) {
+            if(inst.options.prevent_mouseevents && ev.pointerType == Hammer.POINTER_MOUSE) {
+                ev.stopDetect();
+                return;
+            }
+
+            if(inst.options.prevent_default) {
+                ev.preventDefault();
+            }
+
+            if(ev.eventType ==  Hammer.POINTER_MOUSE) {
+                inst.trigger(this.name, ev);
+            }
+        }
+    };
+
+
+    /**
+     * Release
+     * Called as last, tells the user has released the screen
+     * @events  release
+     */
+    Hammer.gestures.Release = {
+        name: 'release',
+        index: Infinity,
+        handler: function releaseGesture(ev, inst) {
+            if(ev.eventType ==  Hammer.EVENT_END) {
+                inst.trigger(this.name, ev);
+            }
+        }
+    };
+
+    o.gesture = Hammer;
+
+})(octopus);/**
  * @file
  * webapp通用组件基础库文件
  * 动画部分
@@ -4120,1577 +4863,4 @@
         }
     });
 
-})(octopus);/**
- * @file
- * webapp通用组件父类
- * @author oupeng-fe
- * @version 1.1
- * @require lib/class.js
- * @require lib/util.js
- * @require lib/dom.js
- * @require lib/event.js
- */
-;(function(o, undefined) {
-
-    "use strict";
-
-    /**
-     * @class octopus.Widget
-     * @desc octopus-ui的父类
-     * @param options {Object}
-     * @param options.el {DOMElement} 根节点 如果没有则创建一个div
-     * @param options.id {String} widget的id 也会成为根节点的id
-     * @param options.eventListeners {Object} 用以批量添加事件
-     * @example
-     * var widget = new Widget({
-     *     id: "widget",
-     *     eventListeners: {
-     *         "onTouch": function onTouch() {},
-     *         "onMove": function onMove() {},
-     *         "scope": this
-     *     }
-     * });
-     * @return new Widget
-     */
-    o.Widget = o.define({
-
-        /**
-         * @private
-         * @property id
-         * @type {String}
-         */
-        id: null,
-
-        /**
-         * @private
-         * @property options
-         * @type {Object}
-         */
-        options: null,
-
-        /**
-         * @private
-         * @property el
-         * @desc widget的根节点
-         * @type {DOMELement}
-         */
-        el: null,
-
-        /**
-         * @private
-         * @property container
-         * @desc widget的容器
-         * @type {DOMElement}
-         */
-        container: null,
-
-        /**
-         * @private
-         * @property autoActivate
-         * @desc 是否对像生成完就直接渲染，标志位
-         * @type {Boolean}
-         */
-        autoActivate: false,
-
-        /**
-         * @private
-         * @property active
-         * @desc 是否处于激活状态
-         * @type {Boolean}
-         */
-        active: false,
-
-        /**
-         * @private
-         * @property events
-         * @type {octopus.Events}
-         */
-        events: null,
-
-        /**
-         * @private
-         * @property isShow
-         * @type {Boolean}
-         */
-        isShow: false,
-
-        /**
-         * @private
-         * @property gesture
-         * @type {octopus.gesture}
-         */
-        gesture: null,
-
-        /**
-         * @private
-         * @property eventListeners
-         * @type {Object}
-         * @desc 事件监听回调列表
-         */
-        eventListeners: null,
-
-        /**
-         * @private
-         * @property widgetManager
-         * @type {octopus.WidgetManager}
-         * @desc widget管理器
-         */
-        widgetManager: null,
-
-        /**
-         * @private
-         * @constructor octopus.Widget.initialize
-         * @desc 构造函数
-         * @param options  -   {Object}
-         */
-        initialize: function(options) {
-            options = options || {};
-            this.addOptions(options);
-            this.events = new o.Events(this);
-            this.gesture = o.gesture;
-            this.id = this.id || o.util.createUniqueID(this.CLASS_NAME + "_");
-            if(this.eventListeners instanceof Object) {
-                this.events.register(this.eventListeners);
-            }
-            this.el = this.el || document.createElement("div");
-            !!this.el.id ? this.id = this.el.id : this.el.id = this.id;
-        },
-
-        /**
-         * @public
-         * @method octopus.Widget.render
-         * @desc 渲染
-         * @param container {DOMElement}
-         */
-        render: function(container) {
-            var len = arguments.length;
-            if(len == 0) {
-                this.container = this.container || document.body;
-            } else {
-                this.container = o.g(arguments[0]);
-            }
-            if(this.container.appendChild === undefined) {
-                throw new Error("Illegal Dom!")
-            } else {
-                if(!!arguments[1]) {
-                    var clonenode = o.dom.cloneNode(this.container, true);
-                    this.appendChild(this.el, clonenode);
-                    this.container.parentNode.replaceChild(clonenode, this.container);
-                    this.container = clonenode;
-                } else {
-                    this.appendChild(this.el, this.container);
-                }
-            }
-            if(!this.active) {
-                this.activate();
-            }
-            if(!this.isShow) {
-                this.show();
-            }
-        },
-
-        /**
-         * @private
-         * @method octopus.Widget.appendChild
-         */
-        appendChild: function(dom, container) {
-            container.appendChild(dom);
-        },
-
-        /**
-         * @public
-         * @method octopus.Widget.activate
-         * @desc 激活控件
-         */
-        activate: function() {
-            if(this.active) return;
-            o.dom.addClass(this.el, "activate");
-            this.active = true;
-        },
-
-        /**
-         * @public
-         * @method octopus.Widget.deactivate
-         * @desc 挂起控件
-         */
-        deactivate: function() {
-            if(!this.active)    return;
-            o.dom.removeClass(this.el, "activate");
-            this.active = false;
-        },
-
-        /**
-         * @public
-         * @method octopus.Widget.destroy
-         * @desc 摧毁
-         */
-        destroy: function() {
-            if(this.container) {
-                this.container.removeChild(this.el);
-                this.container = null;
-            }
-            this.el = null;
-        },
-
-        /**
-         * @public
-         * @method octopus.Widget.on
-         * @desc 监听自定义事件 如果为手势事件 则监听的是根节点触发的
-         * @param type {String}
-         * @param func {Function}
-         * @param opv {Object}
-         */
-        on: function(type, func, opv) {
-            var GESTURES = o.Widget.GESTURES;
-            if(GESTURES.indexOf(type) != -1) {
-                this.gesture(this.el, opv).on(type, func);
-                return;
-            }
-            this.events.on(type, func);
-        },
-
-        /**
-         * @public
-         * @method octopus.Widget.un
-         * @desc 去除监听 与on相对
-         * @param type {String}
-         * @param func {Function}
-         */
-        un: function(type, func) {
-            this.events.un(type, func);
-        },
-
-        /**
-         * @public
-         * @method octopus.Widget.notify
-         * @desc 触发某自定义事件
-         * @param type {String}
-         * @param evt {Object}
-         */
-        notify: function(type, evt) {
-            this.events.triggerEvent(type, evt);
-        },
-
-        /**
-         * @private
-         * @method addOptions
-         * @desc 深度绑定
-         * @param newOptions  -   {Object}
-         */
-        addOptions: function(newOptions) {
-            if (this.options == null) {
-                this.options = {};
-            }
-            o.extend(this.options, newOptions);
-            o.extend(this, newOptions);
-        },
-
-        /**
-         * @public
-         * @method octopus.Widget.show
-         * @desc 显示widget
-         */
-        show: function() {
-            if(this.isShow) return;
-            this.isShow = true;
-            this.el.style.display = "block";
-        },
-
-        /**
-         * @public
-         * @method octopus.Widget.hidden
-         * @desc 隐藏widget
-         */
-        hidden: function() {
-            if(!this.isShow)    return;
-            this.isShow = false;
-            this.el.style.display = "none";
-        },
-
-        /**
-         * @public
-         * @method octopus.Widget.toggleVisible
-         * @desc 切换显示状态
-         */
-        toggleVisible: function() {
-            if(this.isShow) {
-                this.hidden();
-            } else {
-                this.show();
-            }
-        },
-
-        /**
-         * @public
-         * @method octopus.Widget.clone
-         * @returns {*}
-         */
-        clone: function() {
-            return eval("new " + this.CLASS_NAME + "(o.util.clone(this.options))");
-        },
-
-        /**
-         * @public
-         * @method octopus.Widget.getEl
-         * @desc 拿widget的根节点
-         */
-        getEl: function() {
-            return this.el;
-        },
-
-        /**
-         * @public
-         * @method octopus.Widget.getHeight
-         * @desc 拿到widget的高度
-         */
-        getHeight: function() {
-            return o.dom.getHeight(this.el) || o.dom.getStyle(this.el, "height");
-        },
-
-        /**
-         * @public
-         * @method octopus.Widget.getWidth
-         * @desc 拿到widget的宽度
-         */
-        getWidth: function() {
-            return o.dom.getWidth(this.el) || o.dom.getStyle(this.el, "width");
-        },
-
-        /**
-         * @public
-         * @method octopus.Widget.setManager
-         * @desc widget被注册进widgetManager
-         * @param m
-         */
-        setManager: function(m) {
-            this.widgetManager = m;
-        },
-
-        /**
-         * @public
-         * @method octopus.Widget.setZIndex
-         * @desc 设置控件的zindex值
-         * @param z {String}
-         */
-        setZIndex: function(z) {
-            this.el.style.zIndex = z;
-        },
-
-        CLASS_NAME: "octopus.Widget"
-    });
-
-    o.Widget.GESTURES = ["tap", "lontap", "doubletap", "swipe", "swipeleft",
-        "swiperight", "swipeup", "swipedown", "drag", "drapleft", "dragright",
-        "dragup", "dragdown", "touch", "release"];
-
-    /**
-     * @method octopus.widgetManager
-     * @desc 返回一个widget的管理器
-     * @param el {DOMElement}
-     * @param opts {Object}
-     * @returns {o.WidgetManager}
-     */
-    o.widgetManager = function(el, opts) {
-        return new o.WidgetManager(el, opts);
-    };
-
-    /**
-     * @class octopus.WidgetManager
-     * @desc widget管理器
-     * @param el {DOMElement} 管理器覆盖的节点 必须有的参数
-     * @param opts {Object} 额外参数 非必需
-     * @param opts.classFilter {String} 符合条件的节点必需包括这个class 默认为"octopusui-container"
-     * @param opts.supportType {Array} 当前这个管理器支持的控件类型 默认为 slider refresh menu mask back2top
-     */
-    o.WidgetManager = o.define({
-
-        /**
-         * @private
-         * @property el
-         * @type {DOMElement}
-         * @desc 管理器覆盖的节点容器
-         */
-        el: null,
-
-        /**
-         * @private
-         * @property els
-         * @type {Array}
-         * @desc 符合条件的节点集合
-         */
-        els: null,
-
-        /**
-         * @private
-         * @property opts
-         * @desc 参数项
-         */
-        opts: null,
-
-        /**
-         * @private
-         * @property classFilter
-         * @type {String}
-         * @desc 符合条件节点的class
-         */
-        classFilter: null,
-
-        /**
-         * @private
-         * @property widgets
-         * @desc 管理器里已拿到的控件
-         * @type {Array}
-         */
-        widgets: null,
-
-        /**
-         * @private
-         * @property supportType
-         * @desc 支持的控件类型集合
-         */
-        supportType: null,
-
-        /**
-         * @private
-         * @property event
-         */
-        event: null,
-
-        /**
-         * @private
-         * @constructor
-         * @param el {String | DOMElement} 解析的容器
-         * @param opts {Object} 传入的参数
-         */
-        initialize: function(el, opts) {
-            this.opts = o.extend({}, opts || {});
-            this.el = o.g(el);
-            if(!o.util.isNode(this.el))  throw new Error("require a node to initialize!");
-            this.els = [];
-            this.event = new o.Events(this);
-            this.widgets = [];
-            this.supportType = this.opts.supportType || ["slider", "back2top"];
-            this.classFilter = this.opts.classFilter || ".octopusui-container";
-            return this;
-        },
-
-        /**
-         * @public
-         * @method octopus.WidgetManager.init
-         * @desc 开始对指定节点下的符合条件的html片段控件化
-         */
-        init: function() {
-            var els = o.$(this.classFilter, this.el),
-                that = this;
-            o.util.each(els, function(item) {
-                if(o.util.isNode(item)) {
-                    that.els.push(item);
-                }
-            });
-            if(this.els.length == 0)    return;
-            o.util.each(this.els, o.util.bind(this.initWidgets, this));
-        },
-
-        /**
-         * @private
-         * @method initWidgets
-         * @param item 单个widget的html片段的容器
-         */
-        initWidgets: function(item) {
-            var type = o.dom.data(item, "octopusui-type"),
-                index = this.supportType.indexOf(type);
-            if(index == -1 || o.dom.data(item, "octopusui-loaded"))   return;
-            var widget = this[this.supportType[index]](item);
-            this.register(widget);
-            o.dom.data(widget.el, {
-                "octopusui-loaded": "true"
-            });
-        },
-
-        /**
-         * @private
-         * @method getWidgetBy
-         * @param type {String} 获取类型
-         * @param filter {String} 获取节点的选择器
-         */
-        getWidgetBy: function(type, filter) {
-            var widgets = [],
-                len = this.widgets.length,
-                i = len;
-            for(; i--; ) {
-                var widget = this.widgets[i];
-                if(widget[type] == filter) {
-                    if(type == "id") return widget;
-                    widgets.push(widget);
-                }
-            }
-            return widgets;
-        },
-
-        /**
-         * @public
-         * @method octopus.WidgetManager.getWidgetById
-         * @param id {String}
-         * @desc 根据widget的id拿到widget对象
-         */
-        getWidgetById: function(id) {
-            return this.getWidgetBy("id", id);
-        },
-
-        /**
-         * @public
-         * @method octopus.WidgetManager.getWidgetByClass
-         * @param c {String}
-         * @desc 根据widget的class_name拿widget对象集合
-         */
-        getWidgetByClass: function(c) {
-            return this.getWidgetBy("CLASS_NAME", c);
-        },
-
-        /**
-         * @public
-         * @method octopus.WidgetManager.slider
-         * @desc 创建一个轮播图
-         * @param el {DOMElement}
-         */
-        slider: function(el) {
-            return o.Widget.slider(el);
-        },
-
-        /**
-         * @public
-         * @method octopus.WidgetManager.back2top
-         * @desc 创建一个fixed的元素
-         * @param el {DOMElement}
-         */
-        back2top: function(el) {
-            return o.Widget.back2top(el);
-        },
-
-        /**
-         * @public
-         * @method octopus.WidgetManager.register
-         */
-        register: function(widget) {
-            if(this.widgets.indexOf(widget) != -1)  return false;
-            this.widgets.push(widget);
-            widget.setManager(this);
-        },
-
-        /**
-         * @public
-         * @method octopus.WidgetManager.unregister
-         */
-        unregister: function(widget) {
-            var index = this.widgets.indexOf(widget);
-            if(index == -1) return false;
-            this.widgets[index].setManager(null);
-            this.widgets.splice(index, 1);
-        },
-
-        CLASS_NAME: "octopus.WidgetManager"
-    });
-
-})(octopus);/**
- * @file
- * webapp通用组件结构文件
- * 定义模块管理
- * @require lib/class.js
- * @require lib/util.js
- * @require lib/dom.js
- * @require lib/event.js
- * @author oupeng-fe
- * @version 1.1
- */
-;(function(o, undefined) {
-
-    "use strict";
-
-	/**
-	 * @namespace octopus.app
-	 * @desc octopus app模块结构
-	 */
-    o.app = (function() {
-
-        var app = null;
-
-        /**
-         * @private
-         * @method octopus.app.registerModule
-         * @param id
-         * @param func
-         * @param immediate
-         */
-        function registerModule(id, func, immediate) {
-            initialize(undefined).registerModule(id, func, immediate);
-        }
-
-        /**
-         * @private
-         * @method initialize
-         * @param options
-         */
-        function initialize(options) {
-            return !app ? (app = new o.App(options), app) : (!!options ? (console.warn("The app has already exist! Failure to set up the config"), app) : app);
-        }
-
-        return {
-            /**
-             * @public
-             * @method octopus.app.registerModule
-             * @param id
-             * @param func
-             * @param immediate
-             * @desc 注册一个模块
-             */
-            registerModule: registerModule,
-
-            /**
-             * @public
-             * @method octopus.app.initialize
-             * @param options
-             * @desc 初始化app对象 如果不被调用则按照默认属性初始化
-             * @returns {octopus.App|app}
-             */
-            initialize: initialize
-        };
-    })();
-
-    o.App = o.define({
-
-        /**
-         * @private
-         * @property id
-         * @type {String}
-         */
-        id: null,
-
-        /**
-         * @private
-         * @property el
-         * @type {DOMElement}
-         * @desc app的根节点
-         */
-        el: null,
-
-        /**
-         * @private
-         * @property viewEl
-         * @type {DOMElement}
-         * @desc 可视节点
-         */
-        viewEl: null,
-
-        /**
-         * @private
-         * @property layers
-         * @type {Array}
-         * @desc 管理的模块
-         */
-        layers: null,
-
-        /**
-         * @private
-         * @property currentLayer
-         * @type {o.Layer}
-         */
-        currentLayer: null,
-
-        /**
-         * @private
-         * @property cmds
-         * @type {Array}
-         */
-        cmds: null,
-
-        /**
-         * @private
-         * @property moduleCreator
-         * @desc 生成器
-         */
-        moduleCreator: null,
-
-        /**
-         * @private
-         * @property events
-         * @type {o.Events}
-         */
-        events: null,
-
-        /**
-         * @private
-         * @property eventListeners
-         * @type {Object}
-         */
-        eventListeners: null,
-
-        /**
-         * @private
-         * @property cmdManager
-         * @type {o.CmdManager}
-         */
-        cmdManager: null,
-
-        /**
-         * @private
-         * @property eventCaches
-         * @desc 事件缓存 主要防止 一些模块未就位时的事件分发
-         * @type {Array}
-         */
-        eventCaches: null,
-
-        /**
-         * @private
-         * @property isLoad
-         * @type {Boolean}
-         */
-        isLoad: false,
-
-        /**
-         * @private
-         * @property config
-         * @desc 配置项
-         */
-        config: null,
-
-        /**
-         * @private
-         * @property isResize
-         * @type {Boolean}
-         */
-        isResize: false,
-
-        /**
-         * @private
-         * @property widgets
-         */
-        widgets: null,
-
-        /**
-         * @private
-         * @property isInitDom
-         */
-        isInitDom: false,
-
-        /**
-         * @private
-         * @constructor
-         */
-        initialize: function(options) {
-            var config = this.config = o.extend({}, options);
-            this.moduleCreator = {};
-            this.eventCaches = [];
-            this.id = config.id || o.util.createUniqueID(this.CLASS_NAME + "_");
-
-            //监听window事件 启动模块
-            o.event.on(window, "ready", o.util.bind(this.onWindowLoad, this), false);
-            o.event.on(window, "resize", o.util.bind(this.onWindowResize, this), false);
-            if("orientationchange" in window) {
-                o.event.on(window, "orientationchange", o.util.bind(this.onOrientationChanged, this), false);
-            }
-            this.events = new o.Events(this);
-            if(config.eventListeners && o.util.isObject(config.eventListeners)) {
-                this.eventListeners = config.eventListeners;
-                this.events.register(this.eventListeners);
-            }
-            //命令搞上去
-            this.cmdManager = new o.CmdManager({
-                app: this
-            });
-            if(config.cmds) {
-                this.cmds = config.cmds;
-                o.util.each(this.cmds, o.util.bind(this.registerCmd, this));
-                this.cmds.length = 0;
-            }
-        },
-
-        /**
-         * @public
-         * @method octopus.App.registerCmd
-         * @param cmd {octopus.Cmd}
-         */
-        registerCmd: function(cmd) {
-            this.cmdManager.register(cmd);
-        },
-
-        /**
-         * @public
-         * @method octopus.App.executeCmd
-         * @param name {String}
-         * @param ops {Object}
-         * @desc 执行指定命令
-         */
-        executeCmd: function(name, ops) {
-            this.cmdManager.executeCommand(name, ops);
-        },
-
-        /**
-         * @public
-         * @method octopus.App.unregisterCmd
-         * @param name {String}
-         */
-        unregisterCmd: function(name) {
-            this.cmdManager.unregister(name);
-        },
-
-        /**
-         * @public
-         * @method octopus.App.registerModule
-         * @param id {String}
-         * @param m {Object | octopus.Module}
-         * @param immediate {Boolean}
-         */
-        registerModule: function(id, m, immediate) {
-            this.register2ModuleCreator(id, m);
-            return (this.isLoad || !!immediate) ? (this.startModule(id), true) : false;
-        },
-
-        /**
-         * @private
-         * @method register2ModuleCreator
-         * @param id {String} 注册的id
-         * @param creator {Object | Function} 构造器
-         */
-        register2ModuleCreator: function(id, creator) {
-            return this.moduleCreator[id] = {
-                creator: creator,
-                instance: null
-            };
-        },
-
-        /**
-         * @private
-         * @method startModule
-         * @param id {String}
-         */
-        startModule: function(id) {
-            var creator = this.moduleCreator[id];
-            if(creator.instance)   return;
-            creator.instance = creator.creator(this);
-            if(!creator.instance) {
-                console.error("Module " + id + " didn't work for its invalid returns! It should be an object!");
-            } else if(!creator.instance.initialize) {
-                console.error("Module " + id + " didn't work for its invalid returns! It should has the method 'initialize'!");
-            }
-            creator.instance.initialize && creator.instance.initialize();
-        },
-
-        /**
-         * @private
-         * @method octopus.App.getModule
-         * @param id {String}
-         */
-        getModule: function(id) {
-            return this.moduleCreator[id].instance;
-        },
-
-        /**
-         * @public
-         * @method octopus.App.on
-         * @param type {String} 事件名
-         * @param func {Function} 回调
-         */
-        on: function(type, func) {
-            this.events.on(type, func);
-        },
-
-        /**
-         * @public
-         * @method octopus.App.un
-         * @param type {String} 事件名
-         * @param func {Function} 回调
-         */
-        un: function(type, func) {
-            this.events.un(type, func);
-        },
-
-        /**
-         * @public
-         * @method octopus.App.notify
-         * @desc 触发某自定义事件
-         * @param type {String}
-         * @param evt {Object}
-         */
-        notify: function(type, evt) {
-            if(!this.isLoad) {
-                this.eventCaches.push([type, evt]);
-                return;
-            }
-            this.events.triggerEvent(type, evt);
-        },
-
-        /**
-         * @private
-         * @method onWindowLoad
-         * @desc 监听onload事件
-         */
-        onWindowLoad: function() {
-            var that = this;
-            o.util.each(this.moduleCreator, function(item, k) {
-                that.startModule(k);
-            });
-            this.isLoad = true;
-            if(this.eventCaches) {
-                var item;
-                while(item = this.eventCaches.shift()) {
-                    this.notify(item[0], item[1]);
-                }
-            }
-            this.notify("Global-OctopusApp-ModuleCompleted", {});
-        },
-
-        /**
-         * @public
-         * @method octopus.App.render
-         */
-        render: function(el) {
-            if(!this.isLoad)    console.error("The page hasn't loaded!");
-            el = o.g(el);
-            if(!el)    console.error("Invalid node to render!");
-            this.initDomMode(el);
-        },
-
-        /**
-         * @private
-         * @method initDomMode
-         */
-        initDomMode: function(el) {
-            //节点模式
-            this.isInitDom = true;
-            var config = this.config,
-                node = el,
-                id = this.id + "_Octopus_ViewPort";
-            this.el = o.dom.cloneNode(node, true);
-            this.viewEl = o.dom.createDom("div", {
-                id: id,
-                "class": "octopus-viewport",
-                style: "width: 100%; height: 100%; position: relative; z-index: 300; overflow: hidden"
-            });
-            this.el.appendChild(this.viewEl);
-            //如果是节点模式且拥有图层
-            if(config.layers) {
-                o.util.each(config.layers, o.util.bind(this.addLayer, this));
-            }
-            //如果是节点模式且初始化widget控件
-            if(config.widgets) {
-                o.util.each(config.widgets, o.util.bind(this.addWidget, this));
-            }
-            this.notify("Global-OctopusApp-BeforeAppCompleted");
-            //把被搞得面目全非的el加入文档流
-            if(node) {
-                node.parentNode.replaceChild(this.el, node);
-                this.notify("Global-OctopusApp-AppCompleted");
-            }
-        },
-
-        /**
-         * @private
-         * @method onOrientationChanged
-         * @desc 监听横竖屏切换事件
-         */
-        onOrientationChanged: function() {
-            this.notify("Global-OctopusApp-OnOrientationChanged");
-        },
-
-        /**
-         * @private
-         * @method onWindowResize
-         */
-        onWindowResize: function() {
-            if(!this.isResize) {
-                o.util.requestAnimation(o.util.bind(this.checkSize, this));
-                this.isResize = true;
-            }
-        },
-
-        /**
-         * @private
-         * @method checkSize
-         */
-        checkSize: function() {
-            this.isResize = false;
-            this.notify("Global-OctopusApp-OnWindowResize");
-        },
-
-        /**
-         * @public
-         * @method octopus.App.addLayer
-         * @desc 给当前dom上增加图层 如果不存在this.el 则此方法没实际效果
-         * @param layer {octopus.Layer}
-         */
-        addLayer: function(layer) {
-            if(!this.layers)    this.layers = [];
-            if(this.layers.indexOf(layer) != -1)  return;
-            var el = layer.getEl();
-            o.dom.addClass(el, "octopus-app-layer");
-            this.setLayerZIndex(layer, this.layers.length);
-            if(layer.isBaseLayer) {
-                this.el.appendChild(el);
-            } else {
-                this.viewEl.appendChild(el);
-            }
-            if(layer.isCurrent) {
-                this.setCurrentLayer(layer);
-            }
-            this.layers.push(layer);
-            layer.setApp(this);
-            this.notify("Global-OctopusApp-LayerAdd", {layer: layer});
-            layer.afterAdd();
-        },
-
-        /**
-         * @public
-         * @method octopus.App.setCurrentLayer
-         * @param layer
-         */
-        setCurrentLayer: function(layer) {
-            if(this.currentLayer) {
-                this.currentLayer.setCurrent(false);
-            }
-            this.currentLayer = layer;
-            this.topLayer(layer);
-            layer.setCurrent(true);
-            this.notify("Global-OctopusApp-CurrentLayerChanged", {layer: layer});
-        },
-
-        /**
-         * @private
-         * @method setLayerZIndex
-         * @desc 设置图层的index
-         * @param layer {octopus.Layer}
-         * @param zIdx {Number}
-         */
-        setLayerZIndex: function(layer, zIdx) {
-            layer.setZIndex(this.Z_INDEX_BASE[layer.isBaseLayer ? "BaseLayer" : "Layer"] + zIdx * 5);
-        },
-
-        /**
-         * @private
-         * @method octopus.App.resetLayersZIndex
-         * @desc reset图层zindex
-         */
-        resetLayersZIndex: function() {
-            var that = this;
-            o.util.each(this.layers, function(layer, i) {
-                that.setLayerZIndex(layer, i);
-            })
-        },
-
-        /**
-         * @private
-         * @method getTopZIndex
-         */
-        getTopZIndex: function() {
-            var topIndex = {
-                zindex: 0,
-                index: 0
-            };
-            o.util.each(this.layers, function(layer, i) {
-                var _zindex = layer.getEl().style.zIndex || 0;
-                if(_zindex > topIndex.zindex) {
-                    topIndex = {
-                        zindex: _zindex,
-                        index: i
-                    }
-                }
-            });
-            return topIndex;
-        },
-
-        /**
-         * @public
-         * @method octopus.App.topLayer
-         */
-        topLayer: function(layer) {
-            var topIndex = this.getTopZIndex(),
-                index = layer.el.style.zIndex;
-            if(topIndex == index)	return;
-            layer.el.style.zIndex = topIndex.zindex;
-            this.layers[topIndex.index].el.style.zIndex = index;
-        },
-
-        /**
-         * @public
-         * @method octopus.App.getLayer
-         * @param id {String}
-         * @desc 靠id获取图层
-         */
-        getLayer: function(id) {
-            var layer = null;
-            o.util.each(this.layers, function(_layer) {
-                if(id == _layer.id) {
-                    layer = _layer;
-                    return true;
-                }
-            });
-            return layer;
-        },
-
-        /**
-         * @public
-         * @method octopus.App.removeLayer
-         * @param layer
-         * @desc 删掉图层
-         */
-        removeLayer: function(layer) {
-            layer.getEl().parentNode.removeChild(layer.getEl());
-            o.util.removeItem(this.layers, layer);
-            layer.removeApp(this);
-            layer.app = null;
-            this.resetLayersZIndex();
-            this.notify("Global-OctopusApp-LayerRemove", {layer: layer});
-        },
-
-        /**
-         * @public
-         * @method octopus.App.addWidget
-         * @param widget {octopus.Widget}
-         * @param auto {Boolean}
-         * @desc 添加widget到app里
-         */
-        addWidget: function(widget, auto) {
-            if(!this.widgets)    this.widgets = [];
-            var index = this.widgets.indexOf(widget);
-            if(index > -1)  return false;
-            this.widgets.push(widget)
-            if(!auto) {
-                widget.container = widget.outsideViewport ? this.el : this.viewEl;
-                widget.render();
-            }
-            widget.setZIndex(this.Z_INDEX_BASE.Widget + this.widgets.length * 5);
-        },
-
-        /**
-         * @public
-         * @method octopus.App.getWidget
-         * @param id
-         */
-        getWidget: function(id) {
-            var widget = null,
-                i = 0,
-                len = this.widgets.length;
-            o.util.each(this.widgets, function(_widget) {
-                if(_widget.id == id) {
-                    widget = _widget;
-                    return true;
-                }
-            });
-            return widget;
-        },
-
-        /**
-         * @public
-         * @method octopus.App.removeWidget
-         * @param widget {octopus.Widget}
-         */
-        removeWidget: function(widget) {
-            if ((widget) && (widget == this.getWidget(widget.id))) {
-                widget.el.parentNode.removeChild(widget.el);
-                o.util.removeItem(this.widgets, widget);
-            }
-        },
-
-        Z_INDEX_BASE: {
-            BaseLayer: 0,
-            Layer: 350,
-            Widget: 750,
-            Mask: 1000,
-            Popup: 1500
-        },
-
-        CLASS_NAME: "octopus.App"
-    });
-})(octopus);/**
- * @file
- * webapp通用组件结构文件
- * 定义命令或操作
- * @author oupeng-fe
- * @version 1.1
- */
-;(function(o, undefined) {
-
-    "use strict";
-
-    o.Cmd = o.define({
-
-        /**
-         * @private
-         * @property name
-         * @type {String}
-         */
-        name: null,
-
-        /**
-         * @private
-         * @property active
-         * @type {Boolean}
-         */
-        active: false,
-
-        /**
-         * @private
-         * @property app
-         * @type {octopus.App}
-         */
-        app: null,
-
-        /**
-         * @private
-         * @constructor
-         */
-        initialize: function(name, options) {
-            this.name = this.name || this.CLASS_NAME;
-            o.extend(this, options)
-        },
-
-        /**
-         * @public
-         * @method octopus.Cmd.activate
-         * @desc 激活命令状态
-         */
-        activate: function() {
-            if(!this.active) {
-                this.active = true;
-            }
-        },
-
-        /**
-         * @public
-         * @method octopus.Cmd.deactivate
-         * @desc 挂起命令状态
-         */
-        deactivate: function() {
-            if(this.active) {
-                this.active = false;
-            }
-        },
-
-        /**
-         * @public
-         * @method octopus.Cmd.execute
-         * @param option
-         * @desc 执行命令
-         */
-        execute: function(option) {
-            if(!this.active)	return false;
-        },
-
-        /**
-         * @public
-         * @method octopus.Cmd.unexecute
-         * @desc 实现此方法的命令支持undo redo
-         */
-        unexecute: function() {
-            if(!this.active)    return false;
-        },
-
-        /**
-         * @public
-         * @method octopus.Cmd.setApp
-         * @page {octopus.App}
-         * @desc 绑定命令到app
-         */
-        setApp: function(app) {
-            if(this.app != app) {
-                this.app = app;
-            }
-        },
-        CLASS_NAME: "octopus.Cmd"
-    });
-})(octopus);/**
- * @file
- * webapp通用组件结构文件
- * 定义命令管理类
- * @author oupeng-fe
- * @version 1.1
- */
-;(function(o, undefined) {
-
-    "use strict";
-
-    o.CmdManager = o.define({
-
-        /**
-         * @private
-         * @property app
-         * @type {octopus.App}
-         */
-        app: null,
-
-        /**
-         * @private
-         * @property commands
-         * @type {Array}
-         */
-        commands: null,
-
-        /**
-         * @private
-         * @property executeCmds
-         * @type {Array}
-         */
-        executeCmds: null,
-
-        /**
-         * @private
-         * @property name
-         * @type {String}
-         */
-        name: null,
-
-        /**
-         * @private
-         * @constructor
-         */
-        initialize: function(options) {
-            o.extend(this, options);
-            !!this.app ? (this.setApp(this.app), true) : false;
-            this.name = this.name || o.util.createUniqueID(this.CLASS_NAME + "_");
-            this.commands = this.commands || [];
-            this.executeCmds = this.executeCmds || [];
-        },
-
-        /**
-         * @public
-         * @method octopus.CmdManager.setApp
-         * @param app {octopus.App}
-         */
-        setApp: function(app) {
-            this.app == app ? false : (this.app = app, true);
-        },
-
-        /**
-         * @public
-         * @method octopus.CmdManager.register
-         * @param command {o.Cmd}
-         * @desc 注册一个命令到命令管理器
-         */
-        register: function (command) {
-            var index = this.commands.indexOf(command);
-            if(index != -1)	return false;
-            this.commands.push(command);
-            command.setApp(this.app);
-            return true;
-        },
-
-        /**
-         * @public
-         * @method octopus.CmdManager.unregister
-         * @param name {String}
-         */
-        unregister: function(name) {
-            var index = this.getCommandIndexByName(name);
-            if(index == -1)	return false;
-            this.commands.splice(index, 1);
-            return true;
-        },
-
-        /**
-         * @private
-         * @method getCommandIndexByName
-         */
-        getCommandIndexByName: function(name) {
-            var len = this.commands.length,
-                i = len;
-            for(; i--; ) {
-                if(name == this.commands[i].name) {
-                    return i;
-                }
-            }
-            return -1;
-        },
-
-        /**
-         * @public
-         * @method octopus.CmdManager.executeCommand
-         * @param name {String} 命令名
-         * @param option {Object}
-         */
-        executeCommand: function(name, option) {
-            var index = this.getCommandIndexByName(name);
-            if(index == -1)	return;
-            this.commands[index].execute(option);
-        },
-
-        /**
-         * @public
-         * @method octopus.CmdManager.destroy
-         */
-        destroy: function () {
-            this.app = null;
-        },
-
-        CLASS_NAME: "octopus.CmdManager"
-    });
-
-})(octopus);/**
- * @file
- * webapp通用组件结构文件
- * 定义图层基类
- * @author oupeng-fe
- * @version 1.1
- */
-;(function(o, undefined) {
-
-    "use strict";
-
-    o.Layer = o.define({
-        /**
-         * @private
-         * @property id
-         * @type {String}
-         */
-        id: null,
-
-        /**
-         * @private
-         * @property config
-         * @type {Object}
-         */
-        config: null,
-
-        /**
-         * @private
-         * @property isCurrent
-         * @type {Boolean}
-         */
-        isCurrent: false,
-
-        /**
-         * @private
-         * @property event
-         * @type {octopus.Events}
-         */
-        event: null,
-
-        /**
-         * @private
-         * @property el
-         * @type {DOMElement}
-         */
-        el: null,
-
-        /**
-         * @private
-         * @property octopus.Layer.isBaseLayer
-         * @type {Boolean}
-         */
-        isBaseLayer: false,
-
-        /**
-         * @private
-         * @property widgets
-         * @type {Array}
-         */
-        widgets: null,
-
-        /**
-         * @private
-         * @property app
-         * @type {octopus.App}
-         */
-        app: null,
-
-        /**
-         * @private
-         * @constructor
-         */
-        initialize: function(options) {
-            var config = this.config = o.extend({}, options);
-            this.id = config.id || o.util.createUniqueID(this.CLASS_NAME + "_");
-            this.el = o.dom.createDom("div", {
-                id: this.id
-            });
-            this.isCurrent = config.isCurrent || this.isCurrent;
-            this.isBaseLayer = config.isBaseLayer || this.isBaseLayer;
-            if(this.isCurrent || this.isBaseLayer) {
-                o.dom.addClass(this.el, "octopus-layer-base");
-            }
-            this.event = new o.Events(this);
-        },
-
-        /**
-         * @public
-         * @method octopus.Layer.getEl
-         * @return {DOMElement}
-         */
-        getEl: function() {
-            return this.el;
-        },
-
-        /**
-         * @public
-         * @method octopus.Layer.on
-         * @desc 事件监听
-         * @param type {String}
-         * @param func {Function}
-         */
-        on: function(type, func) {
-            this.events.on(type, func);
-        },
-
-        /**
-         * @public
-         * @method octopus.Layer.un
-         * @desc 事件取消监听
-         * @param type {String}
-         * @param func {Function}
-         */
-        un: function(type, func) {
-            this.events.un(type, func);
-        },
-
-        /**
-         * @public
-         * @method octopus.Layer.setApp
-         * @desc 绑定app
-         * @param app {octopus.App}
-         */
-        setApp: function(app) {
-            return app == this.app ? false : (this.app = app, true);
-        },
-
-        /**
-         * @public
-         * @method octopus.Layer.afterAdd
-         * @desc 绑定入app后调用
-         */
-        afterAdd: function() {
-
-        },
-
-        /**
-         * @public
-         * @method octopus.Layer.setCurrent
-         * @param current {Boolean}
-         */
-        setCurrent: function(current) {
-            if((current && this.isCurrent) || (!current && !this.isCurrent)) return;
-            this.isCurrent = current;
-            current ? o.dom.addClass(this.el, "octopus-layer-show") : o.dom.removeClass(this.el, "octopus-layer-show");
-        },
-
-        /**
-         * @public
-         * @method octopus.Layer.setZIndex
-         * @param zIndex {Number}
-         */
-        setZIndex: function(zIndex) {
-            this.el.style.zIndex = zIndex;
-        },
-
-        activate: function() {
-
-        },
-
-        deactivate: function() {
-
-        },
-
-        removeApp: function() {
-
-        },
-
-        CLASS_NAME: "octopus.Layer"
-    });
 })(octopus);

@@ -57,7 +57,6 @@
     }
 
     function selectAnimationType() {
-        var dom = this;
         if(o.dom.hasClass(this, "current")) return;
         o.dom.removeClass(currentDom, "current");
         currentDom = this;
