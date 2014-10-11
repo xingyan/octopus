@@ -363,6 +363,7 @@
                 that = this,
                 url = options["url"],
                 callback = options["success"] || options["complete"],
+                jsonpName = options["jsonp"] || "callback",
                 error = options["error"] || o.util.empty;
             if(o.util.isString(callback)) {
                 callbackName = callback;
@@ -381,7 +382,7 @@
                 error();
             };
             url = o.util.urlAppend(o.util.urlAppend(url,
-                o.util.getParameterString(data || {})), "callback=" + callbackName);
+                o.util.getParameterString(data || {})), jsonpName + "=" + callbackName);
             this._createScriptTag(script, url, charset);
             function getCallBack(onTimeOut) {
                 return function() {
