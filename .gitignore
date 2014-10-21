@@ -10,4 +10,6 @@ rsync.sh
 .settings
 node_modules
 build
-
+*.iml
+*.json
+doc/
