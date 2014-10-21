@@ -11,5 +11,4 @@ rsync.sh
 node_modules
 build
 *.iml
-*.json
 doc/
