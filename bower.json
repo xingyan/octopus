@@ -16,7 +16,10 @@
         "*.md",
         "AUTHORS.txt",
         "Gruntfile.js",
-        "package.json"
+        "package.json",
+        "demo",
+        "doc",
+        "src"
     ],
     "keywords": [
         "octopus",
