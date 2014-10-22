@@ -5,15 +5,9 @@
     "authors": [
         "yanx <yanx@oupeng.com>"
     ],
-    "main": "dist/jquery.js",
     "description": "\"a js framework\"",
     "main": [
-        "output/octopus.app.debug.js",
-        "output/octopus.app.min.js",
-        "output/octopus.base.debug.js",
-        "output/octopus.base.min.js",
         "output/octopus.debug.js",
-        "output/octopus.min.js",
         "output/octopus.css"
     ],
     "ignore": [
@@ -31,3 +25,4 @@
     ],
     "license": "MIT"
 }
+
