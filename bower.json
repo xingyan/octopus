@@ -1,31 +1,30 @@
 {
-    "name": "octopus",
-    "version": "0.0.2",
-    "homepage": "https://github.com/xingyan/octopus",
-    "authors": [
-        "yanx <yanx@oupeng.com>"
-    ],
-    "description": "\"a js framework\"",
-    "main": [
-        "output/octopus.debug.js",
-        "output/octopus.css"
-    ],
-    "ignore": [
-        "**/.*",
-        "build",
-        "*.md",
-        "AUTHORS.txt",
-        "Gruntfile.js",
-        "package.json",
-        "demo",
-        "doc",
-        "src"
-    ],
-    "keywords": [
-        "octopus",
-        "javascript",
-        "framework"
-    ],
-    "license": "MIT"
+  "name": "octopus",
+  "version": "0.0.3",
+  "homepage": "https://github.com/xingyan/octopus",
+  "authors": [
+    "yanx <yanx@oupeng.com>"
+  ],
+  "description": "\"a js framework\"",
+  "main": [
+    "output/octopus.debug.js",
+    "output/octopus.css"
+  ],
+  "ignore": [
+    "**/.*",
+    "build",
+    "*.md",
+    "AUTHORS.txt",
+    "Gruntfile.js",
+    "package.json",
+    "demo",
+    "doc",
+    "src"
+  ],
+  "keywords": [
+    "octopus",
+    "javascript",
+    "framework"
+  ],
+  "license": "MIT"
 }
-
