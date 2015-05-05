@@ -1,0 +1,11 @@
+{
+  "name": "g-octopus",
+  "version": "1.0.10",
+  "description": "",
+  "main": "octopus.debug.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "xingyan",
+  "license": "ISC"
+}

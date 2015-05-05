@@ -133,4 +133,8 @@
 
     window.octopus = o;
 
+    if(typeof module === "object" && typeof module.exports === "object") {
+        module.exports = o    
+    }
+
 })(window);

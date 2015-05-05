@@ -133,6 +133,10 @@
 
     window.octopus = o;
 
+    if(typeof module === "object" && typeof module.exports === "object") {
+        module.exports = o    
+    }
+
 })(window);/**
  * @file
  * webapp通用组件基础库文件
